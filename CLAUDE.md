@@ -29,7 +29,11 @@ Primjer koji se koristi u webu, prototipu i dokumentaciji (ne mijenjati bez razl
 primanja **1.468,00 €** − obavezno **771,33 €** (11 stavki) − štednja **150,00 €** = **546,67 €** za trošenje;
 potrošeno do jutros **207,40 €** → ostaje **339,27 €**; ÷ **17** dana (uključujući danas) = **19,96 €** preporučeni dnevni trošak.
 Primjer računa: Konzum, 6 stavki, ukupno **20,65 €** (Hrana 10,46 · Auto 4,99 · Kućanstvo 5,20).
-Formula: `dnevni_limit = (primanja − obavezno − štednja − potrošeno_do_jučer) / preostali_dani_uključujući_danas`.
+Formula (jedina definicija je u docs/APP-PLAN.md §4.2, implementacija samo u `packages/core`):
+- **raspoloživo** = primanja − obavezno − štednja; **potrošeno** se računa **bez** knjiženih pretplata (već su u „obavezno“);
+- **preporučeni dnevni trošak** = (raspoloživo − potrošeno *prije današnjeg dana*) ÷ preostali dani uključujući danas (jednom za taj dan);
+- **danas još smiješ** = preporučeni dnevni trošak − potrošeno *danas* (može biti negativno, prikaz „X € preko“).
+Nazivi na webu: veliki broj u heroju je „Preporučeni dnevni trošak“, a u „Isprobaj“ i u aplikaciji na početnom ekranu „Danas još smiješ“.
 
 ## Dizajn
 - Izvor istine: dizajn sustav UnitCent (https://claude.ai/artifact/7wzgDHWLkSWQmfEs2ZhYyg) i tokeni u kodu.
@@ -54,4 +58,4 @@ Formula: `dnevni_limit = (primanja − obavezno − štednja − potrošeno_do_j
 ## Stanje (ažurirati)
 - Web `unitcent.com`: objavljen (Next.js 15, Vercel). Waitlist piše u Supabase tablicu `waitlist`.
 - Supabase projekt: postoji (waitlist). Za aplikaciju treba zasebno okruženje (dev/staging/prod), vidi plan.
-- Aplikacija: još nije započeta. Sljedeći korak je „Faza 0: temelji“ iz docs/APP-PLAN.md.
+- Aplikacija: još nije započeta. Plan je v1.1 (docs/APP-PLAN.md, tehnički pregledan). Sljedeći korak je „Faza 0: temelji“; otvorene odluke D-01…D-10 su u §11 plana.
