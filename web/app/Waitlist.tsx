@@ -68,10 +68,10 @@ export function Waitlist({ id, where }: { id: string; where: "hero" | "footer" }
       </div>
       <label className="wl-consent">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-        <span>Slažem se da mi UnitCent pošalje jedan e-mail kad aplikacija izađe. <a href="/privatnost">Privatnost</a></span>
+        <span>Slažem se da me UnitCent obavijesti. <a href="/privatnost">Privatnost</a></span>
       </label>
       {error && <p className="wl-error" role="alert">{error}</p>}
-      <p id={`${id}-note`} className="wl-note">Bez spama. Samo jedan e-mail kad aplikacija izađe.</p>
+      <p id={`${id}-note`} className="wl-note">Bez spama. Samo jedna kratka informacija kad app izađe.</p>
     </form>
   );
 }

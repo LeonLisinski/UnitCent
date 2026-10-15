@@ -32,7 +32,6 @@ function PhoneMock() {
         <div className="p-card" style={{ gap: 0 }}>
           <div className="row"><span className="cat-dot" style={{ ["--c" as string]: "var(--cat-hrana)" }}><Icon name="cart" size={16} /></span><span className="grow">Lidl<small>Jučer · Hrana</small></span><span className="amount">−23,60 €</span></div>
           <div className="row"><span className="cat-dot" style={{ ["--c" as string]: "var(--cat-auto)" }}><Icon name="car" size={16} /></span><span className="grow">INA gorivo<small>Pon · Auto</small></span><span className="amount">−82,00 €</span></div>
-          <div className="row"><span className="cat-dot" style={{ ["--c" as string]: "var(--cat-pretplate)" }}><Icon name="repeat" size={16} /></span><span className="grow">Gmail<small>Danas naplata</small></span><span className="amount">−8,10 €</span></div>
         </div>
       </div>
       <div className="float-card" role="img" aria-label="Skeniran račun Konzum 20,65 € razvrstan u Hranu, Auto i Cigarete">
@@ -95,16 +94,13 @@ export default function Home() {
         <section className="hero" aria-labelledby="h-hero">
           <div className="wrap hero-grid">
             <div>
-              <span className="eyebrow">Aplikacija za troškove, napravljena za Hrvatsku</span>
+              <span className="eyebrow">Uskoro na iPhone i Android</span>
               <h1 id="h-hero">Znaj koliko smiješ potrošiti, svaki dan.</h1>
-              <p className="lead">
-                UnitCent bilježi trošak za 3 sekunde, sam knjiži pretplate i AI-jem čita račune. Početni ekran odmah odgovara na jedno pitanje: koliko još smijem danas.
-              </p>
+              <p className="lead">Unos za 3 sekunde. AI čita račune. Svaki dan znaš koliko smiješ potrošiti.</p>
               <div id="prijava" className="hero-form"><Waitlist id="wl-hero" where="hero" /></div>
               <ul className="trust" aria-label="Obećanja">
                 <li>Bez reklama</li><li>Ne prodajemo podatke</li><li>Brisanje računa u aplikaciji</li>
               </ul>
-              <p className="note">Stiže na iPhone i Android.</p>
             </div>
             <PhoneMock />
           </div>

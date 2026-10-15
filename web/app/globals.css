@@ -321,3 +321,11 @@ footer a:hover { color: var(--ink); }
 
 .logo-tile { display: grid; place-items: center; flex: none; }
 .logo-tile img { display: block; max-width: none; }
+
+/* ---- v2.2: pročišćen hero ---- */
+.hero .lead { font-size: 20px; max-width: 460px; margin-top: 16px; }
+.hero-form { margin-top: 24px; }
+.wl-offer { font-size: 15px; }
+.phone-wrap { margin-bottom: 56px; }
+.float-card { left: -56px; bottom: -64px; }
+@media (max-width: 880px) { .float-card { left: auto; right: -6px; bottom: -64px; } }
