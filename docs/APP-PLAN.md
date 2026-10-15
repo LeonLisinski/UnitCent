@@ -296,6 +296,7 @@ Svaka faza završava demonstracijom, ažuriranjem ovog dokumenta (§12) i odluko
   - `apps/mobile`: Expo SDK 57, Expo Router, 5 tabova, teme, fontovi; `expo-doctor` 21/21, Android bundle se izvozi;
   - `supabase/migrations/20261015000000_init.sql`: tablice, indeksi, okidači, RLS, Storage politika (tablice/indeksi sintaktički provjereni; RLS dio **nije izvršen nad bazom**);
   - `.github/workflows/ci.yml`: testovi + typecheck paketa, build weba.
+- **2026-10-15: dev Supabase projekt** (`ekdcfznglsioobnskqnu`, EU Frankfurt): migracija primijenjena i provjerena preko javnog API-ja: svih 11 tablica postoji; anonimna prijava radi; korisnik piše i čita samo svoje retke; tuđi `user_id` i pisanje u `entitlements`/`scan_usage` vraćaju 403; bez sesije se ne vidi ništa; negativan iznos pada na `check`. Preostalo: staging projekt, Google/Apple provideri, Edge Functions.
 
 **Sljedeće:** dovršiti Fazu 0 (stavke koje traže vlasnika) pa Faza 1. Preostalo u Fazi 0:
 1. rezervirati bundle ID i developer račune (D-05, D-06);

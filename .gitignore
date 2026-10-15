@@ -6,3 +6,6 @@ prototype/
 *.tsbuildinfo
 .expo
 dist
+.env
+.env.*
+!.env.example
