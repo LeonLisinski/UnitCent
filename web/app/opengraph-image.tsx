@@ -18,7 +18,7 @@ export default function OG() {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
           <div style={{ fontSize: 76, fontWeight: 800, color: "#f2f4f1", lineHeight: 1.05, maxWidth: 900 }}>Znaj koliko smiješ potrošiti, svaki dan.</div>
-          <div style={{ display: "flex", alignSelf: "flex-start", background: "#c8f169", color: "#15181a", fontSize: 34, fontWeight: 800, padding: "14px 28px", borderRadius: 20 }}>Danas smiješ 19,96 €</div>
+          <div style={{ display: "flex", alignSelf: "flex-start", background: "#c8f169", color: "#15181a", fontSize: 34, fontWeight: 800, padding: "14px 28px", borderRadius: 20 }}>Preporučeni dnevni trošak: 19,96 €</div>
         </div>
       </div>
     ),

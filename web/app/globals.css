@@ -634,7 +634,7 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 1; pointer-events
 
 /* ================= v6: čitljiv glavni iznos, prikovan račun, hero s mrežom ================= */
 
-/* "Danas smiješ": veliki iznos je sada tamni tekst na limeti (vidljiv u obje teme) */
+/* "Preporučeni dnevni trošak": veliki iznos je sada tamni tekst na limeti (vidljiv u obje teme) */
 .eq-step.final .eq-res dd { background: var(--accent); color: var(--on-accent); padding: 4px 20px 8px; margin-right: 0; border-radius: 18px; font-size: clamp(44px, 6vw, 72px); line-height: 1; box-shadow: 0 10px 40px -10px color-mix(in srgb, var(--accent) 55%, transparent); }
 .eq-step.final .eq-res { align-items: center; }
 
@@ -931,3 +931,142 @@ section, .subs, section.cta { padding-block: clamp(72px, 9.5vw, 148px); }
 /* kurziv u naslovima sekcija */
 h2 .serif { font-size: 1.06em; }
 @media (prefers-reduced-motion: reduce) { .float-chip { animation: none; } }
+
+
+/* ================= v11: mobilni raspored (popis stavki, jednadžba, podnožje) ================= */
+
+/* stari flex stil iz v6 je slagao zaglavlje i stavke jedno do drugog: kategorija je blok */
+.sp-cat { display: block; opacity: 1; }
+.sp-cat-h { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.sp-n { min-width: 0; flex: 1; font-weight: 800; font-size: 17px; }
+.sp-a { flex: none; white-space: nowrap; }
+.sp-cat ul { margin-left: 50px; }
+.sp-cat li > span:first-child { min-width: 0; }
+.sp-cat li .num { flex: none; white-space: nowrap; }
+@media (max-width: 520px) {
+  .sp-cat { padding: 12px 10px 10px; }
+  .sp-cat ul { margin-left: 0; margin-top: 10px; }
+  .sp-cat li { font-size: 14px; }
+  .sp-n { font-size: 16px; }
+  .sp-a { font-size: 18px; }
+  .sp-panel { width: calc(100% - 24px); }
+  .sp-phone { width: min(280px, 100%); }
+}
+
+/* jednadžba na mobitelu: naslov, pa prsten koji ostaje gore (sticky), pa retci koji se pale */
+@media (max-width: 860px) {
+  .eqv-text { display: contents; }
+  .eqv-grid { display: flex; flex-direction: column; gap: 0; }
+  .eqv-text > .label { order: 1; }
+  .eqv-text > h2 { order: 2; margin-top: 10px; font-size: clamp(34px, 9.4vw, 48px); }
+  .eqv-ring { order: 3; position: sticky; top: 68px; z-index: 3; width: 190px; margin: 20px auto 8px; padding: 6px; border-radius: 50%; background: var(--bg); }
+  .eqv-c b { font-size: 32px; }
+  .eqv-c .label { font-size: 10px; }
+  .eqv-rows { order: 4; margin-top: 12px; }
+  .eqv-rows li { opacity: 0.55; padding: 15px 2px; }
+  .eqv-rows li.on { opacity: 1; }
+  .eqv-rows li.final { padding: 18px 18px; }
+  .eqv-sticky { padding-block: 56px 72px; }
+}
+
+/* ring za scroll ne smije prekrivati poveznice u podnožju */
+footer { padding-bottom: 40px; }
+@media (max-width: 640px) {
+  footer { padding-bottom: 96px; }
+  footer .wrap { gap: 14px; }
+  .cta h2 { font-size: clamp(40px, 11.6vw, 64px); line-height: 0.98; }
+  .cta .hero-form { margin-top: 32px; }
+}
+.scroll-ring { transition: opacity 250ms ease, transform 250ms ease; }
+
+/* ================= v12: mobilna jednadžba — stalna traka umjesto okruglog prstena ================= */
+@media (max-width: 860px) {
+  .eqv-ring {
+    order: 3; position: sticky; top: 64px; z-index: 5;
+    width: auto; aspect-ratio: auto; height: auto; padding: 10px 20px;
+    margin: 18px -20px 4px; border-radius: 0;
+    display: flex; align-items: center; gap: 16px;
+    background: var(--bg); border-bottom: 1px solid var(--border); box-shadow: 0 14px 18px -14px rgba(0, 0, 0, 0.6);
+  }
+  .eqv-ring svg { width: 84px; height: 84px; flex: none; }
+  .eqv-c { position: static; inset: auto; align-items: flex-start; justify-content: center; text-align: left; gap: 6px; }
+  .eqv-c b { font-size: clamp(30px, 8.6vw, 40px); }
+}
+
+@media (max-width: 860px) {
+  .eqv-grid { align-items: stretch; }
+  .eqv-ring { align-self: stretch; width: auto; }
+  .eqv-text > .label, .eqv-text > h2 { align-self: flex-start; }
+}
+
+
+/* ================= v14: gumb u zaglavlju, mobilni popis naplata, podnožje ================= */
+.hdr-cta { transition: opacity 250ms ease, transform 250ms ease; }
+.hdr-cta.hide { opacity: 0; transform: translateY(-6px); pointer-events: none; }
+
+/* popis naplata (mobitel); na širem ekranu vidljiv je kalendar */
+.mcal-list { display: none; list-style: none; margin: 0; padding: 0; }
+.mcal-list li { display: grid; grid-template-columns: 34px 44px 1fr auto; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); }
+.mcal-list li:last-child { border-bottom: 1px solid var(--border); }
+.mcal-list .dn { font-weight: 800; font-size: 17px; color: var(--ink); text-align: right; }
+.mcal-list .b { width: 44px; height: 44px; }
+.mcal-list .nm { font-weight: 700; font-size: 17px; min-width: 0; }
+.mcal-list .when { font-size: 14px; font-weight: 600; color: var(--ink-muted); white-space: nowrap; }
+.mcal-list li.past .dn, .mcal-list li.past .nm { color: var(--ink-muted); }
+.mcal-list li.today { background: color-mix(in srgb, var(--brand) 10%, transparent); border-radius: 14px; border-top-color: transparent; padding-inline: 10px; margin-inline: -10px; }
+.mcal-list li.today .when { color: var(--brand); font-weight: 800; }
+@media (max-width: 640px) {
+  .mcal-grid { display: none; }
+  .mcal-list { display: block; }
+  .mcal-h { margin-bottom: 8px; }
+  .mcal-next { margin-top: 14px; }
+}
+
+/* mobitel: hero bez suvišnih redaka, podnožje bez praznog prostora */
+@media (max-width: 640px) {
+  .meta-row { display: none; }
+  .hero-form { margin-top: 20px; }
+  footer { padding-block: 28px; padding-bottom: 28px; }
+  section.cta { padding-bottom: 40px; }
+  .cta .hero-form { margin-top: 24px; }
+}
+
+
+/* ================= v15: diskretniji kalendar, puni tjedni, i na mobitelu ================= */
+.mcal-list { display: none !important; }
+.mcal-grid { display: grid !important; }
+.mcal .d { min-height: 78px; border-top: 0; gap: 4px; padding-top: 4px; }
+.mcal .wd { padding-bottom: 6px; opacity: 0.8; }
+.mcal .d.out .n { opacity: 0.3; font-weight: 500; }
+.mcal .d.past .n { opacity: 0.45; font-weight: 500; }
+.mcal .d.past.has .n { opacity: 0.6; }
+.mcal .d.past .b { opacity: 0.5; }
+.mcal .d.past .sl { opacity: 0.6; }
+.mcal .d.has { background: none; }
+.mcal .b { width: 30px; height: 30px; background: color-mix(in srgb, var(--c) 16%, transparent); box-shadow: none; }
+.mcal .b svg { width: 16px; height: 16px; }
+.mcal .sl { font-size: 11px; font-weight: 600; color: var(--ink-muted); }
+.mcal .d.today .sl, .mcal .d:not(.past):not(.out).has .sl { color: var(--ink); }
+.mcal-grid { row-gap: 2px; }
+@media (max-width: 640px) {
+  .mcal .d { min-height: 62px; }
+  .mcal .b { width: 28px; height: 28px; }
+  .mcal .b svg { width: 15px; height: 15px; }
+  .mcal .sl { display: none; }
+  .mcal .d .n { width: 24px; height: 24px; font-size: 14px; }
+  .mcal-next { font-size: 15px; }
+}
+
+/* v15.1: dani drugih mjeseci jedva vidljivi, bez naslova mjeseca */
+.mcal .d.out .n { opacity: 0.16; font-weight: 400; }
+.mcal .wd { padding-top: 2px; }
+
+
+/* ================= v16: oznake trgovina (neaktivne) ================= */
+.stores { display: flex; flex-wrap: wrap; gap: 12px; }
+.store { border: 0; font: inherit; cursor: default; background: var(--surface); color: var(--ink); box-shadow: inset 0 0 0 1px var(--border-strong); transition: border-color 150ms ease; }
+.store small { opacity: 0.7; }
+.store:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
+.hero-stores { margin-top: 18px; }
+.cta-stores { justify-content: center; margin-top: 28px; }
+@media (max-width: 420px) { .hero-stores .store, .cta-stores .store { flex: 1 1 100%; justify-content: center; } }

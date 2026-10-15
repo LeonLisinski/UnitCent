@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { Icon } from "./icons";
 import { LogoMark, Wordmark } from "./Logo";
-import { CountUp, Equation, PhoneTilt, Reveal, ScrollRing } from "./Motion";
+import { CountUp, Equation, HeaderCta, PhoneTilt, Reveal, ScrollRing } from "./Motion";
 import { ScanPinned } from "./ScanPinned";
+import { Stores } from "./Stores";
 import { TryIt } from "./TryIt";
 import { Words } from "./Words";
 import { Waitlist } from "./Waitlist";
 import { CONTACT_EMAIL, FAQ, SITE_NAME, SITE_URL } from "./site";
 
 /*
- * Jedan plan, isti brojevi svugdje (primanja 1.633 − obavezno 856,33 − štednja 200 = 576,67;
- * potrošeno do jutros 237,40; ostaje 339,27; 17 dana uključujući danas; 339,27 / 17 = 19,96).
+ * Jedan plan, isti brojevi svugdje (primanja 1.468 − obavezno 771,33 − štednja 150 = 546,67;
+ * potrošeno do jutros 207,40; ostaje 339,27; 17 dana uključujući danas; 339,27 / 17 = 19,96).
  * Isto je u Motion.tsx (jednadžba). Tekst CTA-a je svugdje isti.
  */
 const DAILY = 19.96;
@@ -35,20 +36,20 @@ function PhoneMock() {
     <div className="phone-wrap">
       <span className="float-chip fc1" aria-hidden="true"><Icon name="bell" size={16} stroke={2} /><span><b>Sutra naplata</b><small>Netflix · −6,00 €</small></span></span>
       <span className="float-chip fc2" aria-hidden="true"><Icon name="check" size={16} stroke={2.4} /><span><b>Račun razvrstan</b><small>Hrana · Auto · Kućanstvo</small></span></span>
-      <div className="phone" role="img" aria-label="Početni ekran aplikacije UnitCent: danas smiješ potrošiti 19,96 €, potrošeno 237,40 € od 576,67 € ovaj mjesec">
+      <div className="phone" role="img" aria-label="Početni ekran aplikacije UnitCent: preporučeni dnevni trošak 19,96 €, potrošeno 207,40 € od 546,67 € ovaj mjesec">
         <div className="p-top">
-          <div><small className="muted">Četvrtak, 15. listopada</small><br /><b>Bok, Leon</b></div>
+          <div><small className="muted">Četvrtak, 15. listopada</small><br /><b>Bok, Luka</b></div>
           <span className="avatar">L</span>
         </div>
         <div className="p-hero">
-          <div className="label">Danas smiješ</div>
+          <div className="label">Preporučeni dnevni trošak</div>
           <div className="amt num">19,96 €</div>
           <small>Još 17 dana u mjesecu</small>
         </div>
         <div className="p-card">
           <div className="row"><span className="label" style={{ flex: 1 }}>Ovaj mjesec</span><span className="p-pill">Po planu</span></div>
-          <div className="row" style={{ justifyContent: "space-between", fontWeight: 700 }}><span className="num">Potrošeno 237,40 €</span><small className="muted num">od 576,67 €</small></div>
-          <div className="bar"><i style={{ width: "41%" }} /></div>
+          <div className="row" style={{ justifyContent: "space-between", fontWeight: 700 }}><span className="num">Potrošeno 207,40 €</span><small className="muted num">od 546,67 €</small></div>
+          <div className="bar"><i style={{ width: "38%" }} /></div>
         </div>
         <div className="p-card" style={{ gap: 0 }}>
           <div className="row"><span className="cat-dot" style={{ ["--c" as string]: "var(--cat-hrana)" }}><Icon name="cart" size={16} /></span><span className="grow">Lidl<small>Jučer · Hrana</small></span><span className="amount">−23,60 €</span></div>
@@ -98,7 +99,7 @@ export default function Home() {
             <LogoMark size={30} draw /><Wordmark />
           </Link>
           <div className="header-actions">
-            <a className="btn primary sm" href="#prijava">Javi mi kad izađe</a>
+            <HeaderCta />
           </div>
         </div>
       </header>
@@ -108,10 +109,11 @@ export default function Home() {
           <svg className="deco-ring" viewBox="0 0 100 100" fill="none" strokeLinecap="round" aria-hidden="true"><path d="M74.04 25.96A34 34 0 1 0 74.04 74.04" stroke="var(--brand)" strokeWidth="16" /></svg>
           <div className="wrap hero-grid">
             <div>
-              <div className="label">Danas smiješ</div>
+              <div className="label">Preporučeni dnevni trošak</div>
               <div className="hero-number num"><CountUp to={DAILY} /></div>
               <h1 id="h-hero">Znaj koliko smiješ potrošiti. <em className="serif">Svaki dan.</em></h1>
               <div id="prijava" className="hero-form"><Waitlist id="wl-hero" where="hero" /></div>
+              <Stores className="hero-stores" />
               <div className="meta-row"><span>iPhone + Android</span><span>Fiskalni QR</span><span>Bez reklama</span></div>
             </div>
             <PhoneTilt><PhoneMock /></PhoneTilt>
@@ -132,10 +134,11 @@ export default function Home() {
               <p>Najam, režije i pretplate svaki mjesec na isti dan, bez tvog unosa. Dan prije stiže podsjetnik, a dnevni limit ih već uračunava.</p>
             </div>
             <div className="mcal" data-reveal role="img" aria-label="Kalendar naplata za listopad 2026: najam 1., kredit 3., Spotify 5., režije 8., Netflix 11., teretana 12., mobitel 15., struja 18., HBO Max 21., iCloud 24., osiguranje 28.">
-              <div className="mcal-h"><b>Listopad 2026</b><span>{SUBS.length} naplata</span></div>
               <div className="mcal-grid" aria-hidden="true">
                 {["Pon", "Uto", "Sri", "Čet", "Pet", "Sub", "Ned"].map((w) => <span className="wd" key={w}>{w}</span>)}
-                {Array.from({ length: 3 }, (_, i) => <span className="d blank" key={`b${i}`} />)}
+                {[28, 29, 30].map((d) => (
+                  <span className="d out" key={`p${d}`}><span className="n num">{d}</span></span>
+                ))}
                 {Array.from({ length: 31 }, (_, i) => {
                   const day = i + 1;
                   const subs = SUBS.filter((x) => x.d === day);
@@ -153,6 +156,7 @@ export default function Home() {
                     </span>
                   );
                 })}
+                <span className="d out" key="n1"><span className="n num">1</span></span>
               </div>
               <div className="mcal-next" aria-hidden="true">
                 <span className="dot" />Danas, 15.: Mobitel. Sljedeća: Struja 18.
@@ -246,6 +250,7 @@ export default function Home() {
           <div className="wrap-full">
             <h2 id="h-cta" data-reveal>Prestani pogađati.<br /><em className="serif">Počni znati.</em></h2>
             <div className="hero-form center"><Waitlist id="wl-foot" where="footer" /></div>
+            <Stores className="cta-stores" />
           </div>
         </section>
       </main>

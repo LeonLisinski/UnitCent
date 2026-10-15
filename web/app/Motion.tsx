@@ -103,6 +103,16 @@ export function Reveal() {
 export function ScrollRing() {
   const [p, setP] = useState(0);
   const [show, setShow] = useState(false);
+  const [nearFooter, setNearFooter] = useState(false);
+
+  // Uz podnožje se sakrije da ne prekriva poveznice (Privatnost, Kontakt).
+  useEffect(() => {
+    const f = document.querySelector("footer");
+    if (!f) return;
+    const io = new IntersectionObserver(([e]) => setNearFooter(e.isIntersecting), { threshold: 0 });
+    io.observe(f);
+    return () => io.disconnect();
+  }, []);
 
   useEffect(() => {
     let raf = 0;
@@ -129,10 +139,10 @@ export function ScrollRing() {
   return (
     <button
       type="button"
-      className={`scroll-ring${show ? " show" : ""}`}
+      className={`scroll-ring${show && !nearFooter ? " show" : ""}`}
       onClick={() => window.scrollTo({ top: 0, behavior: reduced() ? "auto" : "smooth" })}
       aria-label={`Natrag na vrh. Pročitano ${pct} % stranice.`}
-      tabIndex={show ? 0 : -1}
+      tabIndex={show && !nearFooter ? 0 : -1}
     >
       <svg viewBox="0 0 100 100" fill="none" strokeLinecap="round" aria-hidden="true">
         {/* oblik logotipa: otvoreni prsten (RING_ARC); prazan trag + ispuna koja ga dopunjuje do cijelog znaka */}
@@ -147,15 +157,15 @@ export function ScrollRing() {
   );
 }
 
-/* Jedan plan, isti brojevi kao u page.tsx: 1.633 − 856,33 − 200 − 237,40 = 339,27; ÷ 17 = 19,96. */
+/* Jedan plan, isti brojevi kao u page.tsx: 1.468 − 771,33 − 150 − 207,40 = 339,27; ÷ 17 = 19,96. */
 type EqRow = { op: string; label: string; val: string; v: number; hint: string; final?: boolean };
 const EQ_ROWS: EqRow[] = [
-  { op: "+", label: "Primanja", val: "1.633,00 €", v: 1633, hint: "Primanja" },
-  { op: "−", label: "Obavezno, 11 stavki", val: "856,33 €", v: 776.67, hint: "Nakon obaveznog" },
-  { op: "−", label: "Štednja", val: "200,00 €", v: 576.67, hint: "Za trošenje" },
-  { op: "−", label: "Potrošeno do danas", val: "237,40 €", v: 339.27, hint: "Ostaje ovaj mjesec" },
+  { op: "+", label: "Primanja", val: "1.468,00 €", v: 1468, hint: "Primanja" },
+  { op: "−", label: "Obavezno, 11 stavki", val: "771,33 €", v: 696.67, hint: "Nakon obaveznog" },
+  { op: "−", label: "Štednja", val: "150,00 €", v: 546.67, hint: "Za trošenje" },
+  { op: "−", label: "Potrošeno do danas", val: "207,40 €", v: 339.27, hint: "Ostaje ovaj mjesec" },
   { op: "÷", label: "Dana do kraja mjeseca", val: "17", v: 19.96, hint: "Po danu" },
-  { op: "=", label: "Danas smiješ", val: "19,96 €", v: 19.96, hint: "Danas smiješ", final: true },
+  { op: "=", label: "Preporučeni dnevni trošak", val: "19,96 €", v: 19.96, hint: "Preporučeni dnevni trošak", final: true },
 ];
 const RING_FULL = 238.76; // opseg kruga r=38
 const RING_END = 59.69; // prsten se zatvara do 3/4 kruga
@@ -269,4 +279,50 @@ export function PhoneTilt({ children }: { children: React.ReactNode }) {
   }, []);
 
   return <div ref={ref} className="tilt">{children}</div>;
+}
+
+
+/**
+ * Gumb u zaglavlju: vidljiv je samo kad nije vidljiva ni forma u heroju ni forma na dnu stranice
+ * (da se isti poziv ne prikazuje dvaput). Prostor u zaglavlju ostaje, pa se ništa ne pomiče.
+ */
+export function HeaderCta() {
+  const [hidden, setHidden] = useState(true);
+
+  useEffect(() => {
+    const els = ["#prijava", "#prijava-dno .hero-form"]
+      .map((q) => document.querySelector(q))
+      .filter((e): e is Element => !!e);
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const top = 64; // visina zaglavlja
+      const vh = window.innerHeight;
+      const anyVisible = els.some((el) => {
+        const r = el.getBoundingClientRect();
+        return r.bottom > top && r.top < vh;
+      });
+      setHidden(anyVisible);
+    };
+    const on = () => { if (!raf) raf = requestAnimationFrame(update); };
+    update();
+    window.addEventListener("scroll", on, { passive: true });
+    window.addEventListener("resize", on);
+    return () => {
+      window.removeEventListener("scroll", on);
+      window.removeEventListener("resize", on);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return (
+    <a
+      className={`btn primary sm hdr-cta${hidden ? " hide" : ""}`}
+      href="#prijava"
+      aria-hidden={hidden ? true : undefined}
+      tabIndex={hidden ? -1 : 0}
+    >
+      Javi mi kad izađe
+    </a>
+  );
 }
