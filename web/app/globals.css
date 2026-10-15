@@ -341,3 +341,11 @@ footer a:hover { color: var(--ink); }
   .faq-grid { grid-template-columns: 1fr; gap: 20px; }
   .faq-grid .section-head { position: static; }
 }
+
+/* ---- logo ---- */
+.logo { gap: 10px; color: var(--ink); }
+.logo svg { flex: none; display: block; }
+.wordmark { font-weight: 800; font-size: 21px; letter-spacing: -0.03em; line-height: 1; }
+
+.logo-tile { display: grid; place-items: center; background: #fff; border-radius: 12px; flex: none; box-shadow: inset 0 0 0 1px var(--border); }
+.logo-tile img { display: block; max-width: none; }

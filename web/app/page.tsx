@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Icon } from "./icons";
+import { LogoMark, Wordmark } from "./Logo";
 import { CountUp, ScanStage } from "./Motion";
 import { Waitlist } from "./Waitlist";
 import { CONTACT_EMAIL, FAQ, SITE_NAME, SITE_URL } from "./site";
@@ -79,7 +80,7 @@ export default function Home() {
       <header className="site-header">
         <div className="wrap">
           <Link href="/" className="logo" aria-label="UnitCent, početna">
-            <span className="logo-mark" aria-hidden="true">u¢</span>UnitCent
+            <LogoMark size={40} /><Wordmark />
           </Link>
           <nav className="nav" aria-label="Glavna navigacija">
             <a className="hide-sm" href="#kako-radi">Kako radi</a>
