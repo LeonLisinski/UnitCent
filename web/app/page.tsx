@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { Icon } from "./icons";
 import { LogoMark, Wordmark } from "./Logo";
-import { CountUp, Equation, ScanStage } from "./Motion";
+import { CountUp, Equation, PhoneTilt, Reveal, ScrollRing } from "./Motion";
+import { ScanPinned } from "./ScanPinned";
+import { TryIt } from "./TryIt";
+import { Words } from "./Words";
 import { Waitlist } from "./Waitlist";
 import { CONTACT_EMAIL, FAQ, SITE_NAME, SITE_URL } from "./site";
 
@@ -12,14 +15,26 @@ import { CONTACT_EMAIL, FAQ, SITE_NAME, SITE_URL } from "./site";
  */
 const DAILY = 19.96;
 
-const SUBS = [
-  "Spotify", "Najam", "Netflix", "Režije", "Kredit", "Teretana",
-  "RTV pristojba", "Mobitel", "HBO Max", "Struja", "iCloud", "Osiguranje",
+/* Primjeri fiksnih troškova i dan u mjesecu kad se sami knjiže (ilustracija, bez iznosa). */
+const SUBS: { n: string; d: number; c: string; i: string }[] = [
+  { n: "Najam", d: 1, c: "--cat-stan", i: "house" },
+  { n: "Kredit", d: 3, c: "--cat-stan", i: "card" },
+  { n: "Spotify", d: 5, c: "--cat-pretplate", i: "music" },
+  { n: "Režije", d: 8, c: "--cat-stan", i: "drop" },
+  { n: "Netflix", d: 11, c: "--cat-pretplate", i: "play" },
+  { n: "Teretana", d: 12, c: "--cat-zdravlje", i: "dumbbell" },
+  { n: "Mobitel", d: 15, c: "--cat-pretplate", i: "phone" },
+  { n: "Struja", d: 18, c: "--cat-stan", i: "bolt" },
+  { n: "HBO Max", d: 21, c: "--cat-pretplate", i: "play" },
+  { n: "iCloud", d: 24, c: "--cat-pretplate", i: "cloud" },
+  { n: "Osiguranje", d: 28, c: "--cat-auto", i: "shield" },
 ];
 
 function PhoneMock() {
   return (
     <div className="phone-wrap">
+      <span className="float-chip fc1" aria-hidden="true"><Icon name="bell" size={16} stroke={2} /><span><b>Sutra naplata</b><small>Netflix · −6,00 €</small></span></span>
+      <span className="float-chip fc2" aria-hidden="true"><Icon name="check" size={16} stroke={2.4} /><span><b>Račun razvrstan</b><small>Hrana · Auto · Kućanstvo</small></span></span>
       <div className="phone" role="img" aria-label="Početni ekran aplikacije UnitCent: danas smiješ potrošiti 19,96 €, potrošeno 237,40 € od 576,67 € ovaj mjesec">
         <div className="p-top">
           <div><small className="muted">Četvrtak, 15. listopada</small><br /><b>Bok, Leon</b></div>
@@ -80,112 +95,145 @@ export default function Home() {
       <header className="site-header">
         <div className="wrap">
           <Link href="/" className="logo" aria-label="UnitCent, početna">
-            <LogoMark size={36} /><Wordmark />
+            <LogoMark size={30} draw /><Wordmark />
           </Link>
-          <a className="btn primary sm" href="#prijava">Javi mi kad izađe</a>
+          <div className="header-actions">
+            <a className="btn primary sm" href="#prijava">Javi mi kad izađe</a>
+          </div>
         </div>
       </header>
 
       <main>
         <section className="hero" aria-labelledby="h-hero">
+          <svg className="deco-ring" viewBox="0 0 100 100" fill="none" strokeLinecap="round" aria-hidden="true"><path d="M74.04 25.96A34 34 0 1 0 74.04 74.04" stroke="var(--brand)" strokeWidth="16" /></svg>
           <div className="wrap hero-grid">
             <div>
               <div className="label">Danas smiješ</div>
               <div className="hero-number num"><CountUp to={DAILY} /></div>
-              <h1 id="h-hero">Znaj koliko smiješ potrošiti. Svaki dan.</h1>
+              <h1 id="h-hero">Znaj koliko smiješ potrošiti. <em className="serif">Svaki dan.</em></h1>
               <div id="prijava" className="hero-form"><Waitlist id="wl-hero" where="hero" /></div>
+              <div className="meta-row"><span>iPhone + Android</span><span>Fiskalni QR</span><span>Bez reklama</span></div>
             </div>
-            <PhoneMock />
+            <PhoneTilt><PhoneMock /></PhoneTilt>
           </div>
         </section>
 
         <Equation />
 
-        <section id="skeniranje" className="scan" aria-labelledby="h-scan">
-          <div className="wrap">
-            <div className="section-head">
-              <h2 id="h-scan">Slikaj. Gotovo.</h2>
-              <p>Iznos i datum iz fiskalnog QR koda, stavke razvrstava AI.</p>
-            </div>
-            <ScanStage>
-              <div className="scan-grid">
-                <div className="receipt" role="img" aria-label="Primjer fiskalnog računa s šest stavki, ukupno 20,65 eura">
-                  <div className="c">KONZUM plus d.o.o.</div>
-                  <hr />
-                  <div className="l" style={{ ["--i" as string]: 0 }}><span>KRUH BIJELI 500G</span><span>1,89</span></div>
-                  <div className="l" style={{ ["--i" as string]: 1 }}><span>MLIJEKO 2,8% 1L</span><span>1,29</span></div>
-                  <div className="l" style={{ ["--i" as string]: 2 }}><span>JAJA M 10/1</span><span>3,49</span></div>
-                  <div className="l" style={{ ["--i" as string]: 3 }}><span>SIR GOUDA 300G</span><span>3,79</span></div>
-                  <div className="l" style={{ ["--i" as string]: 4 }}><span>TEKUC.STAKLA 2L</span><span>4,99</span></div>
-                  <div className="l" style={{ ["--i" as string]: 5 }}><span>DETERDZENT 1L</span><span>5,20</span></div>
-                  <hr />
-                  <div className="l"><b>UKUPNO EUR</b><b>20,65</b></div>
-                </div>
-                <span className="arrow"><Icon name="arrow" size={24} stroke={2} /></span>
-                <div className="groups" role="img" aria-label="Razvrstano: Hrana 10,46 €, Auto 4,99 €, Kućanstvo 5,20 €">
-                  <div className="group" style={{ ["--i" as string]: 0 }}>
-                    <div className="gh"><span className="cat-dot" style={{ ["--c" as string]: "var(--cat-hrana)" }}><Icon name="cart" size={18} /></span><span>Hrana</span><span>10,46 €</span></div>
-                  </div>
-                  <div className="group" style={{ ["--i" as string]: 1 }}>
-                    <div className="gh"><span className="cat-dot" style={{ ["--c" as string]: "var(--cat-auto)" }}><Icon name="car" size={18} /></span><span>Auto</span><span>4,99 €</span></div>
-                  </div>
-                  <div className="group" style={{ ["--i" as string]: 2 }}>
-                    <div className="gh"><span className="cat-dot" style={{ ["--c" as string]: "var(--cat-stan)" }}><Icon name="house" size={18} /></span><span>Kućanstvo</span><span>5,20 €</span></div>
-                  </div>
-                </div>
-              </div>
-            </ScanStage>
-          </div>
-        </section>
+        <TryIt />
+
+        <ScanPinned />
 
         <section className="subs" aria-labelledby="h-subs">
-          <div className="wrap">
-            <h2 id="h-subs">Upišeš jednom. Knjiže se same.</h2>
-          </div>
-          <div className="marquee" aria-label="Primjeri pretplata i fiksnih troškova">
-            <div className="track">
-              {[...SUBS, ...SUBS].map((n, i) => (
-                <span className="sub-chip" key={`${n}-${i}`} aria-hidden={i >= SUBS.length ? true : undefined}>
-                  <b>{n}</b>
-                </span>
-              ))}
+          <div className="wrap subs-grid">
+            <div className="section-head" data-reveal>
+              <span className="label">04 / Pretplate</span>
+              <h2 id="h-subs"><Words text="Upišeš jednom." /> <em className="serif"><Words text="Knjiže se same." /></em></h2>
+              <p>Najam, režije i pretplate svaki mjesec na isti dan, bez tvog unosa. Dan prije stiže podsjetnik, a dnevni limit ih već uračunava.</p>
+            </div>
+            <div className="mcal" data-reveal role="img" aria-label="Kalendar naplata za listopad 2026: najam 1., kredit 3., Spotify 5., režije 8., Netflix 11., teretana 12., mobitel 15., struja 18., HBO Max 21., iCloud 24., osiguranje 28.">
+              <div className="mcal-h"><b>Listopad 2026</b><span>{SUBS.length} naplata</span></div>
+              <div className="mcal-grid" aria-hidden="true">
+                {["Pon", "Uto", "Sri", "Čet", "Pet", "Sub", "Ned"].map((w) => <span className="wd" key={w}>{w}</span>)}
+                {Array.from({ length: 3 }, (_, i) => <span className="d blank" key={`b${i}`} />)}
+                {Array.from({ length: 31 }, (_, i) => {
+                  const day = i + 1;
+                  const subs = SUBS.filter((x) => x.d === day);
+                  return (
+                    <span className={`d${day < 15 ? " past" : ""}${day === 15 ? " today" : ""}${subs.length ? " has" : ""}`} key={day}>
+                      <span className="n num">{day}</span>
+                      <span className="bs">
+                        {subs.map((x, k) => (
+                          <span className="sub" key={x.n} data-reveal style={{ ["--c" as string]: `var(${x.c})`, ["--d" as string]: `${200 + (day + k) * 35}ms` }}>
+                            <span className="b"><Icon name={x.i} size={20} stroke={1.9} /></span>
+                            <span className="sl">{x.n}</span>
+                          </span>
+                        ))}
+                      </span>
+                    </span>
+                  );
+                })}
+              </div>
+              <div className="mcal-next" aria-hidden="true">
+                <span className="dot" />Danas, 15.: Mobitel. Sljedeća: Struja 18.
+              </div>
             </div>
           </div>
         </section>
 
-        <section id="besplatno-premium" className="section-alt" aria-labelledby="h-plans">
+        <section id="besplatno-premium" aria-labelledby="h-plans">
           <div className="wrap">
-            <h2 id="h-plans" style={{ marginBottom: 28 }}>Besplatno i Premium</h2>
-            <div className="plans">
-              <div className="plan">
-                <h3>Besplatno</h3>
-                <ul>
-                  <li><Icon name="check" size={20} stroke={2.2} />Unos, pretplate i dnevni limit bez ograničenja</li>
-                  <li><Icon name="check" size={20} stroke={2.2} />Pregled po kategorijama, rad bez interneta</li>
-                  <li><Icon name="check" size={20} stroke={2.2} />3 AI skeniranja računa mjesečno</li>
-                </ul>
-              </div>
-              <div className="plan premium">
-                <h3>Premium</h3>
-                <ul>
-                  <li><Icon name="check" size={20} stroke={2.2} />AI skeniranje računa bez ograničenja</li>
-                  <li><Icon name="check" size={20} stroke={2.2} />AI uvidi i budžeti po kategoriji</li>
-                  <li><Icon name="check" size={20} stroke={2.2} />Uvoz iz Excela i izvoz</li>
-                </ul>
-              </div>
+            <div className="section-head" data-reveal>
+              <span className="label">05 / Planovi</span>
+              <h2 id="h-plans"><Words text="Besplatno i" /> <em className="serif"><Words text="Premium" /></em></h2>
+              <p>Sve što treba za praćenje troškova je besplatno i bez ograničenja. Premium dodaje AI.</p>
             </div>
-            <p className="plans-note">Cijene objavljujemo uz lansiranje.</p>
+            <div className="vs-wrap" data-reveal>
+              <table className="vs">
+                <caption className="sr-only">Usporedba planova Besplatno i Premium</caption>
+                <thead>
+                  <tr>
+                    <th scope="col"><span className="sr-only">Funkcija</span></th>
+                    <th scope="col">Besplatno<small>0 €</small></th>
+                    <th scope="col" className="vs-pro">Premium<small>Cijena uz lansiranje</small></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Unos troška za 3 sekunde</th>
+                    <td><span className="vs-yes"><Icon name="check" size={22} stroke={2.6} /><span className="sr-only">Besplatno: da</span></span></td>
+                    <td className="vs-pro"><span className="vs-yes"><Icon name="check" size={22} stroke={2.6} /><span className="sr-only">Premium: da</span></span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Pretplate i fiksni troškovi</th>
+                    <td><span className="vs-yes"><Icon name="check" size={22} stroke={2.6} /><span className="sr-only">Besplatno: da</span></span></td>
+                    <td className="vs-pro"><span className="vs-yes"><Icon name="check" size={22} stroke={2.6} /><span className="sr-only">Premium: da</span></span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Dnevni limit i pregled po kategorijama</th>
+                    <td><span className="vs-yes"><Icon name="check" size={22} stroke={2.6} /><span className="sr-only">Besplatno: da</span></span></td>
+                    <td className="vs-pro"><span className="vs-yes"><Icon name="check" size={22} stroke={2.6} /><span className="sr-only">Premium: da</span></span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Rad bez interneta</th>
+                    <td><span className="vs-yes"><Icon name="check" size={22} stroke={2.6} /><span className="sr-only">Besplatno: da</span></span></td>
+                    <td className="vs-pro"><span className="vs-yes"><Icon name="check" size={22} stroke={2.6} /><span className="sr-only">Premium: da</span></span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">AI skeniranje računa</th>
+                    <td><span className="vs-txt">3 mjesečno</span></td>
+                    <td className="vs-pro"><span className="vs-txt">Bez ograničenja</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">AI uvidi o potrošnji</th>
+                    <td><span className="vs-no"><Icon name="x" size={20} stroke={2.2} /><span className="sr-only">Besplatno: ne</span></span></td>
+                    <td className="vs-pro"><span className="vs-yes"><Icon name="check" size={22} stroke={2.6} /><span className="sr-only">Premium: da</span></span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Budžeti po kategoriji</th>
+                    <td><span className="vs-no"><Icon name="x" size={20} stroke={2.2} /><span className="sr-only">Besplatno: ne</span></span></td>
+                    <td className="vs-pro"><span className="vs-yes"><Icon name="check" size={22} stroke={2.6} /><span className="sr-only">Premium: da</span></span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Uvoz iz Excela i izvoz</th>
+                    <td><span className="vs-no"><Icon name="x" size={20} stroke={2.2} /><span className="sr-only">Besplatno: ne</span></span></td>
+                    <td className="vs-pro"><span className="vs-yes"><Icon name="check" size={22} stroke={2.6} /><span className="sr-only">Premium: da</span></span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 
         <section id="pitanja" aria-labelledby="h-faq">
-          <div className="wrap faq-grid">
-            <div className="section-head">
-              <h2 id="h-faq">Pitanja</h2>
+          <div className="wrap faq-center">
+            <div className="section-head" data-reveal>
+              <span className="label">06 / Pitanja</span>
+              <h2 id="h-faq"><Words text="Pitanja" /></h2>
             </div>
             <div className="faq">
               {FAQ.map((f) => (
-                <details key={f.q}>
+                <details key={f.q} name="faq">
                   <summary>{f.q}</summary>
                   <p className="a">{f.a}</p>
                 </details>
@@ -194,13 +242,16 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="prijava-dno" className="cta section-alt" aria-labelledby="h-cta">
-          <div className="wrap">
-            <h2 id="h-cta">Prestani pogađati. Počni znati.</h2>
+        <section id="prijava-dno" className="cta" aria-labelledby="h-cta">
+          <div className="wrap-full">
+            <h2 id="h-cta" data-reveal>Prestani pogađati.<br /><em className="serif">Počni znati.</em></h2>
             <div className="hero-form center"><Waitlist id="wl-foot" where="footer" /></div>
           </div>
         </section>
       </main>
+
+      <ScrollRing />
+      <Reveal />
 
       <footer>
         <div className="wrap">

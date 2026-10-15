@@ -30,7 +30,7 @@ diferencijator — većina konkurencije to nema ili je skriveno.
 
 ### Besplatno (Free) — sve zbog čega se korisnik vraća svaki dan
 - Brzi unos troška/prihoda: tipka +, numerička tipkovnica odmah, **tap na kategoriju odmah sprema**
-- Pretplate i fiksni troškovi (Spotify, Netflix, gym, najam, kredit, mobitel, režije, RTV pristojba): kalendar naplata, automatsko knjiženje, podsjetnik dan prije („Sutra ti skida Netflix 13,99 €")
+- Pretplate i fiksni troškovi (Spotify, Netflix, gym, najam, kredit, mobitel, režije): kalendar naplata, automatsko knjiženje, podsjetnik dan prije („Sutra ti skida Netflix 13,99 €")
 - Mjesečni plan: primanja − obavezno − štednja → slobodno za trošiti → dnevni limit
 - Pregled mjeseca po kategorijama i usporedba s prošlim mjesecom
 - Zadane kategorije s ikonama i bojama, mogu se mijenjati
