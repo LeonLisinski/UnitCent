@@ -1,0 +1,11 @@
+{
+  "name": "unitcent",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "test": "pnpm -r --filter \"./packages/*\" test",
+    "typecheck": "pnpm -r --filter \"./packages/*\" typecheck",
+    "prepare": "pnpm --filter @unitcent/tokens build",
+    "mobile": "pnpm --filter @unitcent/mobile start"
+  }
+}

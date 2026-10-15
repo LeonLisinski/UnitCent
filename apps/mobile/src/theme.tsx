@@ -1,0 +1,84 @@
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { useColorScheme, type TextStyle } from "react-native";
+import { tokens } from "@unitcent/tokens";
+
+export type ThemePreference = "system" | "light" | "dark";
+export type Scheme = "light" | "dark";
+
+// Svijetla i tamna paleta imaju iste ključeve (testira se u packages/tokens); vrijednosti su obični stringovi.
+type Palette = Record<keyof typeof tokens.color.dark, string>;
+
+interface ThemeValue {
+  scheme: Scheme;
+  preference: ThemePreference;
+  setPreference: (p: ThemePreference) => void;
+  colors: Palette;
+  space: typeof tokens.space;
+  radius: typeof tokens.radius;
+}
+
+const ThemeContext = createContext<ThemeValue | null>(null);
+
+/**
+ * Tema prati sustav; korisnik može zaključati svijetlu ili tamnu (D-01: tokeni + StyleSheet).
+ * Spremanje izbora u lokalnu bazu dolazi u Fazi 1.
+ */
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const system = useColorScheme();
+  const [preference, setPreference] = useState<ThemePreference>("system");
+
+  const value = useMemo<ThemeValue>(() => {
+    const scheme: Scheme = preference === "system" ? (system === "light" ? "light" : "dark") : preference;
+    return {
+      scheme,
+      preference,
+      setPreference,
+      colors: tokens.color[scheme],
+      space: tokens.space,
+      radius: tokens.radius,
+    };
+  }, [preference, system]);
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+}
+
+export function useTheme(): ThemeValue {
+  const v = useContext(ThemeContext);
+  if (!v) throw new Error("useTheme mora biti unutar ThemeProvider");
+  return v;
+}
+
+/* ---------- Tipografija (iz tokena; fontovi se učitavaju u app/_layout.tsx) ---------- */
+
+export type TextVariant = keyof typeof tokens.font.style | "serif-accent" | "mono-label";
+
+const SANS_BY_WEIGHT: Record<number, string> = {
+  400: "Manrope_400Regular",
+  500: "Manrope_500Medium",
+  600: "Manrope_600SemiBold",
+  700: "Manrope_700Bold",
+  800: "Manrope_800ExtraBold",
+};
+
+export function textStyle(variant: TextVariant): TextStyle {
+  if (variant === "serif-accent") {
+    return { fontFamily: "InstrumentSerif_400Regular_Italic", fontSize: 28, lineHeight: 32 };
+  }
+  if (variant === "mono-label") {
+    return {
+      fontFamily: "JetBrainsMono_500Medium",
+      fontSize: 12,
+      lineHeight: 16,
+      letterSpacing: 0.96,
+      textTransform: "uppercase",
+    };
+  }
+  const s = tokens.font.style[variant];
+  return {
+    fontFamily: SANS_BY_WEIGHT[s.weight] ?? "Manrope_400Regular",
+    fontSize: s.size,
+    lineHeight: s.line,
+    letterSpacing: s.tracking * s.size,
+    ...(s.tabular ? { fontVariant: ["tabular-nums"] as TextStyle["fontVariant"] } : null),
+  };
+}

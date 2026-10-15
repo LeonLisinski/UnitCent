@@ -1,4 +1,8 @@
 node_modules
 .next
+.next-check
 # prototip sadrzi stvarne osobne brojke iz Excela, ne objavljivati u javnom repou
 prototype/
+*.tsbuildinfo
+.expo
+dist

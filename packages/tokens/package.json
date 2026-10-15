@@ -1,0 +1,17 @@
+{
+  "name": "@unitcent/tokens",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/tokens.ts",
+  "types": "dist/tokens.ts",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node scripts/build.mjs && vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "5.7.2",
+    "vitest": "2.1.8"
+  }
+}

@@ -289,7 +289,21 @@ Svaka faza završava demonstracijom, ažuriranjem ovog dokumenta (§12) i odluko
 
   Otvorene su nove odluke D-09 i D-10.
 
-**Sljedeće:** Faza 0. Prvi konkretni koraci:
+- **2026-10-15: Faza 0, što je napravljeno (lokalno, bez računa/servisa):**
+  - workspace (pnpm): `packages/core`, `packages/tokens`, `apps/mobile`; `web/` ostaje izvan workspacea (Vercel, npm);
+  - `packages/core`: novac u centima, parsiranje/formatiranje, datumi, ponavljanja, formula dnevnog limita iz §4.2, 22 testa (test je uhvatio grešku u parsiranju „12,345,6“);
+  - `packages/tokens`: tokeni svijetla/tamna + generator CSS/TS + 27 testova kontrasta (test je uhvatio kontrast obruba 2,72:1 u svijetloj temi; ispravljeno);
+  - `apps/mobile`: Expo SDK 57, Expo Router, 5 tabova, teme, fontovi; `expo-doctor` 21/21, Android bundle se izvozi;
+  - `supabase/migrations/20261015000000_init.sql`: tablice, indeksi, okidači, RLS, Storage politika (tablice/indeksi sintaktički provjereni; RLS dio **nije izvršen nad bazom**);
+  - `.github/workflows/ci.yml`: testovi + typecheck paketa, build weba.
+
+**Sljedeće:** dovršiti Fazu 0 (stavke koje traže vlasnika) pa Faza 1. Preostalo u Fazi 0:
+1. rezervirati bundle ID i developer račune (D-05, D-06);
+2. napraviti `dev`/`staging` Supabase projekte, primijeniti migraciju, uključiti anonimnu prijavu;
+3. Sentry projekt (DSN) i EAS projekt (`eas init`, treba Expo račun);
+4. izraditi Android adaptive ikonu iz znaka.
+
+Izvorni prvi koraci:
 1. rezervirati bundle ID i developer račune (provjeriti D-06);
 2. napraviti dev/staging Supabase projekte i uključiti anonimnu prijavu;
 3. inicijalizirati monorepo i packages/core s testovima dnevnog limita prema §4.2.

@@ -1,0 +1,4 @@
+# Marketinška stranica (web/) namjerno nije u workspaceu: Vercel je veže na mapu web/ i koristi npm.
+packages:
+  - "apps/*"
+  - "packages/*"

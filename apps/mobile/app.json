@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "UnitCent",
+    "slug": "unitcent",
+    "scheme": "unitcent",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#070b0b",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.unitcent.app"
+    },
+    "android": {
+      "package": "com.unitcent.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#070b0b",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
