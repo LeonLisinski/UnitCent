@@ -1,0 +1,4 @@
+node_modules
+.next
+# prototip sadrzi stvarne osobne brojke iz Excela, ne objavljivati u javnom repou
+prototype/

@@ -1,0 +1,17 @@
+# UnitCent
+
+> UnitCent je hrvatska mobilna aplikacija (iOS i Android, u izradi) za praćenje troškova. Trošak se unosi za 3 sekunde, pretplate se knjiže same, a AI skenira račune i razvrstava stavke po kategorijama. Početni ekran pokazuje koliko korisnik još smije potrošiti danas.
+
+## Ključne funkcije
+- Brzi unos troška: iznos i kategorija jednim dodirom.
+- Pretplate i fiksni troškovi (Spotify, Netflix, najam, kredit, mobitel, režije): knjiže se automatski, podsjetnik dan prije.
+- Dnevni limit: (primanja − obavezni troškovi − štednja) / preostali dani u mjesecu.
+- AI skeniranje računa: stavke se razdvajaju po kategorijama; ukupni iznos i datum čitaju se iz QR koda fiskalnog računa; korisnik potvrđuje ili ispravlja.
+- Rad bez interneta, sinkronizacija u pozadini.
+
+## Cjenik
+Osnovno praćenje je besplatno. Premium otključava neograničeno AI skeniranje i dodatne funkcije. Cijene će biti objavljene uz lansiranje.
+
+## Stranice
+- [Početna](/): pregled aplikacije, kako radi, besplatno i Premium, česta pitanja
+- [Privatnost](/privatnost): kako se postupa s podacima
