@@ -13,6 +13,7 @@ const P: Record<string, string> = {
   target: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M12 12h.01",
   file: "M6 3h8l4 4v14H6z M14 3v4h4 M9 13h6 M9 17h6",
   tag: "M3 12V4h8l9 9-8 8z M7.5 8h.01",
+  house: "M4 11 12 4l8 7 M6 9.5V20h12V9.5",
 };
 
 export function Icon({ name, size = 22, stroke = 1.6 }: { name: keyof typeof P | string; size?: number; stroke?: number }) {

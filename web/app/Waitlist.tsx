@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { track } from "@vercel/analytics";
-import { WAITLIST_OFFER } from "./site";
 
 export function Waitlist({ id, where }: { id: string; where: "hero" | "footer" }) {
   const [email, setEmail] = useState("");
@@ -45,8 +44,7 @@ export function Waitlist({ id, where }: { id: string; where: "hero" | "footer" }
   }
 
   return (
-    <form className="wl" onSubmit={onSubmit} noValidate aria-describedby={`${id}-note`}>
-      <p className="wl-offer">{WAITLIST_OFFER}</p>
+    <form className="wl" onSubmit={onSubmit} noValidate>
       <div className="wl-row">
         <label htmlFor={`${id}-email`} className="sr-only">E-adresa</label>
         <input
@@ -68,10 +66,9 @@ export function Waitlist({ id, where }: { id: string; where: "hero" | "footer" }
       </div>
       <label className="wl-consent">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-        <span>Slažem se da me UnitCent obavijesti. <a href="/privatnost">Privatnost</a></span>
+        <span>Slažem se da me UnitCent obavijesti kad app izađe. Bez spama. <a href="/privatnost">Privatnost</a></span>
       </label>
       {error && <p className="wl-error" role="alert">{error}</p>}
-      <p id={`${id}-note`} className="wl-note">Bez spama. Samo jedna kratka informacija kad app izađe.</p>
-    </form>
+      </form>
   );
 }
