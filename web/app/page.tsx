@@ -250,7 +250,7 @@ export default function Home() {
         </section>
 
         <section id="pitanja" aria-labelledby="h-faq">
-          <div className="wrap">
+          <div className="wrap faq-grid">
             <div className="section-head">
               <span className="label">Pitanja</span>
               <h2 id="h-faq">Česta pitanja</h2>

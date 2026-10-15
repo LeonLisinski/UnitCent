@@ -324,3 +324,20 @@ footer a:hover { color: var(--ink); }
   .faq summary { padding: 16px 0; font-size: 16px; min-height: 56px; }
   .cta .hero-form { margin-top: 20px; }
 }
+
+/* ---- v2.1: ravnoteža rasporeda na širokom ekranu ---- */
+.plans { max-width: none; align-items: stretch; }
+.plans .plan { justify-content: flex-start; }
+.plans .plan.premium .btn { margin-top: auto; }
+.section-alt .plan { background: var(--bg); }
+.plan:not(.premium) { box-shadow: inset 0 0 0 1px var(--border); }
+.plans-note { max-width: none; }
+
+.faq-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 64px; align-items: start; }
+.faq-grid .section-head { margin-bottom: 0; position: sticky; top: 96px; }
+.faq-grid .faq { max-width: none; }
+.faq .a { max-width: 680px; }
+@media (max-width: 880px) {
+  .faq-grid { grid-template-columns: 1fr; gap: 20px; }
+  .faq-grid .section-head { position: static; }
+}
