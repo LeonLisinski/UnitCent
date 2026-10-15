@@ -22,7 +22,10 @@ export default function Privatnost() {
         <li>Račun i sve podatke možeš izbrisati kad god želiš.</li>
       </ul>
 
-      <h2>Što prikupljamo</h2>
+      <h2>Lista čekanja i analitika stranice</h2>
+      <p>Ako se prijaviš na listu čekanja, spremamo tvoju e-adresu, vrijeme privole i oznaku izvora prijave (npr. koja je mreža vodila na stranicu). Koristimo je samo da ti jednom javimo kad aplikacija izađe, a možeš zatražiti brisanje na adresu niže. Stranica koristi Vercel Analytics za brojanje posjeta i prijava. Ne postavlja kolačiće za praćenje i ne prati te preko različitih stranica.</p>
+
+      <h2>Što prikupljamo u aplikaciji</h2>
       <p>Podatke koje sam upišeš: iznose, kategorije, pretplate, primanja i plan. Slike računa koje skeniraš. Podatke za prijavu (e-adresa ili Apple/Google račun). Osnovne tehničke podatke potrebne za rad i ispravljanje grešaka.</p>
 
       <h2>Kako se koriste slike računa</h2>

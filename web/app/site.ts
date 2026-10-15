@@ -3,6 +3,10 @@ export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://unitcent.co
 export const SITE_NAME = "UnitCent";
 export const CONTACT_EMAIL = "podrska@unitcent.com";
 
+// Ponuda uz prijavu na listu čekanja. Mijenjati samo uz odluku o stvarnoj ponudi:
+// ovo je javno obećanje. Zasad namjerno bez konkretnog iznosa i roka.
+export const WAITLIST_OFFER = "Prijavi se i dobit ćeš posebnu ponudu pri lansiranju, prije svih ostalih.";
+
 export const FAQ: { q: string; a: string }[] = [
   {
     q: "Što je UnitCent?",
