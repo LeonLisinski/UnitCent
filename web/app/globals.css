@@ -1,58 +1,30 @@
 :root {
-  --bg: #f7f6f2;
-  --surface: #ffffff;
-  --surface-2: #efede7;
-  --border: #e2dfd8;
-  --border-strong: #8a8f8b;
-  --ink: #15181a;
-  --ink-muted: #5c6266;
-  --brand: #0e7a5f;
-  --brand-pressed: #0a5f4a;
-  --brand-soft: #dcf1e8;
-  --brand-ink: #0a5f4a;
-  --on-brand: #ffffff;
+  --bg: #070b0b;
+  --surface: #0f1515;
+  --surface-2: #182120;
+  --border: #243030;
+  --border-strong: #6b7d78;
+  --ink: #f2f4f1;
+  --ink-muted: #a3b0ab;
+  --brand: #3dd6a3;
+  --brand-pressed: #2fb88a;
+  --brand-soft: #0f3a2d;
+  --brand-ink: #7ee8c2;
+  --on-brand: #04241a;
   --accent: #c8f169;
   --on-accent: #15181a;
-  --warning: #a15c07;
-  --danger: #b42318;
-  --cat-hrana: #2f9e6e;
-  --cat-auto: #2f6fd1;
-  --cat-stan: #8a5cd6;
-  --cat-zabava: #e0662c;
-  --cat-zdravlje: #d6457a;
-  --cat-pretplate: #1c9bb0;
-  --cat-cigarete: #9a6a3a;
-  --shadow-float: 0 8px 24px rgba(21, 24, 26, 0.12);
-  --phone-frame: #1d2120;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1211;
-    --surface: #171b1a;
-    --surface-2: #212624;
-    --border: #2c3330;
-    --border-strong: #6b736f;
-    --ink: #f2f1ec;
-    --ink-muted: #a3aaa6;
-    --brand: #3dd6a3;
-    --brand-pressed: #2fb88a;
-    --brand-soft: #12392d;
-    --brand-ink: #7ee8c2;
-    --on-brand: #06261c;
-    --warning: #f5a524;
-    --danger: #f97066;
-    --cat-hrana: #4cc38a;
-    --cat-auto: #6ea2f5;
-    --cat-stan: #b195f0;
-    --cat-zabava: #f59a6b;
-    --cat-zdravlje: #f28bb0;
-    --cat-pretplate: #5fcbdc;
-    --cat-cigarete: #d1a679;
-    --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.5);
-    --phone-frame: #000;
-    color-scheme: dark;
-  }
+  --warning: #f5a524;
+  --danger: #f97066;
+  --cat-hrana: #4cc38a;
+  --cat-auto: #6ea2f5;
+  --cat-stan: #b195f0;
+  --cat-zabava: #f59a6b;
+  --cat-zdravlje: #f28bb0;
+  --cat-pretplate: #5fcbdc;
+  --cat-cigarete: #d1a679;
+  --shadow-float: 0 8px 28px rgba(0, 0, 0, 0.6);
+  --phone-frame: #1a2322;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -347,5 +319,5 @@ footer a:hover { color: var(--ink); }
 .logo svg { flex: none; display: block; }
 .wordmark { font-weight: 800; font-size: 21px; letter-spacing: -0.03em; line-height: 1; }
 
-.logo-tile { display: grid; place-items: center; background: #fff; border-radius: 12px; flex: none; box-shadow: inset 0 0 0 1px var(--border); }
+.logo-tile { display: grid; place-items: center; flex: none; }
 .logo-tile img { display: block; max-width: none; }
