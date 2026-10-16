@@ -9,3 +9,6 @@ dist
 .env
 .env.*
 !.env.example
+
+# lokalne tajne (nikad u repo)
+.secrets/
