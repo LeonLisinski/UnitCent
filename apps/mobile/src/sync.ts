@@ -13,6 +13,7 @@ import { getDb } from "./db/client";
 import { notifyDbChanged } from "./db/events";
 import { kvGet } from "./db/repo";
 import { setSyncHandler } from "./db/syncSignal";
+import { refreshEntitlement } from "./premium";
 import { ensureAnonymousSession, supabase } from "./supabase";
 
 /**
@@ -271,6 +272,7 @@ export async function syncNow(): Promise<void> {
       [at],
     );
     setStatus({ state: "idle", lastAt: at, pending: pendingCount() });
+    void refreshEntitlement();
   } catch (e) {
     failures += 1;
     setStatus({ state: "waiting", pending: pendingCount() });

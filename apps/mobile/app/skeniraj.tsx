@@ -48,8 +48,11 @@ export default function Skeniraj() {
       if (kind === "quota") {
         Alert.alert(
           "Besplatna skeniranja su iskorištena",
-          "Ovaj mjesec više nema besplatnih skeniranja. Premium s više skeniranja stiže uskoro. Trošak i dalje možeš unijeti ručno.",
-          [{ text: "U redu" }],
+          "Ovaj mjesec više nema besplatnih skeniranja. Premium skenira račune bez ograničenja. Trošak i dalje možeš unijeti ručno.",
+          [
+            { text: "Ne sada", style: "cancel" },
+            { text: "Pogledaj Premium", onPress: () => router.replace("/premium" as Href) },
+          ],
         );
       } else if (kind === "no-session") toast.show("Skeniranje traži internetsku vezu");
       else if (kind === "network") toast.show("Nema veze. Probaj ponovno ili unesi ručno.");

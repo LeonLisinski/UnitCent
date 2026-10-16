@@ -17,6 +17,7 @@ import { Amount, DayBars, Donut, RoundButton } from "../../src/fx";
 import { monthShort, monthTitle } from "../../src/format";
 import { HERO, Hero, ListRow, MonthSwitcher, minMonth, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
 import { useTheme } from "../../src/theme";
+import { freeMinMonth, usePremium } from "../../src/premium";
 import { T } from "../../src/ui";
 import { listCategories, listTransactionsInMonth, today } from "../../src/db/repo";
 
@@ -31,6 +32,7 @@ const enter = (i: number) => FadeInDown.delay(i * 70).duration(420);
 export default function Pregled() {
   const { colors, fx } = useTheme();
   const router = useRouter();
+  const premium = usePremium();
   const thisMonth = yearMonthOf(today());
   const [month, setMonth] = useState<YearMonth>(thisMonth);
   const earliest = minMonth();
@@ -66,7 +68,7 @@ export default function Pregled() {
     <TabScreen>
       <Animated.View entering={enter(0)}>
         <PageHeader>
-          <MonthSwitcher month={month} onChange={setMonth} min={earliest} max={thisMonth} />
+          <MonthSwitcher month={month} onChange={setMonth} min={earliest} max={thisMonth} lockedBefore={premium ? undefined : freeMinMonth()} onLocked={() => router.push("/premium" as Href)} />
         </PageHeader>
       </Animated.View>
 

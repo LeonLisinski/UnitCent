@@ -199,7 +199,22 @@ function shiftMonth(ym: string, delta: number): string {
  * Odabir mjeseca: strelice za susjedne mjesece i, dodirom na naslov (ikona kalendara), izbornik s godinom i mjesecima
  * da se do daljnjeg ili prošlog mjeseca stigne jednim dodirom. `min` i `max` su granice ("YYYY-MM").
  */
-export function MonthSwitcher({ month, onChange, min, max }: { month: string; onChange: (m: string) => void; min: string; max: string }) {
+export function MonthSwitcher({
+  month,
+  onChange,
+  min,
+  max,
+  lockedBefore,
+  onLocked,
+}: {
+  month: string;
+  onChange: (m: string) => void;
+  min: string;
+  max: string;
+  /** Mjeseci prije ovoga su zaključani (Premium): označeni lokotom, a dodir poziva `onLocked`. */
+  lockedBefore?: string;
+  onLocked?: () => void;
+}) {
   const { colors, fx } = useTheme();
   const [open, setOpen] = useState(false);
   const [year, setYear] = useState(Number(month.slice(0, 4)));
@@ -210,7 +225,12 @@ export function MonthSwitcher({ month, onChange, min, max }: { month: string; on
 
   return (
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-      <RoundButton icon="back" label="Prethodni mjesec" disabled={month <= min} onPress={() => onChange(shiftMonth(month, -1))} />
+      <RoundButton
+        icon={lockedBefore && month <= lockedBefore ? "lock" : "back"}
+        label={lockedBefore && month <= lockedBefore ? "Stariji mjeseci su u Premiumu" : "Prethodni mjesec"}
+        disabled={month <= min}
+        onPress={() => (lockedBefore && month <= lockedBefore ? onLocked?.() : onChange(shiftMonth(month, -1)))}
+      />
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${monthTitle(month)}. Odaberi mjesec i godinu`}
@@ -246,6 +266,7 @@ export function MonthSwitcher({ month, onChange, min, max }: { month: string; on
                 {Array.from({ length: 12 }, (_, i) => {
                   const ym = `${year}-${String(i + 1).padStart(2, "0")}`;
                   const disabled = ym < min || ym > max;
+                  const locked = !!lockedBefore && ym < lockedBefore;
                   const selected = ym === month;
                   return (
                     <View key={ym} style={{ width: "25%", alignItems: "center" }}>
@@ -256,7 +277,8 @@ export function MonthSwitcher({ month, onChange, min, max }: { month: string; on
                         disabled={disabled}
                         onPress={() => {
                           setOpen(false);
-                          onChange(ym);
+                          if (locked) onLocked?.();
+                          else onChange(ym);
                         }}
                         style={{
                           width: 66,
@@ -267,12 +289,15 @@ export function MonthSwitcher({ month, onChange, min, max }: { month: string; on
                           backgroundColor: selected ? colors.brand : "transparent",
                           borderWidth: ym === current && !selected ? 1.5 : 0,
                           borderColor: colors.brand,
-                          opacity: disabled ? 0.25 : 1,
+                          opacity: disabled ? 0.25 : locked ? 0.6 : 1,
                         }}
                       >
-                        <T v="headline" color={selected ? colors["on-brand"] : colors.ink} style={{ fontSize: 15, textTransform: "capitalize" }}>
-                          {monthShort(ym)}
-                        </T>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                          <T v="headline" color={selected ? colors["on-brand"] : colors.ink} style={{ fontSize: 15, textTransform: "capitalize" }}>
+                            {monthShort(ym)}
+                          </T>
+                          {locked ? <Icon name="lock" size={12} color={colors["ink-muted"]} /> : null}
+                        </View>
                       </Pressable>
                     </View>
                   );

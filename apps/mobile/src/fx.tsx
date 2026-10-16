@@ -297,7 +297,7 @@ export function DayBars({
 
 /* ---------- donut pregleda ---------- */
 
-/** Miješa hex boju s bijelom (t 0 do 1): svjetlija nijansa iste boje za kraj gradijenta isječka. */
+/** Miješa hex boju s bijelom (t 0 do 1): svjetlija nijansa iste boje. */
 function lighten(hex: string, t: number): string {
   const h = hex.replace("#", "");
   if (h.length !== 6) return hex;
@@ -305,6 +305,20 @@ function lighten(hex: string, t: number): string {
   return `#${[0, 2, 4].map((i) => mix(i).toString(16).padStart(2, "0")).join("")}`;
 }
 
+/** Miješa dvije hex boje (t 0 do 1). */
+function mixHex(a: string, b: string, t: number): string {
+  const pa = a.replace("#", "");
+  const pb = b.replace("#", "");
+  if (pa.length !== 6 || pb.length !== 6) return a;
+  const ch = (i: number) => Math.round(parseInt(pa.slice(i, i + 2), 16) * (1 - t) + parseInt(pb.slice(i, i + 2), 16) * t);
+  return `#${[0, 2, 4].map((i) => ch(i).toString(16).padStart(2, "0")).join("")}`;
+}
+
+/**
+ * Krug po kategorijama. Isti jezik kao prsten na početnoj: svaki isječak ima gradijent koji prati luk (od boje kategorije
+ * do svjetlije nijanse iste boje), pa se kraj svakog isječka vidi kao svjetliji „vrh“, a sljedeći počinje tamnije.
+ * Gradijent je izveden iz niza kratkih lukova, jer SVG linearni gradijent ne može pratiti zavoj.
+ */
 export function Donut({
   size = 262,
   slices,
@@ -315,44 +329,33 @@ export function Donut({
   children?: ReactNode;
 }) {
   const { fx } = useTheme();
-  // Isti jezik kao prsten na početnoj: ista debljina (≈ 6,7 % veličine), isti trag, blagi sjaj i gradijent po boji.
   const R = 102;
   const W = 17;
   const C = 2 * Math.PI * R;
   const total = slices.reduce((s, x) => s + x.value, 0);
+  const single = slices.length === 1;
   let off = 0;
   const arcs =
     total > 0
       ? slices.map((s, i) => {
           const len = (s.value / total) * C;
-          const a0 = (off / C) * 2 * Math.PI;
-          const a1 = ((off + len) / C) * 2 * Math.PI;
-          const arc = {
-            id: `dn${i}`,
-            color: s.color,
-            len,
-            start: off,
-            x1: 125 + R * Math.cos(a0),
-            y1: 125 + R * Math.sin(a0),
-            x2: 125 + R * Math.cos(a1),
-            y2: 125 + R * Math.sin(a1),
-          };
+          const n = Math.max(4, Math.round(len / 6));
+          const seg = len / n;
+          const light = lighten(s.color, 0.42);
+          const parts = Array.from({ length: n }, (_, k) => {
+            const t = n === 1 ? 1 : k / (n - 1);
+            // Jedan isječak je cijeli krug: gradijent ide tamno-svijetlo-tamno da spoj na vrhu nema skoka.
+            const u = single ? 1 - Math.abs(2 * t - 1) : t;
+            return { color: mixHex(s.color, light, u), start: off + k * seg };
+          });
+          const arc = { id: `dn${i}`, color: s.color, len, start: off, seg, parts };
           off += len;
-          // Jedan isječak je cijeli krug (početak = kraj): gradijent ide dijagonalno da ne bude degeneriran.
-          return slices.length === 1 ? { ...arc, x1: 30, y1: 30, x2: 220, y2: 220 } : arc;
+          return arc;
         })
       : [];
   return (
     <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
       <Svg width={size} height={size} viewBox="0 0 250 250">
-        <Defs>
-          {arcs.map((a) => (
-            <LinearGradient key={a.id} id={a.id} gradientUnits="userSpaceOnUse" x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}>
-              <Stop offset="0" stopColor={a.color} />
-              <Stop offset="1" stopColor={lighten(a.color, 0.4)} />
-            </LinearGradient>
-          ))}
-        </Defs>
         <G rotation={-90} origin="125, 125">
           <Circle cx={125} cy={125} r={R} stroke={fx.track} strokeWidth={W} fill="none" />
           {/* Sjaj: dva šira prozirna sloja ispod isječaka */}
@@ -364,17 +367,27 @@ export function Donut({
               <Circle key={`${g.w}-${a.id}`} cx={125} cy={125} r={R} stroke={a.color} strokeWidth={g.w} opacity={g.o} fill="none" strokeDasharray={`${a.len} ${C}`} strokeDashoffset={-a.start} />
             )),
           )}
-          {arcs.map((a) => (
-            <Circle key={a.id} cx={125} cy={125} r={R} stroke={`url(#${a.id})`} strokeWidth={W} fill="none" strokeDasharray={`${a.len} ${C}`} strokeDashoffset={-a.start} />
-          ))}
+          {arcs.map((a) =>
+            a.parts.map((p, k) => (
+              <Circle
+                key={`${a.id}-${k}`}
+                cx={125}
+                cy={125}
+                r={R}
+                stroke={p.color}
+                strokeWidth={W}
+                fill="none"
+                strokeDasharray={`${a.seg + 0.8} ${C}`}
+                strokeDashoffset={-p.start}
+              />
+            )),
+          )}
         </G>
       </Svg>
       <View style={{ position: "absolute", alignItems: "center", gap: 4, maxWidth: size * 0.62 }}>{children}</View>
     </View>
   );
 }
-
-/* ---------- povlačenje retka za brisanje ---------- */
 
 let lastSwipeAt = 0;
 /** Istinito neposredno nakon povlačenja retka: dodir koji prati otpuštanje prsta se ignorira (nema slučajnog otvaranja). */

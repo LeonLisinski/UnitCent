@@ -23,11 +23,11 @@ export function Safe({
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
   edges?: ("top" | "bottom")[];
-  /** iOS modal je kartica koja već počinje ispod statusne trake: gornji umetak se ne dodaje (inače je razmak dvostruk). */
+  /** iOS modal je kartica koja već počinje ispod statusne trake: dodaje se samo pola gornjeg umetka (cijeli bi bio dvostruk razmak). */
   sheet?: boolean;
 }) {
   const i = useInsets();
-  const top = sheet && Platform.OS === "ios" ? 0 : i.top;
+  const top = sheet && Platform.OS === "ios" ? Math.round(i.top * 0.5) : i.top;
   return (
     <View style={[{ flex: 1, paddingTop: edges.includes("top") ? top : 0, paddingBottom: edges.includes("bottom") ? i.bottom : 0 }, style]}>
       {children}

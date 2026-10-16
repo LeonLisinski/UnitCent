@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Alert, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { formatEur, occurrenceDate, previousMonth, yearMonthOf, type YearMonth } from "@unitcent/core";
 import { Calendar } from "../../src/Calendar";
@@ -10,6 +10,7 @@ import { Amount, Ring, RoundButton } from "../../src/fx";
 import { monthTitle, nextMonthOf } from "../../src/format";
 import { HERO, Hero, ListRow, MonthSwitcher, minMonth, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
 import { useTheme } from "../../src/theme";
+import { freeMinMonth, usePremium } from "../../src/premium";
 import { T } from "../../src/ui";
 import { deleteRecurring, listCategories, listRecurring, today } from "../../src/db/repo";
 import { rescheduleReminders } from "../../src/notifications";
@@ -22,6 +23,7 @@ const enter = (i: number) => FadeInDown.delay(i * 70).duration(420);
  */
 export default function Pretplate() {
   const router = useRouter();
+  const premium = usePremium();
   const { colors } = useTheme();
   const day = today();
   const thisMonth = yearMonthOf(day);
@@ -73,7 +75,7 @@ export default function Pretplate() {
     <TabScreen>
       <Animated.View entering={enter(0)}>
         <PageHeader>
-          <MonthSwitcher month={month} onChange={setMonth} min={earliest} max={latest} />
+          <MonthSwitcher month={month} onChange={setMonth} min={earliest} max={latest} lockedBefore={premium ? undefined : freeMinMonth()} onLocked={() => router.push("/premium" as Href)} />
         </PageHeader>
       </Animated.View>
 

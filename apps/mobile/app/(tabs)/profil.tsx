@@ -5,6 +5,7 @@ import Constants from "expo-constants";
 import * as Haptics from "expo-haptics";
 import { formatEur, yearMonthOf } from "@unitcent/core";
 import { useAccount } from "../../src/account";
+import { PRICE, usePremium } from "../../src/premium";
 import { Avatar } from "../../src/components";
 import { AccountCta, SyncLine } from "../../src/AccountSection";
 import { useDb } from "../../src/data";
@@ -60,6 +61,7 @@ export default function Profil() {
   const toast = useToast();
   const router = useRouter();
   const account = useAccount();
+  const premium = usePremium();
   const month = yearMonthOf(today());
   const plan = useDb(() => getPlan(month) ?? getLatestPlanBefore(month));
   const cats = useDb(() => listCategories());
@@ -103,6 +105,15 @@ export default function Profil() {
           </View>
 
           {account.hasSession && account.anonymous ? <AccountCta /> : null}
+
+          <Group>
+            <Row
+              icon="star"
+              title={premium ? "Premium je aktivan" : "Nadogradi na Premium"}
+              subtitle={premium ? "Cijela povijest i neograničeno skeniranje" : `Cijela povijest i skeniranje računa · ${PRICE.amount} ${PRICE.period}`}
+              onPress={() => router.push("/premium" as Href)}
+            />
+          </Group>
 
           <Group>
             <Row

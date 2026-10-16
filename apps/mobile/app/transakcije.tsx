@@ -9,6 +9,7 @@ import { monthTitle, nextMonthOf, relativeDay } from "../src/format";
 import { Icon } from "../src/icons";
 import { MonthSwitcher, PAD, PageHeader, minMonth } from "../src/layout";
 import { Safe } from "../src/safe";
+import { freeMinMonth, usePremium } from "../src/premium";
 import { textStyle, useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { TxRow } from "../src/TxRow";
@@ -24,6 +25,7 @@ type Item = { kind: "head"; date: string; total: number } | { kind: "tx"; tx: Tr
 export default function Transakcije() {
   const { colors, fx } = useTheme();
   const router = useRouter();
+  const premium = usePremium();
   const toast = useToast();
   const params = useLocalSearchParams<{ month?: string; categoryId?: string }>();
   const thisMonth = yearMonthOf(today());
@@ -62,7 +64,7 @@ export default function Transakcije() {
   const header = (
     <View style={{ gap: 12, paddingBottom: 8 }}>
       {searching ? null : (
-        <MonthSwitcher month={month} onChange={setMonth} min={earliest} max={thisMonth} />
+        <MonthSwitcher month={month} onChange={setMonth} min={earliest} max={thisMonth} lockedBefore={premium ? undefined : freeMinMonth()} onLocked={() => router.push("/premium" as Href)} />
       )}
 
       <View
