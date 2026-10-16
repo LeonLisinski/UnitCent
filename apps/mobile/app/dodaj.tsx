@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Keyboard, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { Safe, useInsets } from "../src/safe";
 import { parseAmount } from "@unitcent/core";
 import { Button, CatIcon, Keypad } from "../src/components";
 import { useDb } from "../src/data";
@@ -38,7 +38,7 @@ export default function Dodaj() {
   const [showNote, setShowNote] = useState(!!editing?.note);
   const [noteFocus, setNoteFocus] = useState(false); // tipkovnica telefona otvorena: sakrij našu numeričku, da „Spremi“ ostane vidljiv
   const [type, setType] = useState<Kind>(editing?.type ?? "expense");
-  const insets = useSafeAreaInsets();
+  const insets = useInsets();
   // Visina tipkovnice telefona mjeri se izravno (KeyboardAvoidingView u modalu pogrešno računa pomak).
   const [kb, setKb] = useState(0);
   useEffect(() => {
@@ -76,7 +76,7 @@ export default function Dodaj() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
-      <SafeAreaView style={{ flex: 1 }}>
+      <Safe style={{ flex: 1 }}>
         <View style={{ flex: 1, paddingHorizontal: space["4"] + 4, paddingTop: space["3"], paddingBottom: space["3"] + Math.max(0, kb - insets.bottom), gap: space["3"] }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <View style={{ flexDirection: "row", gap: 4 }}>
@@ -204,7 +204,7 @@ export default function Dodaj() {
           {noteFocus ? null : <Keypad value={value} onChange={setValue} />}
           <Button label={editing ? "Spremi izmjene" : "Spremi"} disabled={!cents || cents <= 0} onPress={save} />
         </View>
-      </SafeAreaView>
+      </Safe>
     </View>
   );
 }

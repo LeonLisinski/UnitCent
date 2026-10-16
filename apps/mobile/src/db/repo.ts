@@ -186,6 +186,16 @@ export function deleteCategory(id: string): void {
   notifyDbChanged();
 }
 
+export function restoreCategory(id: string): void {
+  const db = getDb();
+  const t = nowIso();
+  db.withTransactionSync(() => {
+    db.runSync("update categories set deleted_at = null, client_updated_at = ?, rev = rev + 1 where id = ?", [t, id]);
+    enqueueCategory(id);
+  });
+  notifyDbChanged();
+}
+
 /* ---------- transakcije ---------- */
 
 type TxRow = {

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ScrollView, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Safe } from "../src/safe";
 import { POPULAR_RECURRING, type Cents } from "@unitcent/core";
 import { AmountField, Button, CatIcon, Chip } from "../src/components";
 import { Glow, RoundButton } from "../src/fx";
@@ -62,7 +62,7 @@ export default function NovaPretplata() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
-    <SafeAreaView style={{ flex: 1 }}>
+    <Safe style={{ flex: 1 }}>
       <ScrollView
         contentContainerStyle={{ padding: space["4"], gap: space["4"], paddingBottom: space["7"] }}
         keyboardShouldPersistTaps="handled"
@@ -148,7 +148,7 @@ export default function NovaPretplata() {
 
         <Button label={editing ? "Spremi" : "Dodaj"} disabled={!valid} onPress={save} />
       </ScrollView>
-    </SafeAreaView>
+    </Safe>
     </View>
   );
 }

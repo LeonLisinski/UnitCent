@@ -5,11 +5,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { formatEur, yearMonthOf, type Cents } from "@unitcent/core";
 import { AmountField, Button, CatIcon, Segmented } from "../../src/components";
 import { useDb } from "../../src/data";
-import { Glass, Glow } from "../../src/fx";
+import { Glass, Glow, SwipeRow } from "../../src/fx";
 import { textStyle, useTheme, type ThemePreference } from "../../src/theme";
 import { useToast } from "../../src/toast";
 import { T } from "../../src/ui";
-import { getLatestPlanBefore, listCategories, getPlan, kvGet, kvSet, today, upsertPlan } from "../../src/db/repo";
+import { deleteCategory, restoreCategory, getLatestPlanBefore, listCategories, getPlan, kvGet, kvSet, today, upsertPlan } from "../../src/db/repo";
+import { useAccount } from "../../src/account";
 import { AccountSection } from "../../src/AccountSection";
 import { deleteAccountAndData, exportData } from "../../src/dataTools";
 import { disableReminders, enableReminders, remindersEnabled } from "../../src/notifications";
@@ -32,7 +33,9 @@ export default function Profil() {
   const month = yearMonthOf(today());
   const plan = useDb(() => getPlan(month) ?? getLatestPlanBefore(month));
   const savedName = useDb(() => kvGet("name") ?? "");
+  const account = useAccount();
   const [name, setName] = useState(savedName);
+  useEffect(() => setName(savedName), [savedName]);
   const [income, setIncome] = useState<{ text: string; cents: Cents | null }>({ text: "", cents: null });
   const [savings, setSavings] = useState<{ text: string; cents: Cents | null }>({ text: "", cents: null });
   const [reminders, setReminders] = useState(remindersEnabled());
@@ -57,28 +60,37 @@ export default function Profil() {
         >
           <T v="title-1" style={{ fontSize: 30, lineHeight: 36 }}>Profil</T>
 
-          <View style={{ gap: 6 }}>
-            <T v="caption" muted>Ime (za pozdrav)</T>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              onEndEditing={() => kvSet("name", name.trim())}
-              placeholder="npr. Luka"
-              placeholderTextColor={colors["ink-muted"]}
-              accessibilityLabel="Ime"
-              style={[
-                textStyle("body"),
-                {
-                  minHeight: 56,
-                  borderRadius: 16,
-                  borderWidth: 1.5,
-                  borderColor: fx.glassBorder,
-                  backgroundColor: fx.glass,
-                  color: colors.ink,
-                  paddingHorizontal: 16,
-                },
-              ]}
-            />
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+            <View
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 32,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: colors["brand-soft"],
+              }}
+            >
+              <T v="title-1" color={colors["brand-ink"]} style={{ fontSize: 26, lineHeight: 32 }}>
+                {(name.trim() || account.email || "?").charAt(0).toUpperCase()}
+              </T>
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                onEndEditing={() => kvSet("name", name.trim())}
+                placeholder="Tvoje ime"
+                placeholderTextColor={colors["ink-muted"]}
+                accessibilityLabel="Ime"
+                maxLength={24}
+                returnKeyType="done"
+                style={[textStyle("title-2"), { color: colors.ink, paddingVertical: 4, minHeight: 44 }]}
+              />
+              <T v="caption" muted numberOfLines={1}>
+                {account.email ?? (account.hasSession ? "Gost, račun nije zaštićen" : "Samo na ovom uređaju")}
+              </T>
+            </View>
           </View>
 
           <AccountSection />
@@ -103,17 +115,25 @@ export default function Profil() {
           <View style={{ gap: 4 }}>
             <T v="mono-label" muted>Kategorije</T>
             {cats.map((c, i) => (
-              <Pressable
+              <SwipeRow
                 key={c.id}
-                accessibilityRole="button"
-                accessibilityLabel={`Uredi kategoriju ${c.name}`}
-                onPress={() => router.push({ pathname: "/kategorija", params: { id: c.id } })}
-                style={{ minHeight: 56, flexDirection: "row", alignItems: "center", gap: 14, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: fx.line }}
+                onDelete={() => {
+                  deleteCategory(c.id);
+                  toast.show(`Obrisano: ${c.name}`, { label: "Poništi", run: () => restoreCategory(c.id) });
+                }}
               >
-                <CatIcon colorToken={c.colorToken} icon={c.icon} size={36} />
-                <T v="headline" style={{ flex: 1, fontWeight: "700" }} numberOfLines={1}>{c.name}</T>
-                <T v="caption" muted>Uredi</T>
-              </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Uredi kategoriju ${c.name}`}
+                  accessibilityHint="Povuci ulijevo za brisanje"
+                  onPress={() => router.push({ pathname: "/kategorija", params: { id: c.id } })}
+                  style={{ minHeight: 56, flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: colors.bg, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: fx.line }}
+                >
+                  <CatIcon colorToken={c.colorToken} icon={c.icon} size={36} />
+                  <T v="headline" style={{ flex: 1, fontWeight: "700" }} numberOfLines={1}>{c.name}</T>
+                  <T v="caption" muted>Uredi</T>
+                </Pressable>
+              </SwipeRow>
             ))}
             <Button variant="text" icon="plus" label="Nova kategorija" onPress={() => router.push("/kategorija")} style={{ alignSelf: "flex-start", marginLeft: -12 }} />
           </View>

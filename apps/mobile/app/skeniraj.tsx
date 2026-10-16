@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
-import { ActivityIndicator, Alert, Linking, Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Alert, Image, Linking, Pressable, StyleSheet, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Safe } from "../src/safe";
 import { formatEur } from "@unitcent/core";
 import { Button } from "../src/components";
 import { Glow, RoundButton } from "../src/fx";
@@ -26,8 +26,11 @@ export default function Skeniraj() {
   const [permission, requestPermission] = useCameraPermissions();
   const [qr, setQr] = useState<FiscalQr | null>(null);
   const [busy, setBusy] = useState(false);
+  const [frozen, setFrozen] = useState<string | null>(null); // snimljena slika ostaje na ekranu dok se čita
+  const [flash, setFlash] = useState(false);
 
   const process = async (uri: string) => {
+    setFrozen(uri);
     setBusy(true);
     try {
       const b64 = await prepareImage(uri);
@@ -53,12 +56,15 @@ export default function Skeniraj() {
       else toast.show("Čitanje nije uspjelo, probaj ponovno");
     } finally {
       setBusy(false);
+      setFrozen(null);
     }
   };
 
   const shoot = async () => {
     if (busy || !camera.current) return;
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setFlash(true);
+    setTimeout(() => setFlash(false), 140);
     const pic = await camera.current.takePictureAsync({ quality: 0.9, skipProcessing: false });
     if (pic?.uri) await process(pic.uri);
   };
@@ -75,7 +81,7 @@ export default function Skeniraj() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
         <Glow />
-        <SafeAreaView style={{ flex: 1 }}>
+        <Safe style={{ flex: 1 }}>
           <View style={{ alignItems: "flex-end", padding: 20 }}>
             <RoundButton icon="x" label="Zatvori" onPress={() => router.back()} />
           </View>
@@ -108,7 +114,7 @@ export default function Skeniraj() {
             )}
             <Button variant="secondary" size="sm" icon="image" label="Odaberi iz galerije" onPress={() => void pick()} />
           </View>
-        </SafeAreaView>
+        </Safe>
       </View>
     );
   }
@@ -130,7 +136,7 @@ export default function Skeniraj() {
         }}
       />
 
-      <SafeAreaView style={{ flex: 1, justifyContent: "space-between" }}>
+      <Safe style={{ flex: 1, justifyContent: "space-between" }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 20 }}>
           <RoundButton icon="x" label="Zatvori" onPress={() => router.back()} />
           {qr?.totalCents ? (
@@ -166,7 +172,10 @@ export default function Skeniraj() {
             <View style={{ width: 44 }} />
           </View>
         </View>
-      </SafeAreaView>
+      </Safe>
+
+      {frozen ? <Image source={{ uri: frozen }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
+      {flash ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: "#ffffff", opacity: 0.55 }]} /> : null}
 
       {busy ? (
         <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(7,11,11,0.82)", alignItems: "center", justifyContent: "center", gap: 14 }]}>

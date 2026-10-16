@@ -18,7 +18,9 @@ import { ThemeProvider, useTheme } from "../src/theme";
 import { ToastProvider } from "../src/toast";
 import { getDb } from "../src/db/client";
 import { bookDueRecurring, ensureCategories } from "../src/db/repo";
+import { applyProfileName } from "../src/account";
 import { startSync } from "../src/sync";
+import { supabase } from "../src/supabase";
 import { rescheduleReminders } from "../src/notifications";
 
 // Splash drži ekran dok se fontovi ne učitaju (nema skakanja teksta na prvom ekranu).
@@ -69,8 +71,13 @@ export default function RootLayout() {
   // Pozadinski poslovi: ne blokiraju prikaz.
   useEffect(() => {
     const stopSync = startSync(); // sesija + sinkronizacija; bez Supabase okruženja radi lokalno
+    void applyProfileName();
+    const auth = supabase?.auth.onAuthStateChange(() => void applyProfileName());
     void rescheduleReminders();
-    return stopSync;
+    return () => {
+      stopSync();
+      auth?.data.subscription.unsubscribe();
+    };
   }, []);
 
   if (!fontsLoaded || !ready) return null;

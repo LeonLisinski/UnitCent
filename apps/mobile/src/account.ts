@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
+import { kvGet, kvSet } from "./db/repo";
 import { resetSyncState, syncNow } from "./sync";
 import { supabase } from "./supabase";
 
 WebBrowser.maybeCompleteAuthSession();
 
 export interface Account {
+  /** Ime iz računa davatelja (Google/Apple), ako postoji. */
+  name: string | null;
   /** Davatelj prijave ("google" | "apple"), ako je prijavljen. */
   provider: string | null;
   /** Ima sesiju (anonimnu ili prijavljenu). */
@@ -16,14 +19,30 @@ export interface Account {
   email: string | null;
 }
 
-const NONE: Account = { hasSession: false, anonymous: false, email: null, provider: null };
+const NONE: Account = { hasSession: false, anonymous: false, email: null, provider: null, name: null };
 
-function toAccount(
-  user: { is_anonymous?: boolean; email?: string; app_metadata?: { provider?: string }; identities?: { provider: string }[] } | null | undefined,
-): Account {
+type AuthUser = {
+  is_anonymous?: boolean;
+  email?: string;
+  user_metadata?: Record<string, unknown>;
+  identities?: { provider: string; identity_data?: Record<string, unknown> }[];
+};
+
+/** Ime za pozdrav iz podataka računa: „given_name“, inače prva riječ punog imena. */
+export function profileName(user: AuthUser | null | undefined): string | null {
+  // Kod povezivanja anonimnog računa podaci davatelja su u identities, ne nužno u user_metadata.
+  const idData = user?.identities?.find((i) => i.provider !== "anonymous")?.identity_data ?? {};
+  const m = { ...idData, ...(user?.user_metadata ?? {}) };
+  const given = typeof m.given_name === "string" ? m.given_name : null;
+  const full = [m.full_name, m.name].find((v): v is string => typeof v === "string" && v.trim().length > 0);
+  const name = (given ?? full?.trim().split(/\s+/)[0] ?? "").trim();
+  return name || null;
+}
+
+function toAccount(user: AuthUser | null | undefined): Account {
   if (!user) return NONE;
   const provider = user.identities?.find((i) => i.provider !== "anonymous")?.provider ?? null;
-  return { hasSession: true, anonymous: !!user.is_anonymous, email: user.email ?? null, provider };
+  return { hasSession: true, anonymous: !!user.is_anonymous, email: user.email ?? null, provider, name: profileName(user) };
 }
 
 export function useAccount(): Account {
@@ -122,4 +141,12 @@ export async function signInWith(provider: Provider): Promise<SignInResult> {
   } catch {
     return "error";
   }
+}
+
+/** Ako korisnik još nema ime u aplikaciji, uzmi ga iz računa (Google/Apple). Ručno upisano ime se nikad ne prepisuje. */
+export async function applyProfileName(): Promise<void> {
+  if (!supabase) return;
+  const { data } = await supabase.auth.getSession();
+  const name = profileName(data.session?.user);
+  if (name && !(kvGet("name") ?? "").trim()) kvSet("name", name);
 }

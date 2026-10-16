@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Alert, Pressable, ScrollView, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Safe } from "../src/safe";
 import { Button, CatIcon } from "../src/components";
 import { Glow, RoundButton } from "../src/fx";
 import { Icon } from "../src/icons";
@@ -55,7 +55,7 @@ export default function Kategorija() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
-      <SafeAreaView style={{ flex: 1 }}>
+      <Safe style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{ padding: space["4"] + 4, gap: space["5"], paddingBottom: space["6"] }}
           keyboardShouldPersistTaps="handled"
@@ -159,7 +159,7 @@ export default function Kategorija() {
           <Button label="Spremi" disabled={!valid} onPress={save} />
           {existing ? <Button variant="danger" label="Obriši kategoriju" onPress={remove} /> : null}
         </ScrollView>
-      </SafeAreaView>
+      </Safe>
     </View>
   );
 }

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ScrollView, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Safe } from "../src/safe";
 import {
   POPULAR_RECURRING,
   computeDailyLimit,
@@ -90,7 +90,7 @@ export default function Onboarding() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
-    <SafeAreaView style={{ flex: 1 }}>
+    <Safe style={{ flex: 1 }}>
       <ScrollView
         contentContainerStyle={{ padding: space["4"], paddingBottom: space["7"], gap: space["5"] }}
         keyboardShouldPersistTaps="handled"
@@ -204,7 +204,7 @@ export default function Onboarding() {
           {step > 0 ? <Button variant="text" label="Natrag" onPress={() => setStep(step - 1)} /> : null}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Safe>
     </View>
   );
 }

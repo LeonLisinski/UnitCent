@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Safe } from "../src/safe";
 import { formatEur } from "@unitcent/core";
 import { Button, CatIcon, Chip } from "../src/components";
 import { useDb } from "../src/data";
@@ -80,7 +80,7 @@ export default function Pregledaj() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
-      <SafeAreaView style={{ flex: 1 }}>
+      <Safe style={{ flex: 1 }}>
         <View style={{ flex: 1, paddingHorizontal: space["4"] + 4, paddingTop: space["3"], paddingBottom: space["3"], gap: space["3"] }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <T v="title-1" style={{ fontSize: 26, lineHeight: 32 }}>Pregledaj račun</T>
@@ -158,7 +158,7 @@ export default function Pregledaj() {
             <Button label={`Spremi · ${formatEur(total)}`} disabled={groups.length === 0} onPress={save} />
           </View>
         </View>
-      </SafeAreaView>
+      </Safe>
     </View>
   );
 }
