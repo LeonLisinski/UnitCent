@@ -317,6 +317,8 @@ Svaka faza završava demonstracijom, ažuriranjem ovog dokumenta (§12) i odluko
 - **2026-10-16: UX sinkronizacije (odluka):** dok sve radi, sinkronizacija je nevidljiva (nema ikona ni natpisa na početnom ekranu: brzina i jednostavnost). Stanje je samo u Profilu, odjeljak „Podaci“: točka + jedna rečenica („Sve je spremljeno u oblaku“ / „Sinkroniziram…“ / „Čeka slanje: N izmjena“ / „Samo na ovom uređaju“), „Zadnja sinkronizacija prije X“ i gumb „Sinkroniziraj sada“. Greške nisu alarmantne (nema crvenog): unos uvijek radi lokalno, a slanje se samo ponavlja s odgodom. Isto tako: korisnik s anonimnim računom dobiva poziv da spremi račun (Google/Apple) tek kad je prijava dostupna.
 - **2026-10-16: kategorije i unos:** odabir kategorije pa gumb „Spremi“; vlastite kategorije (naziv, boja, ikona; uređivanje i brisanje u Profilu); uređivanje troškova (dodir na redak) i pretplata (dodir na stavku); pravilo „sadržaj i primarni gumb uvijek vidljivi, tipkovnica ih ne prekriva“ u CLAUDE.md.
 
+- **2026-10-16: prijava Googleom (dev):** anonimni račun se povezuje s Googleom (`linkIdentity`, isti korisnik i podaci); ako je Google račun već povezan (novi mobitel), prijava u taj račun (`signInWithOAuth`), kursori se resetiraju, a lokalni podaci ulaze u outbox i dodaju se računu. Preko preglednika (expo-web-browser), radi u Expo Go i u buildu. Apple prijava čeka developer račun (D-05/D-06). Odjava još ne postoji (odluka: što s lokalnim podacima).
+
 **Sljedeće:** dovršiti Fazu 0 (stavke koje traže vlasnika) pa Faza 1. Preostalo u Fazi 0:
 1. rezervirati bundle ID i developer račune (D-05, D-06);
 2. napraviti `dev`/`staging` Supabase projekte, primijeniti migraciju, uključiti anonimnu prijavu;

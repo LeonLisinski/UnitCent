@@ -177,6 +177,25 @@ async function pullAll(): Promise<boolean> {
   return changed;
 }
 
+/**
+ * Poziva se kad se promijeni korisnik (prijava u postojeći račun): kursori kreću ispočetka,
+ * a svi lokalni reci ponovno idu u outbox da se dodaju novom računu (ID-evi su jedinstveni po korisniku).
+ */
+export function resetSyncState(): void {
+  const db = getDb();
+  db.withTransactionSync(() => {
+    db.runSync("delete from kv where key like 'sync.cursor.%'");
+    db.runSync("delete from outbox");
+    const t = new Date().toISOString();
+    for (const cfg of TABLES) {
+      db.runSync(
+        `insert into outbox (table_name, row_id, op, payload, created_at) select ?, id, 'upsert', '{}', ? from ${cfg.name}`,
+        [cfg.name, t],
+      );
+    }
+  });
+}
+
 /* ---------- stanje za prikaz (Profil) ---------- */
 
 export type SyncState = "local" | "idle" | "syncing" | "waiting";

@@ -10,6 +10,7 @@ import { textStyle, useTheme, type ThemePreference } from "../../src/theme";
 import { useToast } from "../../src/toast";
 import { T } from "../../src/ui";
 import { getLatestPlanBefore, listCategories, getPlan, kvGet, kvSet, today, upsertPlan } from "../../src/db/repo";
+import { signInWithGoogle, useAccount } from "../../src/account";
 import { agoText } from "../../src/format";
 import { syncNow, useSyncStatus } from "../../src/sync";
 import { disableReminders, enableReminders, remindersEnabled } from "../../src/notifications";
@@ -36,6 +37,8 @@ export default function Profil() {
   const [income, setIncome] = useState<{ text: string; cents: Cents | null }>({ text: "", cents: null });
   const [savings, setSavings] = useState<{ text: string; cents: Cents | null }>({ text: "", cents: null });
   const sync = useSyncStatus();
+  const account = useAccount();
+  const [signingIn, setSigningIn] = useState(false);
   const [reminders, setReminders] = useState(remindersEnabled());
 
   useEffect(() => {
@@ -98,6 +101,37 @@ export default function Profil() {
               }}
             />
           </Glass>
+
+          {account.hasSession ? (
+            <View style={{ gap: space["2"] }}>
+              <T v="mono-label" muted>Račun</T>
+              {account.anonymous ? (
+                <>
+                  <T v="headline" style={{ fontWeight: "700" }}>Račun još nije zaštićen</T>
+                  <T v="caption" muted>
+                    Prijavi se da podaci prežive novi mobitel ili reinstalaciju. Prijava ne mijenja ništa u tvojim podacima.
+                  </T>
+                  <Button
+                    label={signingIn ? "Prijavljujem…" : "Nastavi s Googleom"}
+                    disabled={signingIn}
+                    onPress={async () => {
+                      setSigningIn(true);
+                      const r = await signInWithGoogle();
+                      setSigningIn(false);
+                      if (r === "linked") toast.show("Račun je zaštićen");
+                      else if (r === "signed-in") toast.show("Prijavljen u postojeći račun");
+                      else if (r === "error") toast.show("Prijava nije uspjela, pokušaj ponovno");
+                    }}
+                  />
+                </>
+              ) : (
+                <>
+                  <T v="headline" style={{ fontWeight: "700" }}>{account.email ?? "Prijavljen"}</T>
+                  <T v="caption" muted>Podaci su vezani uz tvoj Google račun.</T>
+                </>
+              )}
+            </View>
+          ) : null}
 
           <View style={{ gap: space["2"] }}>
             <T v="mono-label" muted>Podaci</T>
