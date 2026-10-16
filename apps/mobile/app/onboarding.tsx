@@ -1,32 +1,27 @@
-import { useMemo, useState } from "react";
-import { ScrollView, TextInput, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Pressable, ScrollView, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Safe } from "../src/safe";
+import Animated, { FadeInRight, FadeOutLeft } from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 import {
   POPULAR_RECURRING,
   computeDailyLimit,
   formatEur,
+  parseAmount,
   yearMonthOf,
   type Cents,
 } from "@unitcent/core";
-import { AmountField, Button, Chip } from "../src/components";
-import { Icon } from "../src/icons";
-import { Glass, Glow } from "../src/fx";
+import { signInWith } from "../src/account";
+import { Button, Chip, Keypad } from "../src/components";
+import { Amount, Glow, Ring, RoundButton } from "../src/fx";
 import { fitFontSize } from "../src/format";
+import { Icon } from "../src/icons";
+import { Safe, useInsets, useKeyboardHeight } from "../src/safe";
 import { useTheme } from "../src/theme";
 import { T } from "../src/ui";
-import {
-  addRecurring,
-  bookDueRecurring,
-  kvSet,
-  listCategories,
-  today,
-  upsertPlan,
-} from "../src/db/repo";
-import { rescheduleReminders } from "../src/notifications";
-import { signInWith } from "../src/account";
 import { syncNow } from "../src/sync";
-import { getLatestPlanBefore, getPlan } from "../src/db/repo";
+import { addRecurring, bookDueRecurring, getLatestPlanBefore, getPlan, kvSet, listCategories, today, upsertPlan } from "../src/db/repo";
+import { rescheduleReminders } from "../src/notifications";
 
 interface Pick {
   amountText: string;
@@ -34,39 +29,50 @@ interface Pick {
   day: number;
 }
 
+const SAVING_PRESETS: Cents[] = [0, 5000, 10000, 20000];
+
 /**
- * Onboarding (≤ 60 s, bez računa): 1) primanja, 2) obavezni troškovi, 3) štednja.
- * Na kraju se odmah prikaže preporučeni dnevni trošak: prvi „aha“ trenutak.
+ * Početak (≈ 60 s, bez računa): dobrodošlica s obećanjem → primanja → obavezni troškovi → štednja.
+ * Jedno pitanje po ekranu, velike brojke, glavna radnja uvijek vidljiva. Na kraju se odmah vidi preporučeni dnevni trošak.
  */
 export default function Onboarding() {
-  const { colors, fx, radius, space } = useTheme();
+  const { colors, fx } = useTheme();
   const router = useRouter();
-  const [step, setStep] = useState(0);
-  const [income, setIncome] = useState<{ text: string; cents: Cents | null }>({ text: "", cents: null });
-  const [savings, setSavings] = useState<{ text: string; cents: Cents | null }>({ text: "", cents: null });
+  const insets = useInsets();
+  const kb = useKeyboardHeight();
+  const [step, setStep] = useState(0); // 0 dobrodošlica, 1 primanja, 2 obavezno, 3 štednja
+  const [incomeText, setIncomeText] = useState("");
+  const [savingsText, setSavingsText] = useState("");
   const [picks, setPicks] = useState<Record<string, Pick>>({});
+  const [signing, setSigning] = useState(false);
 
-  const obligatory = useMemo(
-    () => Object.values(picks).reduce((s, p) => s + (p.cents ?? 0), 0),
-    [picks],
-  );
+  const income = incomeText ? parseAmount(incomeText) : null;
+  const savings = savingsText ? parseAmount(savingsText) : null;
+  const obligatory = useMemo(() => Object.values(picks).reduce((s, p) => s + (p.cents ?? 0), 0), [picks]);
 
   const preview = useMemo(
     () =>
       computeDailyLimit({
-        incomeCents: income.cents ?? 0,
+        incomeCents: income ?? 0,
         obligatoryCents: obligatory,
-        savingsCents: savings.cents ?? 0,
+        savingsCents: savings ?? 0,
         spentBeforeTodayCents: 0,
         spentTodayCents: 0,
         today: today(),
       }),
-    [income.cents, obligatory, savings.cents],
+    [income, obligatory, savings],
   );
+
+  // Dobrodošlica: prsten se „napuni“ pri otvaranju (primjer iz proizvoda: 19,96 €).
+  const [demo, setDemo] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setDemo(0.74), 350);
+    return () => clearTimeout(t);
+  }, []);
 
   const finish = () => {
     const month = yearMonthOf(today());
-    upsertPlan({ month, incomeCents: income.cents ?? 0, savingsCents: savings.cents ?? 0 });
+    upsertPlan({ month, incomeCents: income ?? 0, savingsCents: savings ?? 0 });
     const cats = listCategories();
     for (const p of POPULAR_RECURRING) {
       const pick = picks[p.key];
@@ -77,18 +83,20 @@ export default function Onboarding() {
     bookDueRecurring();
     kvSet("onboarded", "1");
     void rescheduleReminders();
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.replace("/");
   };
 
-  const togglePick = (key: string, suggested: Cents, day: number) =>
+  const togglePick = (key: string, suggested: Cents, day: number) => {
+    void Haptics.selectionAsync();
     setPicks((cur) => {
       const next = { ...cur };
       if (next[key]) delete next[key];
       else next[key] = { amountText: suggested > 0 ? String(suggested / 100).replace(".", ",") : "", cents: suggested || null, day };
       return next;
     });
+  };
 
-  const [signing, setSigning] = useState(false);
   /** Povratnik: prijava u postojeći račun; ako već ima plan, preskače postavljanje i vodi na početnu. */
   const existingAccount = async () => {
     setSigning(true);
@@ -106,127 +114,232 @@ export default function Onboarding() {
     setSigning(false);
   };
 
-  const canNext = step === 0 ? (income.cents ?? 0) > 0 : true;
+  const canNext = step === 1 ? (income ?? 0) > 0 : true;
+  const next = () => (step === 3 ? finish() : setStep(step + 1));
+  const bottomPad = Math.max(0, kb - insets.bottom);
+
+  /** Veliki iznos kao u brzom unosu: broj je junak ekrana. */
+  const bigAmount = (text: string) => (
+    <View style={{ alignItems: "center", paddingVertical: 8 }}>
+      <View style={{ flexDirection: "row", alignItems: "baseline" }}>
+        <T
+          v="amount-hero"
+          color={text ? colors.ink : colors["ink-muted"]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.5}
+          style={{ fontSize: fitFontSize(`${text || "0"} €`, 300, 72), lineHeight: 80, letterSpacing: -3 }}
+        >
+          {text || "0"}
+        </T>
+        <T v="title-1" muted style={{ fontSize: 32, marginLeft: 6 }}>€</T>
+      </View>
+    </View>
+  );
+
+  const heading = (title: string, sub?: string) => (
+    <View style={{ gap: 6 }}>
+      <T v="title-1" style={{ fontSize: 28, lineHeight: 34 }}>{title}</T>
+      {sub ? <T muted>{sub}</T> : null}
+    </View>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
-    <Safe style={{ flex: 1 }}>
-      <ScrollView
-        contentContainerStyle={{ padding: space["4"], paddingBottom: space["7"], gap: space["5"] }}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={{ flexDirection: "row", gap: 6 }}>
-          {[0, 1, 2].map((i) => (
-            <View
-              key={i}
-              style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= step ? colors.brand : colors["surface-2"] }}
-            />
-          ))}
-        </View>
-
-        {step === 0 ? (
-          <View style={{ gap: space["5"] }}>
-            <View style={{ gap: space["2"] }}>
-              <T v="mono-label" muted>1 / 3</T>
-              <T v="title-1">Koliko mjesečno primaš?</T>
-              <T muted>Plaća i ostali redoviti prihodi. Bez računa i bez prijave.</T>
+      <Safe>
+        <View style={{ flex: 1, paddingBottom: bottomPad }}>
+          {/* Zaglavlje: natrag + napredak (dobrodošlica ih nema) */}
+          <View style={{ height: 56, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <View style={{ width: 44 }}>
+              {step > 0 ? <RoundButton icon="back" label="Natrag" onPress={() => setStep(step - 1)} /> : null}
             </View>
-            <AmountField label="Primanja mjesečno" value={income.text} onChange={(text, cents) => setIncome({ text, cents })} />
-            <Button variant="text" size="sm" label={signing ? "Prijavljujem…" : "Već imam račun"} disabled={signing} onPress={() => void existingAccount()} />
+            {step > 0 ? (
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                {[1, 2, 3].map((i) => (
+                  <View
+                    key={i}
+                    style={{
+                      width: i === step ? 28 : 8,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: i <= step ? colors.brand : fx.track,
+                    }}
+                  />
+                ))}
+              </View>
+            ) : null}
+            <View style={{ width: 44 }} />
           </View>
-        ) : null}
 
-        {step === 1 ? (
-          <View style={{ gap: space["4"] }}>
-            <View style={{ gap: space["2"] }}>
-              <T v="mono-label" muted>2 / 3</T>
-              <T v="title-1">Što ti se naplaćuje svaki mjesec?</T>
-              <T muted>Odaberi i upiši iznos. Knjiže se same, a dan prije dobiješ podsjetnik.</T>
-            </View>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {POPULAR_RECURRING.map((p) => (
-                <Chip
-                  key={p.key}
-                  label={p.name}
-                  selected={!!picks[p.key]}
-                  onPress={() => togglePick(p.key, p.suggestedCents, p.dayOfMonth)}
-                  left={<Icon name={p.icon} size={18} color={picks[p.key] ? colors["brand-ink"] : colors.ink} />}
-                />
-              ))}
-            </View>
-            {POPULAR_RECURRING.filter((p) => picks[p.key]).map((p) => {
-              const pick = picks[p.key]!;
-              return (
-                <Glass key={p.key} style={{ padding: space["4"], gap: space["3"] }}>
-                  <T v="headline">{p.name}</T>
-                  <View style={{ flexDirection: "row", gap: space["3"] }}>
-                    <View style={{ flex: 2 }}>
-                      <AmountField
-                        label="Iznos"
-                        value={pick.amountText}
-                        onChange={(text, cents) => setPicks((c) => ({ ...c, [p.key]: { ...pick, amountText: text, cents } }))}
-                      />
-                    </View>
-                    <View style={{ flex: 1, gap: 6 }}>
-                      <T v="caption" muted>Dan u mjesecu</T>
-                      <TextInput
-                        value={String(pick.day)}
-                        keyboardType="number-pad"
-                        maxLength={2}
-                        accessibilityLabel={`Dan naplate: ${p.name}`}
-                        onChangeText={(t) => {
-                          const n = Math.min(31, Math.max(1, parseInt(t.replace(/\D/g, ""), 10) || 1));
-                          setPicks((c) => ({ ...c, [p.key]: { ...pick, day: n } }));
-                        }}
-                        style={{
-                          minHeight: 56,
-                          borderRadius: radius.sm + 2,
-                          borderWidth: 1.5,
-                          borderColor: fx.glassBorder,
-                          backgroundColor: fx.glass,
-                          color: colors.ink,
-                          fontSize: 20,
-                          textAlign: "center",
-                        }}
-                      />
-                    </View>
+          <Animated.View key={step} entering={FadeInRight.duration(280)} exiting={FadeOutLeft.duration(160)} style={{ flex: 1 }}>
+            {step === 0 ? (
+              <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: "center", gap: 28 }}>
+                <View style={{ alignItems: "center" }}>
+                  <Ring size={250} remaining={demo} state="ok">
+                    <T v="mono-label" muted>Danas još smiješ</T>
+                    <T v="amount-hero" style={{ fontSize: 50, lineHeight: 56, letterSpacing: -2 }}>19,96 €</T>
+                  </Ring>
+                </View>
+                <View style={{ alignItems: "center", gap: 10 }}>
+                  <T v="title-1" style={{ fontSize: 30, lineHeight: 38, textAlign: "center" }}>
+                    Koliko danas smiješ potrošiti?
+                  </T>
+                  <T muted style={{ textAlign: "center", maxWidth: 300 }}>
+                    UnitCent ti svaki dan kaže točan iznos. Postavljanje traje minutu.
+                  </T>
+                </View>
+              </View>
+            ) : null}
+
+            {step === 1 ? (
+              <View style={{ flex: 1, paddingHorizontal: 20, gap: 8 }}>
+                {heading("Koliko mjesečno primaš?", "Plaća i ostali redoviti prihodi.")}
+                <View style={{ flex: 1, justifyContent: "center" }}>{bigAmount(incomeText)}</View>
+                <Keypad value={incomeText} onChange={setIncomeText} />
+              </View>
+            ) : null}
+
+            {step === 2 ? (
+              <View style={{ flex: 1 }}>
+                <View style={{ paddingHorizontal: 20 }}>{heading("Što plaćaš svaki mjesec?", "Dodirni što imaš. Knjiži se samo, a dan prije stiže podsjetnik.")}</View>
+                <ScrollView
+                  style={{ flex: 1 }}
+                  contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16, gap: 18 }}
+                  keyboardShouldPersistTaps="handled"
+                  showsVerticalScrollIndicator={false}
+                >
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: 16 }}>
+                    {POPULAR_RECURRING.map((p) => {
+                      const on = !!picks[p.key];
+                      return (
+                        <Pressable
+                          key={p.key}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: on }}
+                          accessibilityLabel={p.name}
+                          onPress={() => togglePick(p.key, p.suggestedCents, p.dayOfMonth)}
+                          style={({ pressed }) => ({ width: "25%", alignItems: "center", gap: 7, opacity: pressed ? 0.7 : 1 })}
+                        >
+                          <View
+                            style={{
+                              width: 58,
+                              height: 58,
+                              borderRadius: 29,
+                              alignItems: "center",
+                              justifyContent: "center",
+                              backgroundColor: on ? colors["brand-soft"] : fx.glass,
+                              borderWidth: 2,
+                              borderColor: on ? colors.brand : fx.glassBorder,
+                            }}
+                          >
+                            <Icon name={p.icon} size={24} color={on ? colors["brand-ink"] : colors["ink-muted"]} />
+                            {on ? (
+                              <View style={{ position: "absolute", right: -2, top: -2, width: 20, height: 20, borderRadius: 10, backgroundColor: colors.brand, alignItems: "center", justifyContent: "center" }}>
+                                <Icon name="check" size={12} color={colors["on-brand"]} stroke={3} />
+                              </View>
+                            ) : null}
+                          </View>
+                          <T v="caption" color={on ? colors.brand : colors.ink} numberOfLines={1} style={{ fontWeight: "700", fontSize: 12 }}>{p.name}</T>
+                        </Pressable>
+                      );
+                    })}
                   </View>
-                </Glass>
-              );
-            })}
+
+                  {POPULAR_RECURRING.filter((p) => picks[p.key]).length > 0 ? (
+                    <View>
+                      <T v="mono-label" muted style={{ fontSize: 11, opacity: 0.8, marginBottom: 6 }}>Iznos i dan naplate</T>
+                      {POPULAR_RECURRING.filter((p) => picks[p.key]).map((p, i) => {
+                        const pick = picks[p.key]!;
+                        return (
+                          <View key={p.key} style={{ minHeight: 60, flexDirection: "row", alignItems: "center", gap: 12, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: fx.line }}>
+                            <T v="headline" style={{ flex: 1, fontWeight: "700" }} numberOfLines={1}>{p.name}</T>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: fx.glass, borderWidth: 1, borderColor: fx.glassBorder, borderRadius: 14, paddingHorizontal: 12, minHeight: 44, width: 120 }}>
+                              <TextInput
+                                value={pick.amountText}
+                                placeholder="0,00"
+                                placeholderTextColor={colors["ink-muted"]}
+                                keyboardType="decimal-pad"
+                                accessibilityLabel={`Iznos: ${p.name}`}
+                                onChangeText={(t) => setPicks((c) => ({ ...c, [p.key]: { ...pick, amountText: t, cents: parseAmount(t) } }))}
+                                style={{ flex: 1, color: colors.ink, fontSize: 17, fontWeight: "700", paddingVertical: 8 }}
+                              />
+                              <T v="caption" muted>€</T>
+                            </View>
+                            <View style={{ alignItems: "center" }}>
+                              <TextInput
+                                value={String(pick.day)}
+                                keyboardType="number-pad"
+                                maxLength={2}
+                                accessibilityLabel={`Dan naplate: ${p.name}`}
+                                onChangeText={(t) => {
+                                  const n = Math.min(31, Math.max(1, parseInt(t.replace(/\D/g, ""), 10) || 1));
+                                  setPicks((c) => ({ ...c, [p.key]: { ...pick, day: n } }));
+                                }}
+                                style={{ width: 48, minHeight: 44, borderRadius: 14, borderWidth: 1, borderColor: fx.glassBorder, backgroundColor: fx.glass, color: colors.ink, fontSize: 17, fontWeight: "700", textAlign: "center" }}
+                              />
+                              <T v="caption" muted style={{ fontSize: 10, marginTop: 2 }}>dan</T>
+                            </View>
+                          </View>
+                        );
+                      })}
+                      <T v="caption" muted style={{ marginTop: 8 }}>Ukupno obavezno: {formatEur(obligatory)}</T>
+                    </View>
+                  ) : null}
+                </ScrollView>
+              </View>
+            ) : null}
+
+            {step === 3 ? (
+              <View style={{ flex: 1, paddingHorizontal: 20, gap: 16 }}>
+                {heading("Koliko želiš uštedjeti?", "Može i 0 €. Mijenjaš kad god želiš.")}
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                  {SAVING_PRESETS.map((c) => (
+                    <Chip
+                      key={c}
+                      label={c === 0 ? "Ništa" : formatEur(c).replace(",00", "")}
+                      selected={(savings ?? 0) === c && savingsText !== ""}
+                      onPress={() => setSavingsText(c === 0 ? "0" : String(c / 100))}
+                    />
+                  ))}
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, minHeight: 44, borderRadius: 999, backgroundColor: fx.glass, borderWidth: 1, borderColor: fx.glassBorder }}>
+                    <TextInput
+                      value={SAVING_PRESETS.includes((savings ?? -1) as Cents) && savingsText !== "" ? "" : savingsText}
+                      onChangeText={setSavingsText}
+                      placeholder="Drugo"
+                      placeholderTextColor={colors["ink-muted"]}
+                      keyboardType="decimal-pad"
+                      accessibilityLabel="Iznos štednje"
+                      style={{ minWidth: 70, color: colors.ink, fontSize: 16, fontWeight: "700", paddingVertical: 8 }}
+                    />
+                    <T v="caption" muted>€</T>
+                  </View>
+                </View>
+
+                <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                  <Ring size={236} remaining={Math.min(1, preview.dailyCents > 0 ? 0.82 : 0)} state="ok">
+                    <T v="mono-label" muted>Preporučeni dnevni trošak</T>
+                    <Amount cents={Math.max(0, preview.dailyCents)} maxWidth={160} />
+                    <T v="caption" muted>još {preview.daysLeft} dana u mjesecu</T>
+                  </Ring>
+                </View>
+              </View>
+            ) : null}
+          </Animated.View>
+
+          {/* Glavna radnja uvijek vidljiva */}
+          <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, alignItems: "center", gap: 2 }}>
+            <Button
+              label={step === 0 ? "Kreni" : step === 3 ? "Počni" : "Dalje"}
+              disabled={!canNext}
+              onPress={next}
+            />
+            {step === 0 ? (
+              <Button variant="text" size="sm" label={signing ? "Prijavljujem…" : "Već imam račun"} disabled={signing} onPress={() => void existingAccount()} />
+            ) : null}
           </View>
-        ) : null}
-
-        {step === 2 ? (
-          <View style={{ gap: space["5"] }}>
-            <View style={{ gap: space["2"] }}>
-              <T v="mono-label" muted>3 / 3</T>
-              <T v="title-1">Koliko želiš uštedjeti mjesečno?</T>
-              <T muted>Može i 0 €. Mijenjaš kad god želiš.</T>
-            </View>
-            <AmountField label="Štednja mjesečno" value={savings.text} onChange={(text, cents) => setSavings({ text, cents })} placeholder="0,00" />
-
-            <View style={{ backgroundColor: colors.accent, borderRadius: radius.lg + 8, padding: space["5"], gap: space["1"] }}>
-              <T v="mono-label" color={colors["on-accent"]}>Preporučeni dnevni trošak</T>
-              <T v="amount-hero" color={colors["on-accent"]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={{ fontSize: fitFontSize(formatEur(Math.max(0, preview.dailyCents)), 280, 44) }}>{formatEur(Math.max(0, preview.dailyCents))}</T>
-              <T v="caption" color={colors["on-accent"]}>
-                Ostalo za trošiti {formatEur(Math.max(0, preview.availableCents))}, još {preview.daysLeft} dana u mjesecu
-              </T>
-            </View>
-          </View>
-        ) : null}
-
-        <View style={{ gap: space["1"], alignItems: "center" }}>
-          <Button
-            label={step === 2 ? "Počni" : "Dalje"}
-            disabled={!canNext}
-            onPress={() => (step === 2 ? finish() : setStep(step + 1))}
-          />
-          {step > 0 ? <Button variant="text" label="Natrag" onPress={() => setStep(step - 1)} /> : null}
         </View>
-      </ScrollView>
-    </Safe>
+      </Safe>
     </View>
   );
 }
