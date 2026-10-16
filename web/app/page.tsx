@@ -263,6 +263,7 @@ export default function Home() {
           <span>© {new Date().getFullYear()} UnitCent</span>
           <nav aria-label="Podnožje">
             <Link href="/privatnost">Privatnost</Link>
+            <Link href="/uvjeti">Uvjeti</Link>
             <a href={`mailto:${CONTACT_EMAIL}`}>Kontakt</a>
           </nav>
         </div>

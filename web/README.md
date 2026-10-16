@@ -12,4 +12,4 @@ npm run build   # produkcijski build
 - SEO: metadata u `app/layout.tsx`, JSON-LD (Organization, WebSite, SoftwareApplication, FAQPage) u `app/page.tsx`, `sitemap`, `robots`, `public/llms.txt`, OG slika.
 - Vercel: import mape `web/` kao projekt, framework Next.js, bez dodatnih postavki.
 - Tipke App Store / Google Play vode na #preuzmi dok aplikacija nije objavljena.
-- Privatnost (`/privatnost`) je nacrt: treba pravnu provjeru prije lansiranja.
+- Privatnost (`/privatnost`) i Uvjeti (`/uvjeti`) su nacrti: trebaju pravnu provjeru i podatke o pružatelju prije lansiranja.
