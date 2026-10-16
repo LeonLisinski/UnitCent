@@ -8,7 +8,7 @@ import { Button } from "../src/components";
 import { Icon } from "../src/icons";
 import { ModalScreen } from "../src/layout";
 import { FREE_HISTORY_MONTHS, PLANS, YEARLY_SAVING_PCT, setDevPremium, usePremium, type PlanKey } from "../src/premium";
-import { purchasePlan, restorePurchases, type PurchaseResult } from "../src/purchases";
+import { purchasePlan, type PurchaseResult } from "../src/purchases";
 import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
@@ -22,7 +22,7 @@ const SOCIAL_PROOF: string | null = null;
 /** Što Premium otključava: ikona + kratak naziv, bez kutija. Zlatna i zelena naizmjence. */
 const PERKS: { icon: string; title: string; soon?: boolean }[] = [
   { icon: "calendar", title: "Cijela povijest" },
-  { icon: "camera", title: "Skeniranje računa" },
+  { icon: "camera", title: "Neograničeno skeniranje računa" },
   { icon: "chart", title: "Uvidi i savjeti", soon: true },
 ];
 
@@ -81,21 +81,16 @@ export default function Premium() {
   const p = PLANS[plan];
   const perMonth = plan === "yearly" ? formatEur(Math.round(PLANS.yearly.cents / 12)) : null;
 
-  const handle = (r: PurchaseResult, restoring = false) => {
+  const handle = (r: PurchaseResult) => {
     if (r === "ok") {
-      toast.show(restoring ? "Kupnja je vraćena" : "Hvala! Premium je aktivan");
+      toast.show("Hvala! Premium je aktivan");
       router.back();
     } else if (r === "unavailable") toast.show("Kupnja je dostupna u službenoj verziji aplikacije");
-    else if (r === "error") toast.show(restoring ? "Nema kupnje za vratiti" : "Kupnja nije uspjela, pokušaj ponovno");
+    else if (r === "error") toast.show("Kupnja nije uspjela, pokušaj ponovno");
   };
   const buy = async () => {
     setBusy(true);
     handle(await purchasePlan(plan));
-    setBusy(false);
-  };
-  const restore = async () => {
-    setBusy(true);
-    handle(await restorePurchases(), true);
     setBusy(false);
   };
 
@@ -116,8 +111,6 @@ export default function Premium() {
           <>
             <Button label={`Nastavi · ${p.priceLabel} ${p.per}`} disabled={busy} onPress={() => void buy()} />
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              {quiet("Vrati kupnju", () => void restore())}
-              <T v="caption" muted>·</T>
               {quiet("Uvjeti", () => void Linking.openURL("https://unitcent.com/uvjeti"))}
               <T v="caption" muted>·</T>
               {quiet("Privatnost", () => void Linking.openURL("https://unitcent.com/privatnost"))}

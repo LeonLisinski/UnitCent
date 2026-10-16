@@ -7,6 +7,7 @@ import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
 import { deleteAccountAndData, exportData } from "../src/dataTools";
+import { restorePurchases } from "../src/purchases";
 
 const SITE = "https://unitcent.com";
 
@@ -60,6 +61,18 @@ export default function Podaci() {
               }}
             />
             <Row icon="trash" danger title="Obriši račun i sve podatke" onPress={confirmDelete} />
+          </Group>
+
+          <Group title="Premium">
+            <Row
+              icon="repeat"
+              gold
+              title="Vrati kupnju"
+              onPress={async () => {
+                const r = await restorePurchases();
+                toast.show(r === "ok" ? "Kupnja je vraćena" : r === "unavailable" ? "Dostupno u službenoj verziji aplikacije" : "Nema kupnje za vratiti");
+              }}
+            />
           </Group>
 
           <Group title="Pravno">
