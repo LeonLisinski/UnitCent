@@ -57,6 +57,7 @@ const P: Record<string, string> = {
   trash: "M5 7h14 M10 7V4h4v3 M7 7l1 13h8l1-13",
   back: "M15 6l-6 6 6 6",
   chev: "M9 6l6 6-6 6",
+  image: "M4 5h16v14H4z M4 16l5-5 4 4 3-3 4 4 M9 9.5h.01",
 };
 
 export function Icon({

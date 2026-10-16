@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Keyboard, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { parseAmount } from "@unitcent/core";
@@ -109,7 +109,10 @@ export default function Dodaj() {
                 );
               })}
             </View>
-            <RoundButton icon="x" label="Zatvori" onPress={() => router.back()} />
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              {editing ? null : <RoundButton icon="camera" label="Skeniraj račun" onPress={() => router.replace("/skeniraj" as Href)} />}
+              <RoundButton icon="x" label="Zatvori" onPress={() => router.back()} />
+            </View>
           </View>
 
           <View style={{ alignItems: "center", gap: 2 }}>

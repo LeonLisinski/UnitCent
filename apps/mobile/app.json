@@ -24,7 +24,19 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "UnitCent koristi kameru samo za skeniranje računa."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "UnitCent čita sliku računa koju odabereš."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

@@ -203,6 +203,8 @@ export function addTransaction(input: {
   categoryId: string | null;
   note?: string;
   localDate?: LocalDate;
+  source?: "manual" | "scan";
+  merchant?: string | null;
 }): Transaction {
   const db = getDb();
   const id = newId();
@@ -213,10 +215,10 @@ export function addTransaction(input: {
     type: input.type ?? "expense",
     category_id: input.categoryId,
     note: input.note?.trim() ? input.note.trim() : null,
-    merchant: null as string | null,
+    merchant: input.merchant ?? null,
     local_date: input.localDate ?? today(),
     occurred_at: t,
-    source: "manual" as const,
+    source: input.source ?? ("manual" as const),
     recurring_id: null as string | null,
   };
   db.withTransactionSync(() => {
