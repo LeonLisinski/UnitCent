@@ -24,6 +24,9 @@ import {
   upsertPlan,
 } from "../src/db/repo";
 import { rescheduleReminders } from "../src/notifications";
+import { signInWith } from "../src/account";
+import { syncNow } from "../src/sync";
+import { getLatestPlanBefore, getPlan } from "../src/db/repo";
 
 interface Pick {
   amountText: string;
@@ -85,6 +88,24 @@ export default function Onboarding() {
       return next;
     });
 
+  const [signing, setSigning] = useState(false);
+  /** Povratnik: prijava u postojeći račun; ako već ima plan, preskače postavljanje i vodi na početnu. */
+  const existingAccount = async () => {
+    setSigning(true);
+    const r = await signInWith("google");
+    if (r === "signed-in" || r === "linked") {
+      await syncNow();
+      const month = yearMonthOf(today());
+      if (getPlan(month) ?? getLatestPlanBefore(month)) {
+        kvSet("onboarded", "1");
+        setSigning(false);
+        router.replace("/");
+        return;
+      }
+    }
+    setSigning(false);
+  };
+
   const canNext = step === 0 ? (income.cents ?? 0) > 0 : true;
 
   return (
@@ -112,6 +133,7 @@ export default function Onboarding() {
               <T muted>Plaća i ostali redoviti prihodi. Bez računa i bez prijave.</T>
             </View>
             <AmountField label="Primanja mjesečno" value={income.text} onChange={(text, cents) => setIncome({ text, cents })} />
+            <Button variant="text" size="sm" label={signing ? "Prijavljujem…" : "Već imam račun"} disabled={signing} onPress={() => void existingAccount()} />
           </View>
         ) : null}
 

@@ -216,7 +216,8 @@ function setStatus(patch: Partial<SyncStatus>): void {
   listeners.forEach((l) => l());
 }
 
-function pendingCount(): number {
+/** Broj izmijenjenih redaka koji još nisu poslani na poslužitelj. */
+export function pendingCount(): number {
   return (
     getDb().getFirstSync<{ n: number }>("select count(*) as n from (select 1 from outbox group by table_name, row_id)")?.n ?? 0
   );

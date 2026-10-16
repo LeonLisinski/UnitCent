@@ -8,6 +8,7 @@ import { useToast } from "../src/toast";
 import { T } from "../src/ui";
 import { deleteAccountAndData, exportData } from "../src/dataTools";
 import { restorePurchases } from "../src/purchases";
+import { signOutAndClear, useAccount } from "../src/account";
 
 const SITE = "https://unitcent.com";
 
@@ -16,6 +17,34 @@ export default function Podaci() {
   const { colors, space } = useTheme();
   const router = useRouter();
   const toast = useToast();
+  const account = useAccount();
+
+  const doSignOut = async (force: boolean) => {
+    const r = await signOutAndClear(force);
+    if (r === "ok") {
+      router.dismissAll();
+      router.replace("/onboarding" as Href);
+    } else if (r === "pending") {
+      Alert.alert(
+        "Neke izmjene još nisu poslane",
+        "Spoji se na internet i pokušaj ponovno. Ako se odjaviš sada, te izmjene se gube.",
+        [
+          { text: "Odustani", style: "cancel" },
+          { text: "Odjavi se svejedno", style: "destructive", onPress: () => void doSignOut(true) },
+        ],
+      );
+    } else toast.show("Odjava nije uspjela, pokušaj ponovno");
+  };
+
+  const confirmSignOut = () =>
+    Alert.alert(
+      "Odjaviti se?",
+      "Podaci ostaju spremljeni u tvom računu i vraćaju se kad se ponovno prijaviš. S ovog mobitela se brišu.",
+      [
+        { text: "Odustani", style: "cancel" },
+        { text: "Odjavi se", style: "destructive", onPress: () => void doSignOut(false) },
+      ],
+    );
 
   const confirmDelete = () =>
     Alert.alert(
@@ -62,6 +91,12 @@ export default function Podaci() {
             />
             <Row icon="trash" danger title="Obriši račun i sve podatke" onPress={confirmDelete} />
           </Group>
+
+          {account.hasSession && !account.anonymous ? (
+            <Group title="Račun">
+              <Row icon="user" title="Odjavi se" subtitle={account.email ?? undefined} onPress={confirmSignOut} />
+            </Group>
+          ) : null}
 
           <Group title="Premium">
             <Row

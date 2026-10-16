@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { kvGet, kvSet } from "./db/repo";
-import { resetSyncState, syncNow } from "./sync";
-import { supabase } from "./supabase";
+import { pendingCount, resetSyncState, syncNow } from "./sync";
+import { wipeLocalData } from "./dataTools";
+import { ensureAnonymousSession, supabase } from "./supabase";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -149,4 +150,24 @@ export async function applyProfileName(): Promise<void> {
   const { data } = await supabase.auth.getSession();
   const name = profileName(data.session?.user);
   if (name && !(kvGet("name") ?? "").trim()) kvSet("name", name);
+}
+
+export type SignOutResult = "ok" | "pending" | "error";
+
+/**
+ * Odjava: najprije se pošalju neposlane izmjene (ako ostane išta neposlano, vraća "pending" i ništa ne briše, osim uz `force`),
+ * zatim se sesija lokalno zatvara i lokalni podaci brišu. Podaci ostaju u računu na poslužitelju: ponovna prijava ih vraća.
+ */
+export async function signOutAndClear(force = false): Promise<SignOutResult> {
+  if (!supabase) return "error";
+  try {
+    await syncNow();
+    if (!force && pendingCount() > 0) return "pending";
+    await supabase.auth.signOut({ scope: "local" });
+    wipeLocalData();
+    void ensureAnonymousSession();
+    return "ok";
+  } catch {
+    return "error";
+  }
 }
