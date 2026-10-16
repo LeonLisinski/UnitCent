@@ -340,3 +340,30 @@ export function GoldBadge({ value, lock }: { value?: number; lock?: boolean }) {
     </LinearGradient>
   );
 }
+
+/** Zlatni gumb za Premium: metalni zlatni gradijent, tamni tekst, zvijezda. Širina prema sadržaju, centriran. */
+export function GoldButton({ label, onPress }: { label: string; onPress: () => void }) {
+  const { fx } = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={() => {
+        void Haptics.selectionAsync();
+        onPress();
+      }}
+      style={({ pressed }) => ({ alignSelf: "center", transform: [{ scale: pressed ? 0.97 : 1 }], shadowColor: fx.gold, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 })}
+    >
+      <LinearGradient
+        colors={[fx.goldHi, fx.gold, fx.goldLo]}
+        locations={[0, 0.5, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ minHeight: 54, minWidth: 240, borderRadius: 999, paddingHorizontal: 28, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 }}
+      >
+        <Icon name="star" size={20} color="#2a1d00" stroke={2.2} />
+        <T v="headline" color="#2a1d00" style={{ fontWeight: "800" }}>{label}</T>
+      </LinearGradient>
+    </Pressable>
+  );
+}

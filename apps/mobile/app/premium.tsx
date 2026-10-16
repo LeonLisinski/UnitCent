@@ -133,9 +133,11 @@ export default function Premium() {
         <T v="title-1" style={{ fontSize: 22, lineHeight: 28, textAlign: "center" }}>
           {premium ? "Dobrodošao u Premium" : "Pridruži se Premium korisnicima"}
         </T>
-        <T muted style={{ textAlign: "center", maxWidth: 300 }}>
-          {SOCIAL_PROOF ?? "Za one koji žele znati kamo odlazi svaki euro, bez ograničenja i bez ručnog prepisivanja računa."}
-        </T>
+        {SOCIAL_PROOF ? (
+          <T muted style={{ textAlign: "center", maxWidth: 300 }}>
+            {SOCIAL_PROOF}
+          </T>
+        ) : null}
       </View>
 
       <View style={{ gap: 20 }}>

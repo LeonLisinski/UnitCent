@@ -5,8 +5,8 @@ import Constants from "expo-constants";
 import * as Haptics from "expo-haptics";
 import { formatEur, yearMonthOf } from "@unitcent/core";
 import { useAccount } from "../../src/account";
-import { PLANS, usePremium } from "../../src/premium";
-import { Avatar } from "../../src/components";
+import { usePremium } from "../../src/premium";
+import { Avatar, GoldButton } from "../../src/components";
 import { AccountCta, SyncLine } from "../../src/AccountSection";
 import { useDb } from "../../src/data";
 import { TabScreen } from "../../src/layout";
@@ -106,15 +106,13 @@ export default function Profil() {
 
           {account.hasSession && account.anonymous ? <AccountCta /> : null}
 
-          <Group>
-            <Row
-              icon="star"
-              gold
-              title={premium ? "Premium je aktivan" : "Nadogradi na Premium"}
-              subtitle={premium ? "Cijela povijest i neograničeno skeniranje" : `Od ${PLANS.monthly.priceLabel} mjesečno`}
-              onPress={() => router.push("/premium" as Href)}
-            />
-          </Group>
+          {premium ? (
+            <Group>
+              <Row icon="star" gold title="Premium je aktivan" subtitle="Cijela povijest i neograničeno skeniranje" onPress={() => router.push("/premium" as Href)} />
+            </Group>
+          ) : (
+            <GoldButton label="Nadogradi na Premium" onPress={() => router.push("/premium" as Href)} />
+          )}
 
           <Group>
             <Row
