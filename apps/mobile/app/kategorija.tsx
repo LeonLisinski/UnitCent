@@ -157,7 +157,7 @@ export default function Kategorija() {
           </View>
 
           <Button label="Spremi" disabled={!valid} onPress={save} />
-          {existing ? <Button variant="text" label="Obriši kategoriju" onPress={remove} /> : null}
+          {existing ? <Button variant="danger" label="Obriši kategoriju" onPress={remove} /> : null}
         </ScrollView>
       </SafeAreaView>
     </View>

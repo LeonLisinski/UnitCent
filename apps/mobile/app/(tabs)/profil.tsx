@@ -115,7 +115,7 @@ export default function Profil() {
                 <T v="caption" muted>Uredi</T>
               </Pressable>
             ))}
-            <Button variant="soft" label="Nova kategorija" onPress={() => router.push("/kategorija")} style={{ marginTop: space["2"] }} />
+            <Button variant="text" icon="plus" label="Nova kategorija" onPress={() => router.push("/kategorija")} style={{ alignSelf: "flex-start", marginLeft: -12 }} />
           </View>
 
           <View style={{ gap: space["2"] }}>
@@ -148,7 +148,9 @@ export default function Profil() {
           <View style={{ gap: space["2"] }}>
             <T v="mono-label" muted>Moji podaci</T>
             <Button
-              variant="soft"
+              variant="secondary"
+              size="sm"
+              icon="arrow"
               label="Izvezi podatke (JSON)"
               onPress={async () => {
                 try {
@@ -159,7 +161,7 @@ export default function Profil() {
               }}
             />
             <Button
-              variant="text"
+              variant="danger"
               label="Obriši račun i sve podatke"
               onPress={() =>
                 Alert.alert(

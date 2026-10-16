@@ -22,6 +22,9 @@ function SocialButton({ provider, busy, onPress }: { provider: Provider; busy: b
       disabled={busy}
       onPress={onPress}
       style={({ pressed }) => ({
+        alignSelf: "center",
+        minWidth: 264,
+        paddingHorizontal: 24,
         minHeight: 52,
         borderRadius: 999,
         flexDirection: "row",
@@ -106,7 +109,7 @@ export function AccountSection() {
           <T v="caption" muted>{sub}</T>
         </View>
       </View>
-      <Button variant="soft" label="Sinkroniziraj sada" disabled={sync.state === "syncing"} onPress={() => void syncNow()} />
+      <Button variant="text" size="sm" label="Sinkroniziraj sada" disabled={sync.state === "syncing"} onPress={() => void syncNow()} style={{ alignSelf: "flex-start", marginLeft: -12 }} />
     </View>
   );
 }

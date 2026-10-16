@@ -7,7 +7,8 @@ import * as ImagePicker from "expo-image-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { formatEur } from "@unitcent/core";
 import { Button } from "../src/components";
-import { RoundButton } from "../src/fx";
+import { Glow, RoundButton } from "../src/fx";
+import { Icon } from "../src/icons";
 import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
@@ -18,7 +19,7 @@ import { ScanFailure, parseFiscalQr, prepareImage, scanReceipt, setLastScan, typ
  * Slika se smanji na uređaju, pošalje funkciji `scan-receipt` i nigdje se ne sprema.
  */
 export default function Skeniraj() {
-  const { colors } = useTheme();
+  const { colors, fx } = useTheme();
   const router = useRouter();
   const toast = useToast();
   const camera = useRef<CameraView>(null);
@@ -73,16 +74,40 @@ export default function Skeniraj() {
   if (!permission.granted) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <SafeAreaView style={{ flex: 1, padding: 24, justifyContent: "center", gap: 16 }}>
-          <T v="title-1" style={{ fontSize: 28, lineHeight: 34 }}>Dopusti kameru</T>
-          <T muted>Kamera se koristi samo za skeniranje računa. Slika se ne sprema, a možeš i odabrati sliku iz galerije.</T>
-          {permission.canAskAgain ? (
-            <Button label="Dopusti kameru" onPress={() => void requestPermission()} />
-          ) : (
-            <Button label="Otvori postavke" onPress={() => void Linking.openSettings()} />
-          )}
-          <Button variant="soft" label="Odaberi iz galerije" onPress={() => void pick()} />
-          <Button variant="text" label="Natrag" onPress={() => router.back()} />
+        <Glow />
+        <SafeAreaView style={{ flex: 1 }}>
+          <View style={{ alignItems: "flex-end", padding: 20 }}>
+            <RoundButton icon="x" label="Zatvori" onPress={() => router.back()} />
+          </View>
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32, gap: 14 }}>
+            <View
+              style={{
+                width: 96,
+                height: 96,
+                borderRadius: 48,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: fx.glass,
+                borderWidth: 1,
+                borderColor: fx.glassBorder,
+                marginBottom: 10,
+              }}
+            >
+              <Icon name="camera" size={40} color={colors.brand} stroke={1.6} />
+            </View>
+            <T v="title-1" style={{ fontSize: 28, lineHeight: 34, textAlign: "center" }}>Skeniraj račun</T>
+            <T muted style={{ textAlign: "center", maxWidth: 320 }}>
+              Kameru koristimo samo dok skeniraš. Slika se pročita i odmah odbaci, ne sprema se.
+            </T>
+          </View>
+          <View style={{ alignItems: "center", gap: 6, paddingBottom: 28, paddingHorizontal: 24 }}>
+            {permission.canAskAgain ? (
+              <Button label="Dopusti kameru" onPress={() => void requestPermission()} />
+            ) : (
+              <Button label="Otvori postavke" onPress={() => void Linking.openSettings()} />
+            )}
+            <Button variant="secondary" size="sm" icon="image" label="Odaberi iz galerije" onPress={() => void pick()} />
+          </View>
         </SafeAreaView>
       </View>
     );

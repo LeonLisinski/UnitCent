@@ -195,7 +195,7 @@ export default function Onboarding() {
           </View>
         ) : null}
 
-        <View style={{ gap: space["2"] }}>
+        <View style={{ gap: space["1"], alignItems: "center" }}>
           <Button
             label={step === 2 ? "Počni" : "Dalje"}
             disabled={!canNext}

@@ -32,45 +32,69 @@ export function CatIcon({ colorToken, icon, size = 40 }: { colorToken: string; i
   );
 }
 
+/**
+ * Hijerarhija gumba (CLAUDE.md → Dizajn):
+ *  primary   jedna glavna radnja po ekranu: puna brand pilula, širina prema sadržaju (nikad preko cijele širine);
+ *  secondary staklena pilula s rubom, manje važna radnja (npr. „Odaberi iz galerije“);
+ *  text      tercijarna radnja: tekst u brand boji („+ Nova kategorija“, „Natrag“);
+ *  danger    razorna radnja: crveni tekst, na dnu, uvijek uz potvrdu.
+ * „soft“ je stari naziv za secondary.
+ */
 export function Button({
   label,
   onPress,
   variant = "primary",
+  size = "md",
+  icon,
   disabled,
   style,
 }: {
   label: string;
   onPress: () => void;
-  variant?: "primary" | "soft" | "text";
+  variant?: "primary" | "secondary" | "soft" | "text" | "danger";
+  size?: "md" | "sm";
+  icon?: string;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
-  const { colors, radius } = useTheme();
-  const bg = variant === "primary" ? colors.brand : variant === "soft" ? colors["surface-2"] : "transparent";
-  const fg = variant === "primary" ? colors["on-brand"] : variant === "soft" ? colors.ink : colors["ink-muted"];
+  const { colors, fx } = useTheme();
+  const v = variant === "soft" ? "secondary" : variant;
+  const filled = v === "primary";
+  const outlined = v === "secondary";
+  const fg = filled ? colors["on-brand"] : v === "danger" ? colors.danger : v === "text" ? colors.brand : colors.ink;
+  const h = size === "sm" ? 42 : 52;
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={label}
       accessibilityState={{ disabled: !!disabled }}
       disabled={disabled}
+      hitSlop={{ top: 4, bottom: 4, left: 8, right: 8 }}
       onPress={() => {
         void Haptics.selectionAsync();
         onPress();
       }}
       style={({ pressed }) => [
         {
-          minHeight: 52,
+          alignSelf: "center",
+          minHeight: v === "text" || v === "danger" ? 44 : h,
+          minWidth: filled ? 200 : outlined ? 168 : undefined,
+          paddingHorizontal: filled ? 32 : outlined ? 24 : 12,
           borderRadius: 999,
+          flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: pressed && variant === "primary" ? colors["brand-pressed"] : bg,
-          opacity: disabled ? 0.45 : 1,
-          paddingHorizontal: 20,
+          gap: 8,
+          backgroundColor: filled ? (pressed ? colors["brand-pressed"] : colors.brand) : outlined ? fx.glass : "transparent",
+          borderWidth: outlined ? 1.5 : 0,
+          borderColor: fx.glassBorder,
+          opacity: disabled ? 0.4 : pressed && !filled ? 0.6 : 1,
         },
         style,
       ]}
     >
-      <T v="headline" color={fg}>{label}</T>
+      {icon ? <Icon name={icon} size={18} color={fg} /> : null}
+      <T v="headline" color={fg} style={size === "sm" || v === "text" || v === "danger" ? { fontSize: 15 } : undefined}>{label}</T>
     </Pressable>
   );
 }

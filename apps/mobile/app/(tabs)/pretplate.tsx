@@ -127,7 +127,7 @@ export default function Pretplate() {
             )}
           </Animated.View>
 
-          <Button variant="soft" label="Dodaj pretplatu" onPress={() => router.push("/pretplata")} />
+          <Button variant="secondary" icon="plus" label="Dodaj pretplatu" onPress={() => router.push("/pretplata")} />
         </ScrollView>
       </SafeAreaView>
     </View>
