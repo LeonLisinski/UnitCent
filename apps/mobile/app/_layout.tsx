@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
@@ -14,9 +14,22 @@ import {
 import { InstrumentSerif_400Regular_Italic } from "@expo-google-fonts/instrument-serif";
 import { JetBrainsMono_500Medium } from "@expo-google-fonts/jetbrains-mono";
 import { ThemeProvider, useTheme } from "../src/theme";
+import { ToastProvider } from "../src/toast";
+import { getDb } from "../src/db/client";
+import { bookDueRecurring, ensureCategories } from "../src/db/repo";
+import { ensureAnonymousSession } from "../src/supabase";
+import { rescheduleReminders } from "../src/notifications";
 
 // Splash drži ekran dok se fontovi ne učitaju (nema skakanja teksta na prvom ekranu).
 void SplashScreen.preventAutoHideAsync();
+
+/** Baza se otvara sinkrono prije prvog renderiranja ekrana: početni ekran se crta iz lokalnih podataka. */
+function initLocalData(): true {
+  getDb();
+  ensureCategories();
+  bookDueRecurring();
+  return true;
+}
 
 function Shell() {
   const { scheme, colors } = useTheme();
@@ -25,14 +38,17 @@ function Shell() {
       <StatusBar style={scheme === "dark" ? "light" : "dark"} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
         <Stack.Screen name="dodaj" options={{ presentation: "modal" }} />
+        <Stack.Screen name="pretplata" options={{ presentation: "modal" }} />
       </Stack>
     </>
   );
 }
 
 export default function RootLayout() {
-  const [loaded] = useFonts({
+  const [ready] = useState(initLocalData);
+  const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_500Medium,
     Manrope_600SemiBold,
@@ -43,15 +59,23 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (loaded) void SplashScreen.hideAsync();
-  }, [loaded]);
+    if (fontsLoaded) void SplashScreen.hideAsync();
+  }, [fontsLoaded]);
 
-  if (!loaded) return null;
+  // Pozadinski poslovi: ne blokiraju prikaz.
+  useEffect(() => {
+    void ensureAnonymousSession();
+    void rescheduleReminders();
+  }, []);
+
+  if (!fontsLoaded || !ready) return null;
 
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <Shell />
+        <ToastProvider>
+          <Shell />
+        </ToastProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

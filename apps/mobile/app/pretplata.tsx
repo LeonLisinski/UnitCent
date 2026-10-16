@@ -1,0 +1,143 @@
+import { useMemo, useState } from "react";
+import { Pressable, ScrollView, TextInput, View } from "react-native";
+import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { POPULAR_RECURRING, type Cents } from "@unitcent/core";
+import { AmountField, Button, CatIcon, Chip } from "../src/components";
+import { Icon } from "../src/icons";
+import { textStyle, useTheme } from "../src/theme";
+import { useToast } from "../src/toast";
+import { T } from "../src/ui";
+import { addRecurring, bookDueRecurring, listCategories } from "../src/db/repo";
+import { rescheduleReminders } from "../src/notifications";
+
+/** Nova pretplata ili fiksni trošak. Odabir popularne stavke popunjava naziv, dan i kategoriju. */
+export default function NovaPretplata() {
+  const { colors, radius, space } = useTheme();
+  const router = useRouter();
+  const toast = useToast();
+  const cats = useMemo(() => listCategories(), []);
+
+  const [name, setName] = useState("");
+  const [amount, setAmount] = useState<{ text: string; cents: Cents | null }>({ text: "", cents: null });
+  const [day, setDay] = useState("1");
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [iconKey, setIconKey] = useState<string | null>(null);
+
+  const valid = name.trim().length > 0 && (amount.cents ?? 0) > 0;
+
+  const fill = (key: string) => {
+    const p = POPULAR_RECURRING.find((x) => x.key === key);
+    if (!p) return;
+    setName(p.name);
+    setDay(String(p.dayOfMonth));
+    setIconKey(p.icon);
+    setCategoryId(cats.find((c) => c.key === p.categoryKey)?.id ?? null);
+    if (p.suggestedCents > 0) setAmount({ text: String(p.suggestedCents / 100).replace(".", ","), cents: p.suggestedCents });
+  };
+
+  const save = () => {
+    if (!valid || amount.cents === null) return;
+    const d = Math.min(31, Math.max(1, parseInt(day, 10) || 1));
+    addRecurring({ name, amountCents: amount.cents, dayOfMonth: d, categoryId, iconKey });
+    const booked = bookDueRecurring();
+    void rescheduleReminders();
+    router.back();
+    toast.show(booked > 0 ? "Dodano i već knjiženo ovaj mjesec" : `Dodano · naplata ${d}. u mjesecu`);
+  };
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+      <ScrollView
+        contentContainerStyle={{ padding: space["4"], gap: space["4"], paddingBottom: space["7"] }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <T v="title-2">Dodaj pretplatu</T>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Zatvori"
+            onPress={() => router.back()}
+            style={{ width: 48, height: 48, alignItems: "center", justifyContent: "center" }}
+          >
+            <Icon name="x" size={24} color={colors.ink} />
+          </Pressable>
+        </View>
+
+        <View style={{ gap: space["2"] }}>
+          <T v="mono-label" muted>Popularno</T>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {POPULAR_RECURRING.map((p) => (
+              <Chip key={p.key} label={p.name} selected={name === p.name} onPress={() => fill(p.key)} />
+            ))}
+          </View>
+        </View>
+
+        <View style={{ gap: 6 }}>
+          <T v="caption" muted>Naziv</T>
+          <TextInput
+            value={name}
+            onChangeText={setName}
+            placeholder="npr. Teretana"
+            placeholderTextColor={colors["ink-muted"]}
+            accessibilityLabel="Naziv"
+            style={[
+              textStyle("body"),
+              {
+                minHeight: 56,
+                borderRadius: radius.sm + 2,
+                borderWidth: 1.5,
+                borderColor: colors["border-strong"],
+                backgroundColor: colors.surface,
+                color: colors.ink,
+                paddingHorizontal: 14,
+              },
+            ]}
+          />
+        </View>
+
+        <View style={{ flexDirection: "row", gap: space["3"] }}>
+          <View style={{ flex: 2 }}>
+            <AmountField label="Iznos" value={amount.text} onChange={(text, cents) => setAmount({ text, cents })} />
+          </View>
+          <View style={{ flex: 1, gap: 6 }}>
+            <T v="caption" muted>Dan u mjesecu</T>
+            <TextInput
+              value={day}
+              onChangeText={(t) => setDay(t.replace(/\D/g, "").slice(0, 2))}
+              keyboardType="number-pad"
+              accessibilityLabel="Dan u mjesecu"
+              style={{
+                minHeight: 56,
+                borderRadius: radius.sm + 2,
+                borderWidth: 1.5,
+                borderColor: colors["border-strong"],
+                backgroundColor: colors.surface,
+                color: colors.ink,
+                fontSize: 20,
+                textAlign: "center",
+              }}
+            />
+          </View>
+        </View>
+
+        <View style={{ gap: space["2"] }}>
+          <T v="caption" muted>Kategorija</T>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {cats.map((c) => (
+              <Chip
+                key={c.id}
+                label={c.name}
+                selected={categoryId === c.id}
+                onPress={() => setCategoryId(c.id)}
+                left={<CatIcon colorToken={c.colorToken} icon={c.icon} size={28} />}
+              />
+            ))}
+          </View>
+        </View>
+
+        <Button label="Dodaj" disabled={!valid} onPress={save} />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}

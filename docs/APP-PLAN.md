@@ -298,6 +298,13 @@ Svaka faza završava demonstracijom, ažuriranjem ovog dokumenta (§12) i odluko
   - `.github/workflows/ci.yml`: testovi + typecheck paketa, build weba.
 - **2026-10-15: dev Supabase projekt** (`ekdcfznglsioobnskqnu`, EU Frankfurt): migracija primijenjena i provjerena preko javnog API-ja: svih 11 tablica postoji; anonimna prijava radi; korisnik piše i čita samo svoje retke; tuđi `user_id` i pisanje u `entitlements`/`scan_usage` vraćaju 403; bez sesije se ne vidi ništa; negativan iznos pada na `check`. Preostalo: staging projekt, Google/Apple provideri, Edge Functions.
 
+- **2026-10-16: Faza 1 (lokalni MVP), napisano i provjereno koliko je moguće bez uređaja:**
+  - lokalna SQLite baza (expo-sqlite, vlastiti runner migracija umjesto Drizzlea radi jednostavnosti; outbox se već puni za Fazu 2), deterministički ID-evi za knjiženja pretplata i planove (UUID v5), UUID v7 za ostalo;
+  - ekrani: onboarding (3 koraka s prikazom preporučenog dnevnog troška), početna („Danas još smiješ“ + preporučeni dnevni trošak), brzi unos (tipkovnica + dodir na kategoriju sprema, „Poništi“), pregled po kategorijama s usporedbom s prošlim mjesecom, pretplate s kalendarom i dodavanjem, profil (plan, podsjetnici, tema);
+  - lokalni podsjetnici dan prije naplate (expo-notifications), anonimna Supabase sesija (ne blokira, preskače se bez mreže);
+  - provjere: `tsc` čist, `expo-doctor` 21/21, Android i iOS bundle prolaze, SQL shema i idempotentno knjiženje provjereni na pravom SQLite-u; domena 28 + tokeni 27 testova. **Nije isprobano na uređaju/emulatoru** (vizualni pregled i dodiri tek slijede).
+  - još nedostaje do izlaznog kriterija Faze 1: izvršavanje na uređaju, uređivanje postojeće pretplate/transakcije, 2 tjedna stvarne uporabe.
+
 **Sljedeće:** dovršiti Fazu 0 (stavke koje traže vlasnika) pa Faza 1. Preostalo u Fazi 0:
 1. rezervirati bundle ID i developer račune (D-05, D-06);
 2. napraviti `dev`/`staging` Supabase projekte, primijeniti migraciju, uključiti anonimnu prijavu;

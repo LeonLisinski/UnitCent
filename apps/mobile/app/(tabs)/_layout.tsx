@@ -1,11 +1,23 @@
-import { Pressable, View } from "react-native";
-import { Tabs, useRouter } from "expo-router";
+import { Pressable, View, type ColorValue } from "react-native";
+import { Redirect, Tabs, useRouter } from "expo-router";
+import * as Haptics from "expo-haptics";
+import { Icon } from "../../src/icons";
 import { textStyle, useTheme } from "../../src/theme";
+import { useDb } from "../../src/data";
+import { kvGet } from "../../src/db/repo";
 
-/** Navigacija: Početna · Pregled · [+] · Pretplate · Profil. Tipka + otvara bottom sheet za unos (Faza 1). */
+/** Navigacija: Početna · Pregled · [+] · Pretplate · Profil. Tipka + otvara bottom sheet za unos. */
 export default function TabsLayout() {
   const { colors } = useTheme();
   const router = useRouter();
+  const onboarded = useDb(() => kvGet("onboarded") === "1");
+
+  if (!onboarded) return <Redirect href="/onboarding" />;
+
+  const tabIcon = (name: string) =>
+    function TabIcon({ color }: { color: ColorValue }) {
+      return <Icon name={name} size={24} color={typeof color === "string" ? color : colors.ink} />;
+    };
 
   return (
     <Tabs
@@ -17,10 +29,10 @@ export default function TabsLayout() {
         tabBarLabelStyle: { ...textStyle("caption"), fontSize: 11 },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "Početna" }} />
-      <Tabs.Screen name="pregled" options={{ title: "Pregled" }} />
+      <Tabs.Screen name="index" options={{ title: "Početna", tabBarIcon: tabIcon("home") }} />
+      <Tabs.Screen name="pregled" options={{ title: "Pregled", tabBarIcon: tabIcon("chart") }} />
       <Tabs.Screen
-        name="dodaj"
+        name="plus"
         options={{
           title: "",
           tabBarButton: () => (
@@ -28,26 +40,28 @@ export default function TabsLayout() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Dodaj trošak"
-                onPress={() => router.push("/dodaj")}
+                onPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push("/dodaj");
+                }}
                 style={({ pressed }) => ({
                   marginTop: -14,
-                  width: 56,
-                  height: 56,
-                  borderRadius: 28,
+                  width: 58,
+                  height: 58,
+                  borderRadius: 29,
                   alignItems: "center",
                   justifyContent: "center",
                   backgroundColor: pressed ? colors["brand-pressed"] : colors.brand,
                 })}
               >
-                <View style={{ width: 22, height: 3, borderRadius: 2, backgroundColor: colors["on-brand"] }} />
-                <View style={{ position: "absolute", width: 3, height: 22, borderRadius: 2, backgroundColor: colors["on-brand"] }} />
+                <Icon name="plus" size={28} color={colors["on-brand"]} stroke={2.4} />
               </Pressable>
             </View>
           ),
         }}
       />
-      <Tabs.Screen name="pretplate" options={{ title: "Pretplate" }} />
-      <Tabs.Screen name="profil" options={{ title: "Profil" }} />
+      <Tabs.Screen name="pretplate" options={{ title: "Pretplate", tabBarIcon: tabIcon("calendar") }} />
+      <Tabs.Screen name="profil" options={{ title: "Profil", tabBarIcon: tabIcon("user") }} />
     </Tabs>
   );
 }
