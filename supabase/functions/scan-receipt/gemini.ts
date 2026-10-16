@@ -26,6 +26,10 @@ const SCHEMA = {
   required: ["legible", "merchant", "date", "total_cents", "items"],
 };
 
+function zagrebToday(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Zagreb" }).format(new Date());
+}
+
 function prompt(categories: { id: string; name: string }[]): string {
   const list = categories.map((c) => `- ${c.id}: ${c.name}`).join("\n");
   return `Ti čitaš hrvatski fiskalni račun sa slike i vraćaš JSON prema zadanoj shemi.
@@ -37,7 +41,7 @@ Pravila:
 - Popusti, akcije, loyalty umanjenja i kuponi su ZASEBNI retci s line_type "discount" i NEGATIVNIM iznosom. Povratna naknada za ambalažu je line_type "deposit" (pozitivan iznos). Sve ostalo je "item".
 - "total_cents" je konačni ukupni iznos za platiti ("UKUPNO"), a ne međuzbroj ni PDV.
 - Ne izmišljaj retke i ne zbrajaj retke koji su na računu odvojeni. PDV, poreze, način plaćanja i podatke o trgovini NE vraćaj kao stavke.
-- "merchant": naziv trgovine; "date": datum računa kao YYYY-MM-DD (ako ga nema ili je nečitljiv, null).
+- "merchant": naziv trgovine; "date": datum računa kao YYYY-MM-DD, TOČNO kako je ispisan na računu, s ispravnom godinom (dvoznamenkastu godinu čitaj kao 20xx, npr. 25.02.15 → 2015-02-25). Današnji datum je ${zagrebToday()}. NIKAD ne mijenjaj godinu da bi datum bio blizu današnjeg. Ako datuma nema ili je nečitljiv, null.
 - "category_id": odaberi ISKLJUČIVO jedan od ID-eva dolje; ako nijedan ne odgovara ili nisi siguran, null. Popusti i naknade dobivaju kategoriju stavke na koju se odnose ako je jasno, inače null.
 - "confidence" (0 do 1) je tvoja sigurnost da je redak ispravno pročitan i razvrstan.
 - Ako slika nije račun ili je potpuno nečitljiva: legible=false i prazan "items".

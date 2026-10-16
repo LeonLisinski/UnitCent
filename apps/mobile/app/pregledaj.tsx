@@ -5,6 +5,7 @@ import * as Haptics from "expo-haptics";
 import { Safe } from "../src/safe";
 import { formatEur } from "@unitcent/core";
 import { Button, CatIcon, Chip } from "../src/components";
+import { DateField } from "../src/DateField";
 import { useDb } from "../src/data";
 import { Glow, RoundButton } from "../src/fx";
 import { useTheme } from "../src/theme";
@@ -28,6 +29,8 @@ export default function Pregledaj() {
 
   const [items, setItems] = useState<ScanItem[]>(scan?.result.items ?? []);
   const [open, setOpen] = useState<number | null>(null);
+  // QR je izvor istine za datum, zatim AI; bez njih danas. Korisnik uvijek može promijeniti.
+  const [date, setDate] = useState<string>(scan?.qr?.date ?? scan?.result.date ?? today());
 
   if (!scan) {
     return (
@@ -64,7 +67,6 @@ export default function Pregledaj() {
   };
 
   const save = () => {
-    const date = result.date ?? scan.qr?.date ?? today();
     for (const [categoryId, cents] of groups) {
       addTransaction({ amountCents: cents, categoryId, note: result.merchant ?? undefined, merchant: result.merchant, localDate: date, source: "scan" });
     }
@@ -88,13 +90,13 @@ export default function Pregledaj() {
           </View>
 
           <View style={{ gap: 2 }}>
-            <T v="caption" muted numberOfLines={1}>
-              {[result.merchant, result.date ? result.date.split("-").reverse().join(". ") + "." : null].filter(Boolean).join(" · ")}
-            </T>
+            <T v="caption" muted numberOfLines={1}>{result.merchant ?? "Račun"}</T>
             <T v="amount-hero" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={{ fontSize: 44, lineHeight: 50, letterSpacing: -1.6 }}>
               {formatEur(result.total_cents ?? total)}
             </T>
           </View>
+
+          <DateField label="Datum računa" value={date} onChange={setDate} />
 
           {warn.length > 0 ? (
             <View style={{ padding: 12, borderRadius: 16, backgroundColor: "rgba(245,165,36,0.14)" }}>

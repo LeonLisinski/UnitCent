@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Platform, Pressable, View } from "react-native";
-import { signInWith, useAccount, type Provider } from "./account";
+import { signInWith, type Provider } from "./account";
 import { agoText } from "./format";
 import { AppleLogo, GoogleLogo, Icon } from "./icons";
-import { Group, Row } from "./settings";
+import { Group } from "./settings";
 import { syncNow, useSyncStatus } from "./sync";
 import { useTheme } from "./theme";
 import { useToast } from "./toast";
@@ -44,14 +44,11 @@ function SocialButton({ provider, busy, onPress }: { provider: Provider; busy: b
 }
 
 /**
- * Račun i podaci: tko si (gost / Google / Apple), jesu li podaci spremljeni u oblaku i ručna sinkronizacija.
- * Dok sve radi, sinkronizacija je nevidljiva drugdje u aplikaciji.
+ * Jedina „glavna“ stvar u Profilu kad račun nije zaštićen: poziv na prijavu. Za prijavljene se ne prikazuje.
  */
-export function AccountSection() {
+export function AccountCta() {
   const { colors, fx } = useTheme();
   const toast = useToast();
-  const account = useAccount();
-  const sync = useSyncStatus();
   const [busy, setBusy] = useState(false);
 
   const signIn = async (provider: Provider) => {
@@ -63,67 +60,51 @@ export function AccountSection() {
     else if (r === "error") toast.show("Prijava nije uspjela, pokušaj ponovno");
   };
 
+  return (
+    <Group>
+      <View style={{ padding: 16, gap: 14 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+          <View style={{ width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: fx.track }}>
+            <Icon name="shield" size={19} color={colors.warning} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <T v="headline" style={{ fontWeight: "700" }}>Zaštiti svoje podatke</T>
+            <T v="caption" muted>Prijavi se da prežive novi mobitel.</T>
+          </View>
+        </View>
+        <SocialButton provider="google" busy={busy} onPress={() => void signIn("google")} />
+        {APPLE_ENABLED ? <SocialButton provider="apple" busy={busy} onPress={() => void signIn("apple")} /> : null}
+      </View>
+    </Group>
+  );
+}
+
+/** Jedna tiha crta stanja: točka + „Spremljeno“. Dodir pokreće sinkronizaciju. */
+export function SyncLine() {
+  const { colors } = useTheme();
+  const sync = useSyncStatus();
   const dot = sync.state === "idle" ? colors.brand : sync.state === "local" ? colors["ink-muted"] : colors.warning;
-  const title =
+  const text =
     sync.state === "idle"
-      ? "Sve je spremljeno u oblaku"
+      ? sync.lastAt
+        ? `Spremljeno u oblaku · ${agoText(sync.lastAt)}`
+        : "Spremljeno u oblaku"
       : sync.state === "syncing"
         ? "Sinkroniziram…"
         : sync.state === "waiting"
-          ? `Čeka slanje: ${sync.pending} ${sync.pending === 1 ? "izmjena" : sync.pending < 5 ? "izmjene" : "izmjena"}`
+          ? `Čeka slanje (${sync.pending})`
           : "Samo na ovom uređaju";
-  const sub =
-    sync.state === "local"
-      ? "Podaci su sigurni na mobitelu"
-      : sync.lastAt
-        ? `Zadnja sinkronizacija ${agoText(sync.lastAt)}`
-        : "Još nije sinkronizirano";
-
   return (
-    <Group title="Račun i podaci">
-      {account.hasSession && account.anonymous ? (
-        <View style={{ padding: 16, gap: 14 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-            <View style={{ width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: fx.track }}>
-              <Icon name="shield" size={19} color={colors.warning} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <T v="headline" style={{ fontWeight: "700" }}>Zaštiti svoje podatke</T>
-              <T v="caption" muted>Prijavi se da prežive novi mobitel ili reinstalaciju. Tvoji podaci se ne mijenjaju.</T>
-            </View>
-          </View>
-          <SocialButton provider="google" busy={busy} onPress={() => void signIn("google")} />
-          {APPLE_ENABLED ? <SocialButton provider="apple" busy={busy} onPress={() => void signIn("apple")} /> : null}
-        </View>
-      ) : account.hasSession ? (
-        <Row
-          left={account.provider === "apple" ? <AppleLogo size={26} color={colors.ink} /> : <GoogleLogo size={26} />}
-          title={account.email ?? "Prijavljen"}
-          subtitle={`Povezano s ${account.provider === "apple" ? "Appleom" : "Googleom"}`}
-        />
-      ) : null}
-
-      <Row
-        left={
-          <View style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}>
-            <View style={{ width: 11, height: 11, borderRadius: 6, backgroundColor: dot }} />
-          </View>
-        }
-        title={title}
-        subtitle={sub}
-        right={
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Sinkroniziraj sada"
-            disabled={sync.state === "syncing"}
-            hitSlop={10}
-            onPress={() => void syncNow()}
-            style={({ pressed }) => ({ opacity: sync.state === "syncing" ? 0.35 : pressed ? 0.5 : 1, padding: 6 })}
-          >
-            <Icon name="repeat" size={21} color={colors.brand} />
-          </Pressable>
-        }
-      />
-    </Group>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${text}. Dodirni za sinkronizaciju`}
+      disabled={sync.state === "syncing" || sync.state === "local"}
+      hitSlop={8}
+      onPress={() => void syncNow()}
+      style={{ flexDirection: "row", alignItems: "center", gap: 7, minHeight: 24 }}
+    >
+      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: dot }} />
+      <T v="caption" muted numberOfLines={1} style={{ flexShrink: 1 }}>{text}</T>
+    </Pressable>
   );
 }

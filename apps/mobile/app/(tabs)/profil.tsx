@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
-import { Alert, Linking, ScrollView, Switch, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Switch, TextInput, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import Constants from "expo-constants";
+import * as Haptics from "expo-haptics";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { formatEur, yearMonthOf } from "@unitcent/core";
 import { useAccount } from "../../src/account";
-import { AccountSection } from "../../src/AccountSection";
-import { Segmented } from "../../src/components";
-import { deleteAccountAndData, exportData } from "../../src/dataTools";
+import { AccountCta, SyncLine } from "../../src/AccountSection";
 import { useDb } from "../../src/data";
 import { Glow } from "../../src/fx";
 import { monthTitle } from "../../src/format";
+import { Icon } from "../../src/icons";
 import { Group, Row } from "../../src/settings";
 import { textStyle, useTheme, type ThemePreference } from "../../src/theme";
 import { useToast } from "../../src/toast";
@@ -18,17 +18,45 @@ import { T } from "../../src/ui";
 import { getLatestPlanBefore, getPlan, kvGet, kvSet, listCategories, today } from "../../src/db/repo";
 import { disableReminders, enableReminders, remindersEnabled } from "../../src/notifications";
 
-const THEMES: { key: ThemePreference; label: string }[] = [
-  { key: "system", label: "Sustav" },
-  { key: "light", label: "Svijetla" },
-  { key: "dark", label: "Tamna" },
+const THEMES: { key: ThemePreference; icon: string; label: string }[] = [
+  { key: "light", icon: "sun", label: "Svijetla tema" },
+  { key: "dark", icon: "moon", label: "Tamna tema" },
+  { key: "system", icon: "phone", label: "Tema prema sustavu" },
 ];
 
-const SITE = "https://unitcent.com";
+/** Tri ikone u pilulji umjesto trećeg retka s tekstom: svijetla, tamna, prema sustavu. */
+function ThemeSwitch({ value, onChange }: { value: ThemePreference; onChange: (p: ThemePreference) => void }) {
+  const { colors, fx } = useTheme();
+  return (
+    <View style={{ flexDirection: "row", backgroundColor: fx.track, borderRadius: 999, padding: 3 }}>
+      {THEMES.map((t) => {
+        const on = t.key === value;
+        return (
+          <Pressable
+            key={t.key}
+            accessibilityRole="button"
+            accessibilityLabel={t.label}
+            accessibilityState={{ selected: on }}
+            onPress={() => {
+              void Haptics.selectionAsync();
+              onChange(t.key);
+            }}
+            style={{ width: 42, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: on ? colors.brand : "transparent" }}
+          >
+            <Icon name={t.icon} size={18} color={on ? colors["on-brand"] : colors["ink-muted"]} />
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
 
-/** Profil kao izbornik: zaglavlje s imenom, pa skupine (račun, plan, postavke, podaci, o aplikaciji). */
+/**
+ * Profil po važnosti: tko si → (ako treba) zaštiti podatke → novac → postavke → rijetko korišteno (jedan redak).
+ * Sinkronizacija je jedna tiha crta ispod imena.
+ */
 export default function Profil() {
-  const { colors, fx, space, preference, setPreference } = useTheme();
+  const { colors, space, preference, setPreference } = useTheme();
   const toast = useToast();
   const router = useRouter();
   const account = useAccount();
@@ -51,24 +79,6 @@ export default function Profil() {
     }
   };
 
-  const confirmDelete = () =>
-    Alert.alert(
-      "Obrisati račun i sve podatke?",
-      "Brišu se troškovi, pretplate, kategorije i plan, na mobitelu i u oblaku. Ovo se ne može poništiti.",
-      [
-        { text: "Odustani", style: "cancel" },
-        {
-          text: "Obriši sve",
-          style: "destructive",
-          onPress: async () => {
-            const ok = await deleteAccountAndData();
-            if (ok) router.replace("/onboarding");
-            else toast.show("Brisanje nije uspjelo, provjeri vezu i pokušaj ponovno");
-          },
-        },
-      ],
-    );
-
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
@@ -78,7 +88,6 @@ export default function Profil() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Zaglavlje: avatar, ime (uređuje se izravno) i račun */}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
             <View style={{ width: 68, height: 68, borderRadius: 34, alignItems: "center", justifyContent: "center", backgroundColor: colors["brand-soft"] }}>
               <T v="title-1" color={colors["brand-ink"]} style={{ fontSize: 28, lineHeight: 34 }}>
@@ -95,62 +104,41 @@ export default function Profil() {
                 accessibilityLabel="Ime"
                 maxLength={24}
                 returnKeyType="done"
-                style={[textStyle("title-2"), { color: colors.ink, paddingVertical: 4, minHeight: 44 }]}
+                style={[textStyle("title-2"), { color: colors.ink, paddingVertical: 2, minHeight: 40 }]}
               />
               <T v="caption" muted numberOfLines={1}>
                 {account.email ?? (account.hasSession ? "Gost" : "Samo na ovom uređaju")}
               </T>
+              <SyncLine />
             </View>
           </View>
 
-          <AccountSection />
+          {account.hasSession && account.anonymous ? <AccountCta /> : null}
 
-          <Group title="Moj novac">
+          <Group>
             <Row
               icon="wallet"
               title={`Plan za ${monthTitle(month).replace(/\.$/, "").toLowerCase()}`}
-              subtitle={plan ? `Primanja ${formatEur(plan.incomeCents)} · štednja ${formatEur(plan.savingsCents)}` : "Postavi primanja i štednju"}
+              subtitle={plan ? `${formatEur(plan.incomeCents)} primanja · ${formatEur(plan.savingsCents)} štednja` : "Postavi primanja i štednju"}
               onPress={() => router.push("/plan" as Href)}
             />
             <Row icon="tag" title="Kategorije" value={String(cats.length)} onPress={() => router.push("/kategorije" as Href)} />
           </Group>
 
-          <Group title="Postavke">
+          <Group>
             <Row
               icon="bell"
               title="Podsjetnici naplata"
-              subtitle="Dan prije, u 9:00. Radi i bez interneta."
-              right={<Switch value={reminders} onValueChange={(v) => void toggleReminders(v)} trackColor={{ false: fx.track, true: colors.brand }} thumbColor="#ffffff" />}
+              right={<Switch value={reminders} onValueChange={(v) => void toggleReminders(v)} trackColor={{ false: colors["border-strong"], true: colors.brand }} thumbColor="#ffffff" />}
             />
-            <View>
-              <Row icon="sun" title="Izgled" />
-              <View style={{ paddingHorizontal: 16, paddingBottom: 14 }}>
-                <Segmented value={preference} onChange={setPreference} options={THEMES} />
-              </View>
-            </View>
+            <Row icon="sun" title="Izgled" right={<ThemeSwitch value={preference} onChange={setPreference} />} />
           </Group>
 
-          <Group title="Moji podaci">
-            <Row
-              icon="download"
-              title="Izvezi podatke"
-              subtitle="Svi tvoji podaci u JSON datoteci"
-              onPress={async () => {
-                try {
-                  if (!(await exportData())) toast.show("Dijeljenje nije dostupno na ovom uređaju");
-                } catch {
-                  toast.show("Izvoz nije uspio");
-                }
-              }}
-            />
-            <Row icon="trash" danger title="Obriši račun i sve podatke" onPress={confirmDelete} />
+          <Group>
+            <Row icon="shield" title="Podaci i privatnost" onPress={() => router.push("/podaci" as Href)} />
           </Group>
 
-          <Group title="O aplikaciji">
-            <Row icon="shield" title="Privatnost" external onPress={() => void Linking.openURL(`${SITE}/privatnost`)} />
-            <Row icon="file" title="Uvjeti korištenja" external onPress={() => void Linking.openURL(`${SITE}/uvjeti`)} />
-            <Row icon="info" title="UnitCent" value={`verzija ${Constants.expoConfig?.version ?? ""}`} />
-          </Group>
+          <T v="caption" muted style={{ textAlign: "center" }}>UnitCent · verzija {Constants.expoConfig?.version ?? ""}</T>
         </ScrollView>
       </SafeAreaView>
     </View>

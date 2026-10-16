@@ -74,3 +74,9 @@ export function agoText(iso: string, nowMs = Date.now()): string {
   if (min < 24 * 60) return `prije ${Math.round(min / 60)} h`;
   return `prije ${Math.round(min / 1440)} d`;
 }
+
+/** "25. 2. 2015." (puni datum s godinom, za potvrdu datuma računa). */
+export function fullDate(date: LocalDate): string {
+  const p = parts(date);
+  return `${p.day}. ${p.m}. ${p.y}.`;
+}
