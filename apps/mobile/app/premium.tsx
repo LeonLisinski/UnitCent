@@ -21,10 +21,10 @@ import { T } from "../src/ui";
 const SOCIAL_PROOF: string | null = null;
 
 /** Što Premium otključava: zlatna medaljica s ikonom + kratak naziv. */
-const PERKS: { icon: string; title: string; soon?: boolean }[] = [
-  { icon: "calendar", title: "Cijela povijest" },
-  { icon: "camera", title: "Neograničeno skeniranje računa" },
-  { icon: "chart", title: "Uvidi i savjeti", soon: true },
+const PERKS: { icon: string; title: string; hint: string; soon?: boolean }[] = [
+  { icon: "calendar", title: "Cijela povijest", hint: "Svi mjeseci, ne samo zadnjih šest" },
+  { icon: "camera", title: "Neograničeno skeniranje računa", hint: "Slikaš račun, stavke se razvrstaju same" },
+  { icon: "chart", title: "Uvidi i savjeti", hint: "Gdje ti curi novac i što možeš uštedjeti", soon: true },
 ];
 
 /** Petokraka kao poligon (za medaljon): vanjski i unutarnji polumjer, središte (0,0). */
@@ -195,8 +195,13 @@ export default function Premium() {
             >
               <Icon name={perk.icon} size={21} color="#2a1d00" stroke={2.1} />
             </LinearGradient>
-            <T v="headline" style={{ fontWeight: "700", fontSize: 17, flexShrink: 1 }}>{perk.title}</T>
-            {perk.soon ? <T v="caption" color={fx.gold} style={{ fontSize: 10.5, fontWeight: "800" }}>USKORO</T> : null}
+            <View style={{ flex: 1, gap: 1 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <T v="headline" style={{ fontWeight: "700", fontSize: 17, flexShrink: 1 }}>{perk.title}</T>
+                {perk.soon ? <T v="caption" color={fx.gold} style={{ fontSize: 10.5, fontWeight: "800" }}>USKORO</T> : null}
+              </View>
+              <T v="caption" muted style={{ fontSize: 12.5 }}>{perk.hint}</T>
+            </View>
           </View>
         ))}
       </View>
