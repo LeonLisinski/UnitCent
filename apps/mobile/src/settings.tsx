@@ -69,7 +69,7 @@ export function Row({
   );
   if (!onPress) return body;
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
+    <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.65 : 1, backgroundColor: pressed ? fx.track : "transparent" })}>
       {body}
     </Pressable>
   );

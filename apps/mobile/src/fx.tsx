@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Pressable, View, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
+import { Pressable, StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
 import Svg, { Circle, Defs, G, LinearGradient, Path, RadialGradient, Rect, Stop } from "react-native-svg";
 import Animated, { Easing, useAnimatedProps, useSharedValue, withTiming } from "react-native-reanimated";
 import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
+import { LinearGradient as Sheen } from "expo-linear-gradient";
 import { formatEur, type Cents } from "@unitcent/core";
 import { fitFontSize } from "./format";
 import { Icon } from "./icons";
@@ -13,29 +14,74 @@ import { T } from "./ui";
 
 export function Glow() {
   const { fx } = useTheme();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const size = 560;
+  const size2 = 480;
   return (
-    <View pointerEvents="none" style={{ position: "absolute", top: -190, left: (width - size) / 2, width: size, height: size }}>
-      <Svg width={size} height={size}>
-        <Defs>
-          <RadialGradient id="glow" cx="50%" cy="50%" r="50%">
-            <Stop offset="0" stopColor={fx.glowColor} stopOpacity={fx.glowOpacity} />
-            <Stop offset="0.72" stopColor={fx.glowColor} stopOpacity={0} />
-            <Stop offset="1" stopColor={fx.glowColor} stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Rect width={size} height={size} fill="url(#glow)" />
-      </Svg>
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      {/* Tamna podloga s blagim prijelazom: dubina umjesto ravne crne */}
+      <Sheen colors={[fx.bgTop, fx.bgBottom]} style={StyleSheet.absoluteFill} />
+      <View style={{ position: "absolute", top: -190, left: (width - size) / 2, width: size, height: size }}>
+        <Svg width={size} height={size}>
+          <Defs>
+            <RadialGradient id="glow" cx="50%" cy="50%" r="50%">
+              <Stop offset="0" stopColor={fx.glowColor} stopOpacity={fx.glowOpacity} />
+              <Stop offset="0.72" stopColor={fx.glowColor} stopOpacity={0} />
+              <Stop offset="1" stopColor={fx.glowColor} stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Rect width={size} height={size} fill="url(#glow)" />
+        </Svg>
+      </View>
+      {/* Drugi, hladniji sjaj dolje desno: daje prostoru dubinu */}
+      <View style={{ position: "absolute", top: height - size2 * 0.62, left: width - size2 * 0.6, width: size2, height: size2 }}>
+        <Svg width={size2} height={size2}>
+          <Defs>
+            <RadialGradient id="glow2" cx="50%" cy="50%" r="50%">
+              <Stop offset="0" stopColor={fx.glow2} stopOpacity={0.13} />
+              <Stop offset="0.7" stopColor={fx.glow2} stopOpacity={0} />
+              <Stop offset="1" stopColor={fx.glow2} stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Rect width={size2} height={size2} fill="url(#glow2)" />
+        </Svg>
+      </View>
     </View>
   );
 }
 
-/** Staklena površina umjesto pune kutije: prozirna ispuna i tanak obrub. */
+/**
+ * Staklena površina: blagi prijelaz svjetline odozgo prema dolje, svijetli rub na vrhu (kao da je osvijetljena
+ * odozgo), tanak obrub i, na svijetloj temi, meka sjena. Sadržaj i razmaci se zadaju kroz `style`.
+ */
 export function Glass({ children, style, radius = 24 }: { children?: ReactNode; style?: StyleProp<ViewStyle>; radius?: number }) {
   const { fx } = useTheme();
   return (
-    <View style={[{ backgroundColor: fx.glass, borderColor: fx.glassBorder, borderWidth: 1, borderRadius: radius }, style]}>
+    <View
+      style={[
+        {
+          backgroundColor: fx.glass,
+          borderColor: fx.glassBorder,
+          borderWidth: 1,
+          borderRadius: radius,
+          shadowColor: "#0f1515",
+          shadowOpacity: fx.shadowOpacity,
+          shadowRadius: 18,
+          shadowOffset: { width: 0, height: 8 },
+          elevation: fx.shadowOpacity > 0 ? 3 : 0,
+        },
+        style,
+      ]}
+    >
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius - 1, overflow: "hidden" }]}>
+        <Sheen colors={[fx.sheenTop, fx.sheenBottom]} style={StyleSheet.absoluteFill} />
+        <Sheen
+          colors={["transparent", fx.edge, "transparent"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{ position: "absolute", top: 0, left: radius * 0.6, right: radius * 0.6, height: 1 }}
+        />
+      </View>
       {children}
     </View>
   );
@@ -78,6 +124,9 @@ export function Ring({ size = 262, remaining, state, children }: { size?: number
           </LinearGradient>
         </Defs>
         <Path d={ARC} stroke={fx.track} strokeWidth={20} strokeLinecap="round" fill="none" />
+        {/* Sjaj oko luka: dva šira, prozirna sloja iza glavnog luka */}
+        <AnimatedPath d={ARC} stroke="url(#ringGrad)" strokeWidth={38} strokeLinecap="round" fill="none" opacity={0.08} animatedProps={props} />
+        <AnimatedPath d={ARC} stroke="url(#ringGrad)" strokeWidth={29} strokeLinecap="round" fill="none" opacity={0.14} animatedProps={props} />
         <AnimatedPath d={ARC} stroke="url(#ringGrad)" strokeWidth={20} strokeLinecap="round" fill="none" animatedProps={props} />
       </Svg>
       <View style={{ alignItems: "center", gap: 4, paddingTop: 6 }}>{children}</View>

@@ -19,11 +19,19 @@ export interface Fx {
   glowOpacity: number;
   accent2: string;
   line: string;
+  /** Dubina: gradijent pozadine, drugi sjaj, sjaj površine, svijetli rub, sjena. */
+  bgTop: string;
+  bgBottom: string;
+  glow2: string;
+  sheenTop: string;
+  sheenBottom: string;
+  edge: string;
+  shadowOpacity: number;
 }
 
 const FX: Record<Scheme, Fx> = {
   dark: {
-    glass: "rgba(255,255,255,0.055)",
+    glass: "rgba(255,255,255,0.03)",
     glassBorder: "rgba(255,255,255,0.09)",
     track: "rgba(255,255,255,0.07)",
     tabBg: "rgba(18,26,25,0.95)",
@@ -31,6 +39,13 @@ const FX: Record<Scheme, Fx> = {
     glowOpacity: 0.26,
     accent2: "#c8f169",
     line: "rgba(255,255,255,0.08)",
+    bgTop: "#0c1615",
+    bgBottom: "#050808",
+    glow2: "#2b8fd6",
+    sheenTop: "rgba(255,255,255,0.085)",
+    sheenBottom: "rgba(255,255,255,0.015)",
+    edge: "rgba(255,255,255,0.30)",
+    shadowOpacity: 0,
   },
   light: {
     glass: "rgba(255,255,255,0.86)",
@@ -41,6 +56,13 @@ const FX: Record<Scheme, Fx> = {
     glowOpacity: 0.16,
     accent2: "#7cb518",
     line: "rgba(15,21,21,0.08)",
+    bgTop: "#f8fbf9",
+    bgBottom: "#eaf1ed",
+    glow2: "#3aa0d8",
+    sheenTop: "rgba(255,255,255,0.98)",
+    sheenBottom: "rgba(255,255,255,0.78)",
+    edge: "rgba(255,255,255,1)",
+    shadowOpacity: 0.08,
   },
 };
 

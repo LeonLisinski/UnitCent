@@ -82,7 +82,10 @@ export default function Pocetna() {
           <Animated.View entering={enter(0)} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <View>
               <T v="caption" muted>{longDate(day)}</T>
-              <T v="title-1" style={{ fontSize: 24, lineHeight: 30 }}>{name ? `Bok, ${name}` : "Bok"}</T>
+              <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6 }}>
+                <T v="title-1" style={{ fontSize: 24, lineHeight: 32 }}>Bok</T>
+                {name ? <T v="serif-accent" color={colors.brand} style={{ fontSize: 32, lineHeight: 38 }}>{name}</T> : null}
+              </View>
             </View>
             <LinearGradient
               colors={[colors.brand, fx.accent2]}

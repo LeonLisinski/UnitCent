@@ -89,6 +89,7 @@ export function Button({
           borderWidth: outlined ? 1.5 : 0,
           borderColor: fx.glassBorder,
           opacity: disabled ? 0.4 : pressed && !filled ? 0.6 : 1,
+          transform: [{ scale: pressed ? 0.97 : 1 }],
         },
         style,
       ]}

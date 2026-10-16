@@ -101,9 +101,20 @@ export function FloatingTabBar({ state, descriptors, navigation }: TabBarProps) 
                 void Haptics.selectionAsync();
                 navigation.navigate(route.name);
               }}
-              style={{ width: 62, alignItems: "center", gap: 3, minHeight: 48, justifyContent: "center" }}
+              style={{ width: 66, alignItems: "center", gap: 2, minHeight: 52, justifyContent: "center" }}
             >
-              <Icon name={ICONS[route.name] ?? "dots"} size={24} color={color} />
+              <View
+                style={{
+                  width: 52,
+                  height: 30,
+                  borderRadius: 15,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: focused ? "rgba(61,214,163,0.16)" : "transparent",
+                }}
+              >
+                <Icon name={ICONS[route.name] ?? "dots"} size={23} color={color} stroke={focused ? 2 : 1.7} />
+              </View>
               <T v="caption" color={color} style={{ fontSize: 10.5, lineHeight: 13, fontWeight: "700" }}>{label}</T>
             </Pressable>
           );
