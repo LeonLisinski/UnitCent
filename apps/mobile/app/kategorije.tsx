@@ -6,6 +6,7 @@ import { CatIcon } from "../src/components";
 import { useDb } from "../src/data";
 import { Glow, RoundButton } from "../src/fx";
 import { Icon } from "../src/icons";
+import { ListRow } from "../src/layout";
 import { Safe } from "../src/safe";
 import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
@@ -95,55 +96,53 @@ export default function Kategorije() {
             {cats.map((c, i) => {
               const on = picked.has(c.id);
               return (
-                <View
+                <ListRow
                   key={c.id}
-                  style={{ flexDirection: "row", alignItems: "center", borderTopWidth: i === 0 ? 0 : 1, borderTopColor: fx.line }}
-                >
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityState={selecting ? { selected: on } : undefined}
-                    accessibilityLabel={selecting ? c.name : `Uredi kategoriju ${c.name}`}
-                    onPress={() => (selecting ? toggle(c.id) : router.push({ pathname: "/kategorija", params: { id: c.id } }))}
-                    onLongPress={() => {
-                      if (!selecting) {
-                        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        setSelecting(true);
-                        toggle(c.id);
-                      }
-                    }}
-                    style={{ flex: 1, minHeight: 62, flexDirection: "row", alignItems: "center", gap: 14 }}
-                  >
-                    {selecting ? (
-                      <View
-                        style={{
-                          width: 26,
-                          height: 26,
-                          borderRadius: 13,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderWidth: 2,
-                          borderColor: on ? colors.brand : fx.glassBorder,
-                          backgroundColor: on ? colors.brand : "transparent",
-                        }}
+                  first={i === 0}
+                  left={
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+                      {selecting ? (
+                        <View
+                          style={{
+                            width: 26,
+                            height: 26,
+                            borderRadius: 13,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderWidth: 2,
+                            borderColor: on ? colors.brand : fx.glassBorder,
+                            backgroundColor: on ? colors.brand : "transparent",
+                          }}
+                        >
+                          {on ? <Icon name="check" size={15} color={colors["on-brand"]} stroke={2.4} /> : null}
+                        </View>
+                      ) : null}
+                      <CatIcon colorToken={c.colorToken} icon={c.icon} size={40} />
+                    </View>
+                  }
+                  title={c.name}
+                  right={
+                    selecting ? undefined : (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Obriši kategoriju ${c.name}`}
+                        hitSlop={6}
+                        onPress={() => remove([c.id])}
+                        style={({ pressed }) => ({ width: 44, height: 44, alignItems: "center", justifyContent: "center", opacity: pressed ? 0.5 : 1 })}
                       >
-                        {on ? <Icon name="check" size={15} color={colors["on-brand"]} stroke={2.4} /> : null}
-                      </View>
-                    ) : null}
-                    <CatIcon colorToken={c.colorToken} icon={c.icon} size={40} />
-                    <T v="headline" style={{ flex: 1, fontWeight: "700" }} numberOfLines={1}>{c.name}</T>
-                  </Pressable>
-                  {selecting ? null : (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Obriši kategoriju ${c.name}`}
-                      hitSlop={6}
-                      onPress={() => remove([c.id])}
-                      style={({ pressed }) => ({ width: 48, height: 48, alignItems: "center", justifyContent: "center", opacity: pressed ? 0.5 : 1 })}
-                    >
-                      <Icon name="trash" size={20} color={colors["ink-muted"]} />
-                    </Pressable>
-                  )}
-                </View>
+                        <Icon name="trash" size={20} color={colors["ink-muted"]} />
+                      </Pressable>
+                    )
+                  }
+                  onPress={() => (selecting ? toggle(c.id) : router.push({ pathname: "/kategorija", params: { id: c.id } }))}
+                  onLongPress={() => {
+                    if (!selecting) {
+                      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      setSelecting(true);
+                      toggle(c.id);
+                    }
+                  }}
+                />
               );
             })}
           </ScrollView>

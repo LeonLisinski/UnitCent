@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { ScrollView, View } from "react-native";
+import { View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   formatEur,
   monthExpenseTotal,
@@ -13,8 +12,9 @@ import {
 } from "@unitcent/core";
 import { CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
-import { DayBars, Donut, Glow, RoundButton } from "../../src/fx";
-import { fitFontSize, monthShort, monthTitle } from "../../src/format";
+import { Amount, DayBars, Donut, RoundButton } from "../../src/fx";
+import { monthShort, monthTitle } from "../../src/format";
+import { HERO, ListRow, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
 import { useTheme } from "../../src/theme";
 import { T } from "../../src/ui";
 import { listCategories, listTransactionsInMonth, today } from "../../src/db/repo";
@@ -26,8 +26,9 @@ function nextMonth(ym: YearMonth): YearMonth {
 
 const enter = (i: number) => FadeInDown.delay(i * 70).duration(420);
 
+/** Pregled: mjesec → krug po kategorijama → ritam po danima → kategorije s udjelom. */
 export default function Pregled() {
-  const { colors, fx, space } = useTheme();
+  const { colors, fx } = useTheme();
   const thisMonth = yearMonthOf(today());
   const [month, setMonth] = useState<YearMonth>(thisMonth);
 
@@ -59,98 +60,72 @@ export default function Pregled() {
   const avgPerDay = dayNo > 0 ? Math.round(variable / dayNo) : 0;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Glow />
-      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-        <ScrollView
-          contentContainerStyle={{ padding: space["4"] + 4, paddingTop: space["4"], paddingBottom: 140, gap: space["5"] }}
-          showsVerticalScrollIndicator={false}
-        >
-          <Animated.View entering={enter(0)} style={{ gap: space["3"] }}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-              <RoundButton icon="back" label="Prethodni mjesec" onPress={() => setMonth(previousMonth(month))} />
-              <T v="title-2" style={{ fontSize: 19 }}>{monthTitle(month)}</T>
-              <RoundButton icon="chev" label="Sljedeći mjesec" disabled={month >= thisMonth} onPress={() => setMonth(nextMonth(month))} />
-            </View>
-          </Animated.View>
+    <TabScreen>
+      <Animated.View entering={enter(0)}>
+        <PageHeader>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <RoundButton icon="back" label="Prethodni mjesec" onPress={() => setMonth(previousMonth(month))} />
+            <T v="title-2" style={{ fontSize: 19 }}>{monthTitle(month)}</T>
+            <RoundButton icon="chev" label="Sljedeći mjesec" disabled={month >= thisMonth} onPress={() => setMonth(nextMonth(month))} />
+          </View>
+        </PageHeader>
+      </Animated.View>
 
-          <Animated.View entering={enter(1)} style={{ alignItems: "center" }}>
-            <Donut slices={slices}>
-              <T v="mono-label" muted>Potrošeno</T>
-              <T v="amount-hero" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={{ fontSize: fitFontSize(formatEur(total), 150, 36), lineHeight: 42, letterSpacing: -1.4 }}>{formatEur(total)}</T>
-              {change !== null && change !== 0 ? (
-                <View
-                  style={{
-                    flexDirection: "row",
-                    gap: 6,
-                    paddingHorizontal: 11,
-                    paddingVertical: 5,
-                    borderRadius: 999,
-                    backgroundColor: up ? "rgba(245,165,36,0.16)" : "rgba(61,214,163,0.16)",
-                  }}
-                >
-                  <T v="caption" color={up ? colors.warning : colors.brand} style={{ fontWeight: "800" }}>
-                    {up ? "▲" : "▼"} {Math.abs(change)} % vs {monthShort(previousMonth(month))}
-                  </T>
-                </View>
-              ) : (
-                <T v="caption" muted>{change === 0 ? "isto kao prošli mjesec" : "nema usporedbe"}</T>
-              )}
-            </Donut>
-          </Animated.View>
+      <Animated.View entering={enter(1)} style={{ alignItems: "center" }}>
+        <Donut size={HERO} slices={slices}>
+          <T v="mono-label" muted>Potrošeno</T>
+          <Amount cents={total} maxWidth={170} />
+          {change !== null && change !== 0 ? (
+            <T v="caption" color={up ? colors.warning : colors.brand} style={{ fontWeight: "800" }}>
+              {up ? "▲" : "▼"} {Math.abs(change)} % vs {monthShort(previousMonth(month))}
+            </T>
+          ) : (
+            <T v="caption" muted>{change === 0 ? "isto kao prošli mjesec" : "nema usporedbe"}</T>
+          )}
+        </Donut>
+      </Animated.View>
 
-          {variable > 0 ? (
-            <Animated.View entering={enter(2)} style={{ gap: space["2"] }}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
-                <T v="mono-label" muted>Po danima</T>
-                <T v="caption" muted>prosjek {formatEur(avgPerDay)} / dan</T>
-              </View>
-              <DayBars values={perDay} daysInMonth={dim} todayIndex={dayNo - 1} limitCents={avgPerDay} />
-            </Animated.View>
-          ) : null}
+      {variable > 0 ? (
+        <Animated.View entering={enter(2)}>
+          <Section title="Po danima" right={`prosjek ${formatEur(avgPerDay)} / dan`}>
+            <DayBars values={perDay} daysInMonth={dim} todayIndex={dayNo - 1} limitCents={avgPerDay} />
+          </Section>
+        </Animated.View>
+      ) : null}
 
-          <Animated.View entering={enter(3)}>
-            {byCat.length === 0 ? (
-              <T muted style={{ textAlign: "center" }}>Još nema troškova u ovom mjesecu.</T>
-            ) : (
-              byCat.map((row, i) => {
+      <Animated.View entering={enter(3)}>
+        <Section title="Kategorije">
+          {byCat.length === 0 ? (
+            <T muted>Još nema troškova u ovom mjesecu.</T>
+          ) : (
+            <View>
+              {byCat.map((row, i) => {
                 const c = row.categoryId ? catById.get(row.categoryId) : undefined;
                 const col = colorOf(c?.colorToken ?? "cat-ostalo");
                 const pct = total > 0 ? Math.round((row.totalCents / total) * 100) : 0;
                 const share = total > 0 ? row.totalCents / total : 0;
                 return (
-                  <View
+                  <ListRow
                     key={row.categoryId ?? "none"}
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 14,
-                      minHeight: 68,
-                      paddingVertical: 8,
-                      borderTopWidth: i === 0 ? 0 : 1,
-                      borderTopColor: fx.line,
-                    }}
-                  >
-                    <CatIcon colorToken={c?.colorToken ?? "cat-ostalo"} icon={c?.icon ?? "dots"} size={40} />
-                    <View style={{ flex: 1, gap: 7 }}>
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-                        <T v="headline" numberOfLines={1} style={{ fontWeight: "700", flexShrink: 1 }}>{c?.name ?? "Bez kategorije"}</T>
-                        <T v="amount" style={{ fontWeight: "800" }}>{formatEur(row.totalCents)}</T>
-                      </View>
+                    first={i === 0}
+                    left={<CatIcon colorToken={c?.colorToken ?? "cat-ostalo"} icon={c?.icon ?? "dots"} size={40} />}
+                    title={c?.name ?? "Bez kategorije"}
+                    subtitle={
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                         <View style={{ flex: 1, height: 5, borderRadius: 3, backgroundColor: fx.track, overflow: "hidden" }}>
                           <View style={{ width: `${Math.max(2, share * 100)}%`, height: "100%", borderRadius: 3, backgroundColor: col }} />
                         </View>
                         <T v="caption" muted style={{ width: 38, textAlign: "right" }}>{pct} %</T>
                       </View>
-                    </View>
-                  </View>
+                    }
+                    right={<RowAmount>{formatEur(row.totalCents)}</RowAmount>}
+                  />
                 );
-              })
-            )}
-          </Animated.View>
-        </ScrollView>
-      </SafeAreaView>
-    </View>
+              })}
+            </View>
+          )}
+        </Section>
+      </Animated.View>
+    </TabScreen>
   );
 }

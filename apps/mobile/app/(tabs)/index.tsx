@@ -1,12 +1,12 @@
-import { useRouter, type Href } from "expo-router";
+import { useRouter } from "expo-router";
 import { ScrollView, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { daysInMonth, formatEur, parseYearMonth, upcomingInMonth, yearMonthOf } from "@unitcent/core";
-import { Avatar, CatIcon } from "../../src/components";
+import { CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
-import { Amount, Glass, Glow, MonthBar, Ring, SwipeRow, type RingState } from "../../src/fx";
+import { Amount, Glass, MonthBar, Ring, SwipeRow, type RingState } from "../../src/fx";
 import { longDate, relativeDay } from "../../src/format";
+import { HERO, PAD, PageHeader, Section, TabScreen } from "../../src/layout";
 import { useTheme } from "../../src/theme";
 import { useToast } from "../../src/toast";
 import { TxRow } from "../../src/TxRow";
@@ -24,8 +24,9 @@ import {
 
 const enter = (i: number) => FadeInDown.delay(i * 70).duration(420);
 
+/** Početna: pozdrav → današnji limit (prsten) → mjesec (traka) → što dolazi → što je zadnje. */
 export default function Pocetna() {
-  const { colors, fx, space } = useTheme();
+  const { colors } = useTheme();
   const router = useRouter();
   const toast = useToast();
 
@@ -52,8 +53,6 @@ export default function Pocetna() {
   const { y, m } = parseYearMonth(month);
   const dim = daysInMonth(y, m);
   const dayNo = Number(day.slice(8));
-
-  // Tempo: potrošeno do sada u odnosu na proporcionalni dio raspoloživog.
   const variableSpent = limit.availableCents - limit.monthLeftCents;
   const expected = (limit.availableCents * dayNo) / dim;
   const pace = expected <= 0 ? "ok" : variableSpent / expected > 1.05 ? "fast" : variableSpent / expected < 0.95 ? "slow" : "ok";
@@ -63,84 +62,78 @@ export default function Pocetna() {
   const sections = new Map<string, typeof recent>();
   for (const t of recent) sections.set(t.localDate, [...(sections.get(t.localDate) ?? []), t]);
 
-  const initial = (name?.trim()[0] ?? "U").toUpperCase();
-
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Glow />
-      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-        <ScrollView
-          contentContainerStyle={{ paddingHorizontal: space["4"] + 4, paddingTop: space["3"], paddingBottom: 140, gap: space["5"] }}
-          showsVerticalScrollIndicator={false}
+    <TabScreen>
+      <Animated.View entering={enter(0)}>
+        <PageHeader>
+          <T v="caption" muted>{longDate(day)}</T>
+          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6 }}>
+            <T v="title-1" style={{ fontSize: 24, lineHeight: 32 }}>Bok</T>
+            {name ? <T v="serif-accent" color={colors.brand} style={{ fontSize: 32, lineHeight: 38 }}>{name}</T> : null}
+          </View>
+        </PageHeader>
+      </Animated.View>
+
+      <Animated.View entering={enter(1)} style={{ alignItems: "center" }}>
+        <Ring size={HERO} remaining={remaining} state={state}>
+          <T v="mono-label" muted>{limit.isOver ? "Danas si preko" : "Danas još smiješ"}</T>
+          <Amount cents={limit.isOver ? -limit.overByCents : limit.leftTodayCents} color={limit.isOver ? colors.danger : colors.ink} maxWidth={170} />
+          <T v="caption" muted>od {formatEur(limit.dailyCents)}</T>
+        </Ring>
+      </Animated.View>
+
+      <Animated.View entering={enter(2)}>
+        <Section
+          title="Ovaj mjesec"
+          right={
+            <T v="headline" color={monthOver ? colors.danger : colors.ink} style={{ fontSize: 15 }}>
+              {monthOver ? `${formatEur(-limit.monthLeftCents)} preko` : `ostalo ${formatEur(limit.monthLeftCents)}`}
+            </T>
+          }
         >
-          <Animated.View entering={enter(0)} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <MonthBar spent={variableSpent} available={limit.availableCents} expected={dayNo / dim} />
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <T v="caption" muted>još {limit.daysLeft} {limit.daysLeft === 1 ? "dan" : "dana"}</T>
+            <T v="caption" color={pace === "fast" ? colors.warning : colors.brand} style={{ fontWeight: "800" }}>{paceLabel}</T>
+          </View>
+        </Section>
+      </Animated.View>
+
+      {upcoming.length > 0 ? (
+        <Animated.View entering={enter(3)}>
+          <Section title="Uskoro">
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -PAD }} contentContainerStyle={{ paddingHorizontal: PAD, gap: 10 }}>
+              {upcoming.map(({ item, date }) => {
+                const rec = recById.get(item.id);
+                const cat = catById.get(rec?.categoryId ?? "");
+                const diff = Number(date.slice(8)) - dayNo;
+                const when = diff === 0 ? "danas" : diff === 1 ? "sutra" : `za ${diff} dana`;
+                return (
+                  <Glass key={item.id} style={{ width: 136, padding: 12, gap: 8 }}>
+                    <CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={rec?.iconKey ?? cat?.icon ?? "repeat"} size={34} />
+                    <View style={{ gap: 2 }}>
+                      <T v="headline" numberOfLines={1}>{item.name}</T>
+                      <T v="caption" muted>{when}</T>
+                      <T v="amount" style={{ fontSize: 17, marginTop: 2 }}>{formatEur(item.amountCents)}</T>
+                    </View>
+                  </Glass>
+                );
+              })}
+            </ScrollView>
+          </Section>
+        </Animated.View>
+      ) : null}
+
+      <Animated.View entering={enter(4)}>
+        <Section title="Zadnje">
+          {recent.length === 0 ? (
+            <T muted>Još nema troškova. Dodaj prvi s +.</T>
+          ) : (
             <View>
-              <T v="caption" muted>{longDate(day)}</T>
-              <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6 }}>
-                <T v="title-1" style={{ fontSize: 24, lineHeight: 32 }}>Bok</T>
-                {name ? <T v="serif-accent" color={colors.brand} style={{ fontSize: 32, lineHeight: 38 }}>{name}</T> : null}
-              </View>
-            </View>
-            <Avatar initial={initial} onPress={() => router.navigate("/profil" as Href)} />
-          </Animated.View>
-
-          <Animated.View entering={enter(1)} style={{ alignItems: "center", gap: space["3"] }}>
-            <Ring remaining={remaining} state={state}>
-              <T v="mono-label" muted>{limit.isOver ? "Danas si preko" : "Danas još smiješ"}</T>
-              <Amount cents={limit.isOver ? -limit.overByCents : limit.leftTodayCents} color={limit.isOver ? colors.danger : colors.ink} />
-              <T v="headline" muted style={{ fontSize: 14 }}>od {formatEur(limit.dailyCents)}</T>
-            </Ring>
-          </Animated.View>
-
-          <Animated.View entering={enter(2)} style={{ gap: space["3"] }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
-              <T v="mono-label" muted>Ovaj mjesec</T>
-              <T v="headline" color={monthOver ? colors.danger : colors.ink} style={{ fontSize: 15 }}>
-                {monthOver ? `${formatEur(-limit.monthLeftCents)} preko` : `ostalo ${formatEur(limit.monthLeftCents)}`}
-              </T>
-            </View>
-            <MonthBar spent={variableSpent} available={limit.availableCents} expected={dayNo / dim} />
-            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <T v="caption" muted>još {limit.daysLeft} {limit.daysLeft === 1 ? "dan" : "dana"}</T>
-              <T v="caption" color={pace === "fast" ? colors.warning : colors.brand} style={{ fontWeight: "800" }}>{paceLabel}</T>
-            </View>
-          </Animated.View>
-
-          {upcoming.length > 0 ? (
-            <Animated.View entering={enter(3)} style={{ gap: space["2"] }}>
-              <T v="mono-label" muted>Uskoro</T>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -(space["4"] + 4) }} contentContainerStyle={{ paddingHorizontal: space["4"] + 4, gap: 10 }}>
-                {upcoming.map(({ item, date }) => {
-                  const rec = recById.get(item.id);
-                  const cat = catById.get(rec?.categoryId ?? "");
-                  const diff = Number(date.slice(8)) - dayNo;
-                  const when = diff === 0 ? "danas" : diff === 1 ? "sutra" : `za ${diff} dana`;
-                  return (
-                    <Glass key={item.id} style={{ width: 136, padding: 12, gap: 8 }}>
-                      <CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={rec?.iconKey ?? cat?.icon ?? "repeat"} size={34} />
-                      <View style={{ gap: 2 }}>
-                        <T v="headline" numberOfLines={1}>{item.name}</T>
-                        <T v="caption" muted>{when}</T>
-                        <T v="amount" style={{ fontSize: 17, marginTop: 2 }}>{formatEur(item.amountCents)}</T>
-                      </View>
-                    </Glass>
-                  );
-                })}
-              </ScrollView>
-            </Animated.View>
-          ) : null}
-
-          <Animated.View entering={enter(4)} style={{ gap: space["1"] }}>
-            <T v="mono-label" muted style={{ marginBottom: 2 }}>Zadnje</T>
-            {recent.length === 0 ? (
-              <Glass style={{ padding: space["5"] }}>
-                <T muted>Još nema troškova. Dodaj prvi s +.</T>
-              </Glass>
-            ) : (
-              [...sections.entries()].map(([date, list]) => (
+              {[...sections.entries()].map(([date, list], si) => (
                 <View key={date}>
-                  <T v="mono-label" muted style={{ marginTop: 10, marginBottom: 2, fontSize: 11 }}>{relativeDay(date, day)}</T>
-                  {list.map((t) => (
+                  <T v="caption" muted style={{ marginTop: si === 0 ? 0 : 14, fontWeight: "700" }}>{relativeDay(date, day)}</T>
+                  {list.map((t, i) => (
                     <SwipeRow
                       key={t.id}
                       onDelete={() => {
@@ -149,16 +142,22 @@ export default function Pocetna() {
                       }}
                     >
                       <View>
-                        <TxRow tx={t} category={t.categoryId ? catById.get(t.categoryId) : undefined} hideDate onPress={() => router.push({ pathname: "/dodaj", params: { id: t.id } })} />
+                        <TxRow
+                          tx={t}
+                          first={i === 0}
+                          category={t.categoryId ? catById.get(t.categoryId) : undefined}
+                          hideDate
+                          onPress={() => router.push({ pathname: "/dodaj", params: { id: t.id } })}
+                        />
                       </View>
                     </SwipeRow>
                   ))}
                 </View>
-              ))
-            )}
-          </Animated.View>
-        </ScrollView>
-      </SafeAreaView>
-    </View>
+              ))}
+            </View>
+          )}
+        </Section>
+      </Animated.View>
+    </TabScreen>
   );
 }

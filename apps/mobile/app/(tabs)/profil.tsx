@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, Switch, TextInput, View } from "react-native";
+import { Pressable, Switch, TextInput, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import Constants from "expo-constants";
 import * as Haptics from "expo-haptics";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { formatEur, yearMonthOf } from "@unitcent/core";
 import { useAccount } from "../../src/account";
 import { Avatar } from "../../src/components";
 import { AccountCta, SyncLine } from "../../src/AccountSection";
 import { useDb } from "../../src/data";
-import { Glow } from "../../src/fx";
+import { TabScreen } from "../../src/layout";
 import { monthTitle } from "../../src/format";
 import { Icon } from "../../src/icons";
 import { Group, Row } from "../../src/settings";
@@ -81,14 +80,7 @@ export default function Profil() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Glow />
-      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-        <ScrollView
-          contentContainerStyle={{ padding: space["4"] + 4, paddingTop: space["5"], paddingBottom: 140, gap: space["5"] }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+    <TabScreen>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
             <Avatar size={68} initial={(name.trim() || account.email || "?").charAt(0)} />
             <View style={{ flex: 1, minWidth: 0 }}>
@@ -136,8 +128,6 @@ export default function Profil() {
           </Group>
 
           <T v="caption" muted style={{ textAlign: "center" }}>UnitCent · verzija {Constants.expoConfig?.version ?? ""}</T>
-        </ScrollView>
-      </SafeAreaView>
-    </View>
+    </TabScreen>
   );
 }

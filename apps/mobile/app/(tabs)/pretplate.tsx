@@ -1,14 +1,13 @@
-import { Alert, Pressable, ScrollView, View } from "react-native";
+import { Alert, View } from "react-native";
 import { useRouter } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { formatEur, occurrenceDate, yearMonthOf } from "@unitcent/core";
 import { Calendar } from "../../src/Calendar";
-import { Button, CatIcon } from "../../src/components";
+import { CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
-import { Glow } from "../../src/fx";
-import { fitFontSize } from "../../src/format";
+import { Amount, Ring, RoundButton } from "../../src/fx";
+import { monthTitle } from "../../src/format";
+import { ListRow, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
 import { useTheme } from "../../src/theme";
 import { T } from "../../src/ui";
 import { deleteRecurring, listCategories, listRecurring, today } from "../../src/db/repo";
@@ -16,9 +15,10 @@ import { rescheduleReminders } from "../../src/notifications";
 
 const enter = (i: number) => FadeInDown.delay(i * 70).duration(420);
 
+/** Pretplate: mjesec (+ dodaj) → koliko je ovaj mjesec već plaćeno (isti prsten kao na početnoj) → kalendar → stavke. */
 export default function Pretplate() {
-  const { colors, fx, space } = useTheme();
   const router = useRouter();
+  const { colors } = useTheme();
   const day = today();
   const month = yearMonthOf(day);
   const items = useDb(() => listRecurring());
@@ -31,7 +31,8 @@ export default function Pretplate() {
     const d = occurrenceDate(i, month);
     return d && d <= day ? s + i.amountCents : s;
   }, 0);
-  const paidPct = total > 0 ? Math.round((paid / total) * 100) : 0;
+  const paidRatio = total > 0 ? paid / total : 0;
+  const count = `${items.length} ${items.length === 1 ? "stavka" : items.length < 5 ? "stavke" : "stavki"}`;
 
   const confirmDelete = (id: string, name: string) =>
     Alert.alert(`Obrisati „${name}“?`, "Već knjiženi troškovi ostaju.", [
@@ -46,80 +47,62 @@ export default function Pretplate() {
       },
     ]);
 
-  const row = (it: (typeof items)[number], sub: string, i: number) => {
-    const cat = catById.get(it.categoryId ?? "");
-    return (
-      <Pressable
-        key={it.id}
-        accessibilityRole="button"
-        accessibilityHint="Dodirni za uređivanje, dugo pritisni za brisanje"
-        onPress={() => router.push({ pathname: "/pretplata", params: { id: it.id } })}
-        delayLongPress={450}
-        onLongPress={() => confirmDelete(it.id, it.name)}
-        style={{ minHeight: 64, flexDirection: "row", alignItems: "center", gap: 14, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: fx.line }}
-      >
-        <CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={it.iconKey ?? cat?.icon ?? "repeat"} />
-        <View style={{ flex: 1 }}>
-          <T v="headline" numberOfLines={1} style={{ fontWeight: "700" }}>{it.name}</T>
-          <T v="caption" muted>{sub}</T>
-        </View>
-        <T v="amount" style={{ fontWeight: "800" }}>{formatEur(it.amountCents)}</T>
-      </Pressable>
-    );
-  };
-
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Glow />
-      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-        <ScrollView
-          contentContainerStyle={{ padding: space["4"] + 4, paddingTop: space["5"], paddingBottom: 140, gap: space["5"] }}
-          showsVerticalScrollIndicator={false}
-        >
-          <Animated.View entering={enter(0)} style={{ gap: space["4"] }}>
-            <View style={{ gap: 4 }}>
-              <T v="mono-label" muted>Svaki mjesec</T>
-              <T v="amount-hero" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={{ fontSize: fitFontSize(formatEur(total), 320, 46), lineHeight: 52, letterSpacing: -2 }}>{formatEur(total)}</T>
-            </View>
-            <View style={{ gap: 6 }}>
-              <View style={{ height: 6, borderRadius: 3, backgroundColor: fx.track, overflow: "hidden" }}>
-                <LinearGradient
-                  colors={[colors.brand, fx.accent2]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={{ width: `${paidPct}%`, height: "100%", borderRadius: 3 }}
-                />
-              </View>
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <T v="mono-label" muted>plaćeno {paidPct} %</T>
-                <T v="mono-label" muted>{items.length} {items.length === 1 ? "stavka" : items.length < 5 ? "stavke" : "stavki"}</T>
-              </View>
-            </View>
-          </Animated.View>
+    <TabScreen>
+      <Animated.View entering={enter(0)}>
+        <PageHeader right={<RoundButton icon="plus" label="Dodaj pretplatu" onPress={() => router.push("/pretplata")} />}>
+          <T v="title-2" style={{ fontSize: 19 }}>{monthTitle(month)}</T>
+        </PageHeader>
+      </Animated.View>
 
-          {items.length > 0 ? (
-            <Animated.View entering={enter(1)}>
-              <Calendar month={month} items={items} categories={cats} todayDate={day} />
-            </Animated.View>
-          ) : null}
+      <Animated.View entering={enter(1)} style={{ alignItems: "center" }}>
+        <Ring size={220} remaining={paidRatio} state="ok">
+          <T v="mono-label" muted>Svaki mjesec</T>
+          <Amount cents={total} maxWidth={150} base={44} />
+          <T v="caption" muted>plaćeno {Math.round(paidRatio * 100)} %</T>
+        </Ring>
+      </Animated.View>
 
-          <Animated.View entering={enter(2)} style={{ gap: 4 }}>
-            <T v="mono-label" muted>Stavke</T>
-            {items.length === 0 ? (
-              <T muted>Upišeš jednom, knjiže se same. Dodaj prvu pretplatu ili fiksni trošak.</T>
-            ) : (
-              <View>{[...items].sort((a, b) => a.dayOfMonth - b.dayOfMonth).map((it, i) => {
+      {items.length > 0 ? (
+        <Animated.View entering={enter(2)}>
+          <Section title="Kalendar">
+            <Calendar month={month} items={items} categories={cats} todayDate={day} />
+          </Section>
+        </Animated.View>
+      ) : null}
+
+      <Animated.View entering={enter(3)}>
+        <Section title="Stavke" right={count}>
+          {items.length === 0 ? (
+            <T muted>Upišeš jednom, knjiže se same. Dodaj prvu pretplatu ili fiksni trošak s +.</T>
+          ) : (
+            <View>
+              {[...items]
+                .sort((a, b) => a.dayOfMonth - b.dayOfMonth)
+                .map((it, i) => {
+                  const cat = catById.get(it.categoryId ?? "");
                   const d = it.active ? occurrenceDate(it, month) : null;
                   const diff = d ? Number(d.slice(8)) - Number(day.slice(8)) : null;
-                  const sub = diff === null ? "Neaktivno" : diff < 0 ? `plaćeno ${Number(d!.slice(8))}.` : diff === 0 ? "danas" : diff === 1 ? "sutra" : `za ${diff} dana`;
-                  return row(it, sub, i);
-                })}</View>
-            )}
-          </Animated.View>
-
-          <Button variant="secondary" icon="plus" label="Dodaj pretplatu" onPress={() => router.push("/pretplata")} />
-        </ScrollView>
-      </SafeAreaView>
-    </View>
+                  const sub =
+                    diff === null ? "Neaktivno" : diff < 0 ? `plaćeno ${Number(d!.slice(8))}.` : diff === 0 ? "danas" : diff === 1 ? "sutra" : `za ${diff} dana`;
+                  return (
+                    <ListRow
+                      key={it.id}
+                      first={i === 0}
+                      left={<CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={it.iconKey ?? cat?.icon ?? "repeat"} size={40} />}
+                      title={it.name}
+                      subtitle={sub}
+                      right={<RowAmount color={diff !== null && diff < 0 ? colors["ink-muted"] : undefined}>{formatEur(it.amountCents)}</RowAmount>}
+                      hint="Dodirni za uređivanje, dugo pritisni za brisanje"
+                      onPress={() => router.push({ pathname: "/pretplata", params: { id: it.id } })}
+                      onLongPress={() => confirmDelete(it.id, it.name)}
+                    />
+                  );
+                })}
+            </View>
+          )}
+        </Section>
+      </Animated.View>
+    </TabScreen>
   );
 }

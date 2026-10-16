@@ -284,7 +284,7 @@ export function DayBars({
 /* ---------- donut pregleda ---------- */
 
 export function Donut({
-  size = 250,
+  size = 262,
   slices,
   children,
 }: {
@@ -293,9 +293,10 @@ export function Donut({
   children?: ReactNode;
 }) {
   const { fx } = useTheme();
+  // Isti jezik kao prsten na početnoj: ista debljina (≈ 6,7 % veličine), zaobljeni krajevi, isti trag.
   const R = 102;
-  const W = 18; // debljina prstena
-  const GAP = 5; // vidljiv razmak između isječaka (u jedinicama viewBoxa)
+  const W = 17;
+  const GAP = 6; // vidljiv razmak između isječaka
   const C = 2 * Math.PI * R;
   const total = slices.reduce((s, x) => s + x.value, 0);
   const many = slices.length > 1;
@@ -309,21 +310,24 @@ export function Donut({
           {total > 0 && many
             ? slices.map((s, i) => {
                 const len = (s.value / total) * C;
-                // Ravni krajevi i fiksan razmak: isječak je kraći za GAP, a pomaknut za pola razmaka.
-                const dash = Math.max(1, len - GAP);
-                const el = (
-                  <Circle
-                    key={i}
-                    cx={125}
-                    cy={125}
-                    r={R}
-                    stroke={s.color}
-                    strokeWidth={W}
-                    fill="none"
-                    strokeDasharray={`${dash} ${C}`}
-                    strokeDashoffset={-(off + GAP / 2)}
-                  />
-                );
+                // Zaobljeni krajevi dodaju W duljine, pa se crta skraćuje za W + razmak: isječci se nikad ne preklapaju.
+                // Isječci prekratki za to (< ~4 %) ne crtaju se na prstenu, a vide se u popisu ispod.
+                const dash = len - GAP - W;
+                const el =
+                  dash > 0.5 ? (
+                    <Circle
+                      key={i}
+                      cx={125}
+                      cy={125}
+                      r={R}
+                      stroke={s.color}
+                      strokeWidth={W}
+                      strokeLinecap="round"
+                      fill="none"
+                      strokeDasharray={`${dash} ${C}`}
+                      strokeDashoffset={-(off + (GAP + W) / 2)}
+                    />
+                  ) : null;
                 off += len;
                 return el;
               })

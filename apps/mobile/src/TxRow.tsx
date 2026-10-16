@@ -1,14 +1,13 @@
-import { Pressable, View } from "react-native";
 import { formatEur } from "@unitcent/core";
 import { CatIcon } from "./components";
 import { relativeDay } from "./format";
+import { ListRow, RowAmount } from "./layout";
 import { useTheme } from "./theme";
-import { T } from "./ui";
 import { today, type Category, type Transaction } from "./db/repo";
 
 /**
- * Redak troška: ikona kategorije, naziv, podatak i iznos. Bez kutije; na početnom je omotan
- * u SwipeRow (povuci ulijevo za brisanje), a dugi pritisak je rezerva za pristupačnost.
+ * Redak troška. Naziv je bilješka (ili kategorija); kategorija se u podnaslovu ponavlja samo kad naziv nije ona.
+ * Na početnom je omotan u SwipeRow (povuci ulijevo za brisanje), dodir uređuje.
  */
 export function TxRow({
   tx,
@@ -16,36 +15,30 @@ export function TxRow({
   onPress,
   onLongPress,
   hideDate,
+  first,
 }: {
   tx: Transaction;
   category?: Category;
   onPress?: () => void;
   onLongPress?: () => void;
   hideDate?: boolean;
+  first?: boolean;
 }) {
   const { colors } = useTheme();
-  // Naziv je bilješka (ili kategorija); kategorija se u podnaslovu ponavlja samo kad naziv nije ona.
   const title = tx.note ?? category?.name ?? "Trošak";
   const source = tx.source === "recurring" ? "Pretplata" : tx.source === "scan" ? "Račun" : null;
-  const sub = [hideDate ? null : relativeDay(tx.localDate, today()), tx.note ? category?.name : null, source]
-    .filter(Boolean)
-    .join(" · ");
-  const amount = tx.type === "income" ? `+${formatEur(tx.amountCents)}` : formatEur(-tx.amountCents);
+  const sub = [hideDate ? null : relativeDay(tx.localDate, today()), tx.note ? category?.name : null, source].filter(Boolean).join(" · ");
+  const income = tx.type === "income";
   return (
-    <Pressable
+    <ListRow
+      first={first}
+      left={<CatIcon colorToken={category?.colorToken ?? "cat-ostalo"} icon={category?.icon ?? "dots"} size={40} />}
+      title={title}
+      subtitle={sub || undefined}
+      right={<RowAmount color={income ? colors.brand : undefined}>{income ? `+${formatEur(tx.amountCents)}` : formatEur(-tx.amountCents)}</RowAmount>}
       onPress={onPress}
       onLongPress={onLongPress}
-      delayLongPress={450}
-      accessibilityRole="button"
-      accessibilityHint="Dodirni za uređivanje, povuci ulijevo za brisanje"
-      style={{ minHeight: 64, flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 10 }}
-    >
-      <CatIcon colorToken={category?.colorToken ?? "cat-ostalo"} icon={category?.icon ?? "dots"} />
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <T v="headline" numberOfLines={1} style={{ fontWeight: "700" }}>{title}</T>
-        <T v="caption" muted numberOfLines={1}>{sub}</T>
-      </View>
-      <T v="amount" color={tx.type === "income" ? colors.brand : colors.ink} style={{ fontWeight: "800" }}>{amount}</T>
-    </Pressable>
+      hint="Dodirni za uređivanje, povuci ulijevo za brisanje"
+    />
   );
 }
