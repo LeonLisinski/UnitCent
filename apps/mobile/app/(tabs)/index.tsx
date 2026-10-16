@@ -83,18 +83,23 @@ export default function Pocetna() {
       </Animated.View>
 
       <Animated.View entering={enter(2)}>
-        <Section
-          title="Ovaj mjesec"
-          right={
-            <T v="headline" color={monthOver ? colors.danger : colors.ink} style={{ fontSize: 15 }}>
-              {monthOver ? `${formatEur(-limit.monthLeftCents)} preko` : `ostalo ${formatEur(limit.monthLeftCents)}`}
-            </T>
-          }
-        >
+        <Section title="Ovaj mjesec">
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" }}>
+            <View style={{ gap: 2 }}>
+              <T v="caption" muted>Potrošeno</T>
+              <T v="amount" color={colors["ink-muted"]} style={{ fontSize: 22, lineHeight: 28, fontWeight: "800" }}>{formatEur(variableSpent)}</T>
+            </View>
+            <View style={{ gap: 2, alignItems: "flex-end" }}>
+              <T v="caption" muted>{monthOver ? "Preko plana" : "Ostalo"}</T>
+              <T v="amount" color={monthOver ? colors.danger : colors.ink} style={{ fontSize: 22, lineHeight: 28, fontWeight: "800" }}>
+                {formatEur(monthOver ? -limit.monthLeftCents : limit.monthLeftCents)}
+              </T>
+            </View>
+          </View>
           <MonthBar spent={variableSpent} available={limit.availableCents} expected={dayNo / dim} />
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <T v="caption" muted>još {limit.daysLeft} {limit.daysLeft === 1 ? "dan" : "dana"}</T>
-            <T v="caption" color={pace === "fast" ? colors.warning : colors.brand} style={{ fontWeight: "800" }}>{paceLabel}</T>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+            <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: pace === "fast" ? colors.warning : colors.brand }} />
+            <T v="caption" muted>{paceLabel} · još {limit.daysLeft} {limit.daysLeft === 1 ? "dan" : "dana"}</T>
           </View>
         </Section>
       </Animated.View>
@@ -132,7 +137,7 @@ export default function Pocetna() {
             <View>
               {[...sections.entries()].map(([date, list], si) => (
                 <View key={date}>
-                  <T v="caption" muted style={{ marginTop: si === 0 ? 0 : 14, fontWeight: "700" }}>{relativeDay(date, day)}</T>
+                  <T v="caption" muted style={{ marginTop: si === 0 ? 0 : 16, fontWeight: "600" }}>{relativeDay(date, day)}</T>
                   {list.map((t, i) => (
                     <SwipeRow
                       key={t.id}

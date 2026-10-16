@@ -47,7 +47,7 @@ export function Section({ title, right, children }: { title: string; right?: Rea
   return (
     <View style={{ gap: 12 }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
-        <T v="mono-label" muted>{title}</T>
+        <T v="mono-label" muted style={{ fontSize: 11, opacity: 0.8 }}>{title}</T>
         {typeof right === "string" ? <T v="caption" muted>{right}</T> : right}
       </View>
       {children}

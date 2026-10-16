@@ -293,45 +293,38 @@ export function Donut({
   children?: ReactNode;
 }) {
   const { fx } = useTheme();
-  // Isti jezik kao prsten na početnoj: ista debljina (≈ 6,7 % veličine), zaobljeni krajevi, isti trag.
+  // Isti jezik kao prsten na početnoj: ista debljina (≈ 6,7 % veličine), isti trag i isti blagi sjaj.
   const R = 102;
   const W = 17;
-  const GAP = 6; // vidljiv razmak između isječaka
   const C = 2 * Math.PI * R;
   const total = slices.reduce((s, x) => s + x.value, 0);
-  const many = slices.length > 1;
   let off = 0;
+  const arcs =
+    total > 0
+      ? slices.map((s) => {
+          const len = (s.value / total) * C;
+          const arc = { color: s.color, len, start: off };
+          off += len;
+          return arc;
+        })
+      : [];
   return (
     <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
       <Svg width={size} height={size} viewBox="0 0 250 250">
         <G rotation={-90} origin="125, 125">
           <Circle cx={125} cy={125} r={R} stroke={fx.track} strokeWidth={W} fill="none" />
-          {total > 0 && !many ? <Circle cx={125} cy={125} r={R} stroke={slices[0]!.color} strokeWidth={W} fill="none" /> : null}
-          {total > 0 && many
-            ? slices.map((s, i) => {
-                const len = (s.value / total) * C;
-                // Zaobljeni krajevi dodaju W duljine, pa se crta skraćuje za W + razmak: isječci se nikad ne preklapaju.
-                // Isječci prekratki za to (< ~4 %) ne crtaju se na prstenu, a vide se u popisu ispod.
-                const dash = len - GAP - W;
-                const el =
-                  dash > 0.5 ? (
-                    <Circle
-                      key={i}
-                      cx={125}
-                      cy={125}
-                      r={R}
-                      stroke={s.color}
-                      strokeWidth={W}
-                      strokeLinecap="round"
-                      fill="none"
-                      strokeDasharray={`${dash} ${C}`}
-                      strokeDashoffset={-(off + (GAP + W) / 2)}
-                    />
-                  ) : null;
-                off += len;
-                return el;
-              })
-            : null}
+          {/* Sjaj: dva šira prozirna sloja ispod isječaka */}
+          {[
+            { w: W + 20, o: 0.08 },
+            { w: W + 11, o: 0.14 },
+          ].map((g) =>
+            arcs.map((a, i) => (
+              <Circle key={`${g.w}-${i}`} cx={125} cy={125} r={R} stroke={a.color} strokeWidth={g.w} opacity={g.o} fill="none" strokeDasharray={`${a.len} ${C}`} strokeDashoffset={-a.start} />
+            )),
+          )}
+          {arcs.map((a, i) => (
+            <Circle key={i} cx={125} cy={125} r={R} stroke={a.color} strokeWidth={W} fill="none" strokeDasharray={`${a.len} ${C}`} strokeDashoffset={-a.start} />
+          ))}
         </G>
       </Svg>
       <View style={{ position: "absolute", alignItems: "center", gap: 4, maxWidth: size * 0.62 }}>{children}</View>
