@@ -20,10 +20,10 @@ import { T } from "../src/ui";
 const SOCIAL_PROOF: string | null = null;
 
 /** Što Premium otključava: ikona + kratak naziv, bez kutija. Zlatna i zelena naizmjence. */
-const PERKS: { icon: string; title: string; hint: string; soon?: boolean }[] = [
-  { icon: "calendar", title: "Cijela povijest", hint: `Besplatno je zadnjih ${FREE_HISTORY_MONTHS} mjeseci` },
-  { icon: "camera", title: "Skeniranje računa", hint: "Bez ograničenja, razvrstano po kategorijama" },
-  { icon: "chart", title: "Uvidi i savjeti", hint: "Gdje curi novac", soon: true },
+const PERKS: { icon: string; title: string; soon?: boolean }[] = [
+  { icon: "calendar", title: "Cijela povijest" },
+  { icon: "camera", title: "Skeniranje računa" },
+  { icon: "chart", title: "Uvidi i savjeti", soon: true },
 ];
 
 /** Prebacivač plana: pilula s dvije opcije; godišnja nosi zlatnu oznaku uštede. */
@@ -146,23 +146,15 @@ export default function Premium() {
       </View>
 
       <View style={{ gap: 20 }}>
-        {PERKS.map((perk, i) => {
-          const c = i % 2 === 0 ? fx.gold : colors.brand;
-          return (
-            <View key={perk.title} style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-              <View style={{ width: 44, alignItems: "center" }}>
-                <Icon name={perk.icon} size={26} color={c} stroke={1.9} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <T v="headline" style={{ fontWeight: "700", fontSize: 17 }}>{perk.title}</T>
-                  {perk.soon ? <T v="caption" color={fx.gold} style={{ fontSize: 10.5, fontWeight: "800" }}>USKORO</T> : null}
-                </View>
-                <T v="caption" muted>{perk.hint}</T>
-              </View>
+        {PERKS.map((perk) => (
+          <View key={perk.title} style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+            <View style={{ width: 44, alignItems: "center" }}>
+              <Icon name={perk.icon} size={26} color={fx.gold} stroke={1.9} />
             </View>
-          );
-        })}
+            <T v="headline" style={{ fontWeight: "700", fontSize: 17 }}>{perk.title}</T>
+            {perk.soon ? <T v="caption" color={fx.gold} style={{ fontSize: 10.5, fontWeight: "800" }}>USKORO</T> : null}
+          </View>
+        ))}
       </View>
 
       {premium ? null : (
