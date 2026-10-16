@@ -319,6 +319,9 @@ Svaka faza završava demonstracijom, ažuriranjem ovog dokumenta (§12) i odluko
 
 - **2026-10-16: prijava Googleom (dev):** anonimni račun se povezuje s Googleom (`linkIdentity`, isti korisnik i podaci); ako je Google račun već povezan (novi mobitel), prijava u taj račun (`signInWithOAuth`), kursori se resetiraju, a lokalni podaci ulaze u outbox i dodaju se računu. Preko preglednika (expo-web-browser), radi u Expo Go i u buildu. Apple prijava čeka developer račun (D-05/D-06). Odjava još ne postoji (odluka: što s lokalnim podacima).
 
+- **2026-10-16: brisanje računa i izvoz podataka (zahtjev storea i GDPR-a):** Edge Function `delete-account` (supabase/functions/, objavljena na dev; briše slike u Storageu i korisnika, tablice kaskadno), u Profilu „Moji podaci“: izvoz u JSON (expo-sharing) i „Obriši račun i sve podatke“ (potvrda, briše i lokalno, vraća na onboarding, nova anonimna sesija). **Neisprobano na uređaju.**
+- **Popis otvorenog prije lansiranja (da se ne zaboravi):** Faza 2: odjava (što s lokalnim podacima), spajanje s lokalnom sigurnosnom kopijom (D-10), test prijave Googleom na buildu (Redirect URLs i Site URL u Supabaseu), Apple prijava (treba developer račun; uključiti `EXPO_PUBLIC_APPLE_SIGNIN=1`), uključiti zaštitu od procurjelih lozinki u Auth postavkama, staging projekt. Faza 3: AI skeniranje. Ostalo: App Attest/Play Integrity, RevenueCat, Sentry/EAS, PostHog, e-adresa podrške, uvjeti korištenja i privatnost (pravni pregled), Android adaptive ikona.
+
 **Sljedeće:** dovršiti Fazu 0 (stavke koje traže vlasnika) pa Faza 1. Preostalo u Fazi 0:
 1. rezervirati bundle ID i developer račune (D-05, D-06);
 2. napraviti `dev`/`staging` Supabase projekte, primijeniti migraciju, uključiti anonimnu prijavu;

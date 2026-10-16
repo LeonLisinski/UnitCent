@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, TextInput, View } from "react-native";
+import { Alert, Pressable, ScrollView, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { formatEur, yearMonthOf, type Cents } from "@unitcent/core";
@@ -11,6 +11,7 @@ import { useToast } from "../../src/toast";
 import { T } from "../../src/ui";
 import { getLatestPlanBefore, listCategories, getPlan, kvGet, kvSet, today, upsertPlan } from "../../src/db/repo";
 import { AccountSection } from "../../src/AccountSection";
+import { deleteAccountAndData, exportData } from "../../src/dataTools";
 import { disableReminders, enableReminders, remindersEnabled } from "../../src/notifications";
 
 const THEMES: { key: ThemePreference; label: string }[] = [
@@ -142,6 +143,43 @@ export default function Profil() {
           <View style={{ gap: space["2"] }}>
             <T v="mono-label" muted>Tema</T>
             <Segmented value={preference} onChange={setPreference} options={THEMES} />
+          </View>
+
+          <View style={{ gap: space["2"] }}>
+            <T v="mono-label" muted>Moji podaci</T>
+            <Button
+              variant="soft"
+              label="Izvezi podatke (JSON)"
+              onPress={async () => {
+                try {
+                  if (!(await exportData())) toast.show("Dijeljenje nije dostupno na ovom uređaju");
+                } catch {
+                  toast.show("Izvoz nije uspio");
+                }
+              }}
+            />
+            <Button
+              variant="text"
+              label="Obriši račun i sve podatke"
+              onPress={() =>
+                Alert.alert(
+                  "Obrisati račun i sve podatke?",
+                  "Brišu se troškovi, pretplate, kategorije i plan, na mobitelu i u oblaku. Ovo se ne može poništiti.",
+                  [
+                    { text: "Odustani", style: "cancel" },
+                    {
+                      text: "Obriši sve",
+                      style: "destructive",
+                      onPress: async () => {
+                        const ok = await deleteAccountAndData();
+                        if (ok) router.replace("/onboarding");
+                        else toast.show("Brisanje nije uspjelo, provjeri vezu i pokušaj ponovno");
+                      },
+                    },
+                  ],
+                )
+              }
+            />
           </View>
         </ScrollView>
       </SafeAreaView>
