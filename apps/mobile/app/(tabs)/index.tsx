@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { ScrollView, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -27,6 +28,7 @@ const enter = (i: number) => FadeInDown.delay(i * 70).duration(420);
 
 export default function Pocetna() {
   const { colors, fx, space } = useTheme();
+  const router = useRouter();
   const toast = useToast();
 
   const day = today();
@@ -162,7 +164,7 @@ export default function Pocetna() {
                       }}
                     >
                       <View style={{ backgroundColor: colors.bg }}>
-                        <TxRow tx={t} category={t.categoryId ? catById.get(t.categoryId) : undefined} hideDate />
+                        <TxRow tx={t} category={t.categoryId ? catById.get(t.categoryId) : undefined} hideDate onPress={() => router.push({ pathname: "/dodaj", params: { id: t.id } })} />
                       </View>
                     </SwipeRow>
                   ))}

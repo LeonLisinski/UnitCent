@@ -271,6 +271,28 @@ export function listRecentTransactions(limit = 8): Transaction[] {
     .map(mapTx);
 }
 
+export function getTransaction(id: string): Transaction | null {
+  const r = getDb().getFirstSync<TxRow>("select * from transactions where id = ? and deleted_at is null", [id]);
+  return r ? mapTx(r) : null;
+}
+
+export function updateTransaction(
+  id: string,
+  input: { amountCents: Cents; type: "expense" | "income"; categoryId: string | null; note?: string },
+): void {
+  const db = getDb();
+  const t = nowIso();
+  db.withTransactionSync(() => {
+    db.runSync(
+      "update transactions set amount_cents = ?, type = ?, category_id = ?, note = ?, client_updated_at = ?, rev = rev + 1 where id = ?",
+      [Math.round(input.amountCents), input.type, input.categoryId, input.note?.trim() ? input.note.trim() : null, t, id],
+    );
+    const r = db.getFirstSync<TxRow>("select * from transactions where id = ?", [id]);
+    if (r) enqueue("transactions", id, "upsert", r);
+  });
+  notifyDbChanged();
+}
+
 /* ---------- plan mjeseca ---------- */
 
 export function getPlan(month: YearMonth): MonthPlan | null {
@@ -359,6 +381,33 @@ export function addRecurring(input: {
   });
   notifyDbChanged();
   return mapRec(row);
+}
+
+export function getRecurring(id: string): RecurringRecord | null {
+  const r = getDb().getFirstSync<RecRow>("select * from recurring_items where id = ? and deleted_at is null", [id]);
+  return r ? mapRec(r) : null;
+}
+
+/** Izmjena vrijedi od sljedećeg knjiženja; već knjiženi troškovi se ne mijenjaju. */
+export function updateRecurring(
+  id: string,
+  input: { name: string; amountCents: Cents; dayOfMonth: number; categoryId: string | null; iconKey?: string | null },
+): void {
+  const db = getDb();
+  const t = nowIso();
+  db.withTransactionSync(() => {
+    db.runSync(
+      `update recurring_items set name = ?, amount_cents = ?, day_of_month = ?, category_id = ?, icon_key = ?,
+         client_updated_at = ?, rev = rev + 1 where id = ?`,
+      [
+        input.name.trim(), Math.round(input.amountCents), Math.min(31, Math.max(1, Math.round(input.dayOfMonth))),
+        input.categoryId, input.iconKey ?? null, t, id,
+      ],
+    );
+    const r = db.getFirstSync<RecRow>("select * from recurring_items where id = ?", [id]);
+    if (r) enqueue("recurring_items", id, "upsert", r);
+  });
+  notifyDbChanged();
 }
 
 export function deleteRecurring(id: string): void {

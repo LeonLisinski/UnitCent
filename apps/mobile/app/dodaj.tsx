@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Keyboard, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { parseAmount } from "@unitcent/core";
@@ -12,9 +12,16 @@ import { fitFontSize } from "../src/format";
 import { textStyle, useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
-import { addTransaction, deleteTransaction, listCategoriesByUsage } from "../src/db/repo";
+import { addTransaction, deleteTransaction, getTransaction, listCategoriesByUsage, updateTransaction } from "../src/db/repo";
 
 type Kind = "expense" | "income";
+
+/** Cente u tekst za tipkovnicu: 1250 → "12,5", 1200 → "12". */
+function centsToInput(c: number): string {
+  const whole = Math.floor(c / 100);
+  const frac = c % 100;
+  return frac === 0 ? String(whole) : `${whole},${String(frac).padStart(2, "0").replace(/0$/, "")}`;
+}
 
 /**
  * Brzi unos: veliki iznos, mreža kategorija i tipkovnica. Kategorija se samo označi, a sprema gumb „Spremi“.
@@ -24,11 +31,13 @@ export default function Dodaj() {
   const { colors, fx, space } = useTheme();
   const router = useRouter();
   const toast = useToast();
-  const [value, setValue] = useState("");
-  const [note, setNote] = useState("");
-  const [showNote, setShowNote] = useState(false);
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const editing = id ? getTransaction(id) : null;
+  const [value, setValue] = useState(editing ? centsToInput(editing.amountCents) : "");
+  const [note, setNote] = useState(editing?.note ?? "");
+  const [showNote, setShowNote] = useState(!!editing?.note);
   const [noteFocus, setNoteFocus] = useState(false); // tipkovnica telefona otvorena: sakrij našu numeričku, da „Spremi“ ostane vidljiv
-  const [type, setType] = useState<Kind>("expense");
+  const [type, setType] = useState<Kind>(editing?.type ?? "expense");
   const insets = useSafeAreaInsets();
   // Visina tipkovnice telefona mjeri se izravno (KeyboardAvoidingView u modalu pogrešno računa pomak).
   const [kb, setKb] = useState(0);
@@ -40,7 +49,7 @@ export default function Dodaj() {
       hide.remove();
     };
   }, []);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(editing?.categoryId ?? null);
   const cats = useDb(() => listCategoriesByUsage());
 
   const cents = value ? parseAmount(value) : null;
@@ -49,6 +58,13 @@ export default function Dodaj() {
     const categoryId = selected;
     if (!cents || cents <= 0) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      return;
+    }
+    if (editing) {
+      updateTransaction(editing.id, { amountCents: cents, type, categoryId, note });
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.back();
+      toast.show("Izmjene spremljene");
       return;
     }
     const tx = addTransaction({ amountCents: cents, type, categoryId, note });
@@ -183,7 +199,7 @@ export default function Dodaj() {
             </Pressable>
           )}
           {noteFocus ? null : <Keypad value={value} onChange={setValue} />}
-          <Button label="Spremi" disabled={!cents || cents <= 0} onPress={save} />
+          <Button label={editing ? "Spremi izmjene" : "Spremi"} disabled={!cents || cents <= 0} onPress={save} />
         </View>
       </SafeAreaView>
     </View>

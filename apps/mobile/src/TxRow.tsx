@@ -13,11 +13,13 @@ import { today, type Category, type Transaction } from "./db/repo";
 export function TxRow({
   tx,
   category,
+  onPress,
   onLongPress,
   hideDate,
 }: {
   tx: Transaction;
   category?: Category;
+  onPress?: () => void;
   onLongPress?: () => void;
   hideDate?: boolean;
 }) {
@@ -29,10 +31,11 @@ export function TxRow({
   const amount = tx.type === "income" ? `+${formatEur(tx.amountCents)}` : formatEur(-tx.amountCents);
   return (
     <Pressable
+      onPress={onPress}
       onLongPress={onLongPress}
       delayLongPress={450}
       accessibilityRole="button"
-      accessibilityHint={onLongPress ? "Dugo pritisni za brisanje" : "Povuci ulijevo za brisanje"}
+      accessibilityHint="Dodirni za uređivanje, povuci ulijevo za brisanje"
       style={{ minHeight: 64, flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 10 }}
     >
       <CatIcon colorToken={category?.colorToken ?? "cat-ostalo"} icon={category?.icon ?? "dots"} />

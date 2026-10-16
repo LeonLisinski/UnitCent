@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { ScrollView, TextInput, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { POPULAR_RECURRING, type Cents } from "@unitcent/core";
 import { AmountField, Button, CatIcon, Chip } from "../src/components";
@@ -8,7 +8,7 @@ import { Glow, RoundButton } from "../src/fx";
 import { textStyle, useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
-import { addRecurring, bookDueRecurring, listCategories } from "../src/db/repo";
+import { addRecurring, bookDueRecurring, getRecurring, listCategories, updateRecurring } from "../src/db/repo";
 import { rescheduleReminders } from "../src/notifications";
 
 /** Nova pretplata ili fiksni trošak. Odabir popularne stavke popunjava naziv, dan i kategoriju. */
@@ -18,11 +18,17 @@ export default function NovaPretplata() {
   const toast = useToast();
   const cats = useMemo(() => listCategories(), []);
 
-  const [name, setName] = useState("");
-  const [amount, setAmount] = useState<{ text: string; cents: Cents | null }>({ text: "", cents: null });
-  const [day, setDay] = useState("1");
-  const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [iconKey, setIconKey] = useState<string | null>(null);
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const editing = id ? getRecurring(id) : null;
+  const [name, setName] = useState(editing?.name ?? "");
+  const [amount, setAmount] = useState<{ text: string; cents: Cents | null }>(
+    editing
+      ? { text: editing.amountCents % 100 === 0 ? String(editing.amountCents / 100) : (editing.amountCents / 100).toFixed(2).replace(".", ","), cents: editing.amountCents }
+      : { text: "", cents: null },
+  );
+  const [day, setDay] = useState(editing ? String(editing.dayOfMonth) : "1");
+  const [categoryId, setCategoryId] = useState<string | null>(editing?.categoryId ?? null);
+  const [iconKey, setIconKey] = useState<string | null>(editing?.iconKey ?? null);
 
   const valid = name.trim().length > 0 && (amount.cents ?? 0) > 0;
 
@@ -39,6 +45,13 @@ export default function NovaPretplata() {
   const save = () => {
     if (!valid || amount.cents === null) return;
     const d = Math.min(31, Math.max(1, parseInt(day, 10) || 1));
+    if (editing) {
+      updateRecurring(editing.id, { name, amountCents: amount.cents, dayOfMonth: d, categoryId, iconKey });
+      void rescheduleReminders();
+      router.back();
+      toast.show("Izmjene spremljene · vrijede od sljedeće naplate");
+      return;
+    }
     addRecurring({ name, amountCents: amount.cents, dayOfMonth: d, categoryId, iconKey });
     const booked = bookDueRecurring();
     void rescheduleReminders();
@@ -55,10 +68,11 @@ export default function NovaPretplata() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <T v="title-2">Dodaj pretplatu</T>
+          <T v="title-2">{editing ? "Uredi pretplatu" : "Dodaj pretplatu"}</T>
           <RoundButton icon="x" label="Zatvori" onPress={() => router.back()} />
         </View>
 
+        {editing ? null : (
         <View style={{ gap: space["2"] }}>
           <T v="mono-label" muted>Popularno</T>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -67,6 +81,7 @@ export default function NovaPretplata() {
             ))}
           </View>
         </View>
+        )}
 
         <View style={{ gap: 6 }}>
           <T v="caption" muted>Naziv</T>
@@ -131,7 +146,7 @@ export default function NovaPretplata() {
           </View>
         </View>
 
-        <Button label="Dodaj" disabled={!valid} onPress={save} />
+        <Button label={editing ? "Spremi" : "Dodaj"} disabled={!valid} onPress={save} />
       </ScrollView>
     </SafeAreaView>
     </View>

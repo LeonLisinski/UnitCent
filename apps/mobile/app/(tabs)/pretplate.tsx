@@ -53,7 +53,8 @@ export default function Pretplate() {
       <Pressable
         key={it.id}
         accessibilityRole="button"
-        accessibilityHint="Dugo pritisni za brisanje"
+        accessibilityHint="Dodirni za uređivanje, dugo pritisni za brisanje"
+        onPress={() => router.push({ pathname: "/pretplata", params: { id: it.id } })}
         delayLongPress={450}
         onLongPress={() => confirmDelete(it.id, it.name)}
         style={{ minHeight: 64, flexDirection: "row", alignItems: "center", gap: 14, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: fx.line }}
