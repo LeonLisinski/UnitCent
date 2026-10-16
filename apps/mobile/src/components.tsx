@@ -277,3 +277,51 @@ export function Avatar({ initial, size = 44, onPress }: { initial: string; size?
     </Pressable>
   );
 }
+
+/** Tekstno polje s oznakom iznad (staklena podloga, zeleni obrub u fokusu). */
+export function TextField({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  maxLength,
+  autoFocus,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (t: string) => void;
+  placeholder?: string;
+  maxLength?: number;
+  autoFocus?: boolean;
+}) {
+  const { colors, fx } = useTheme();
+  const [focus, setFocus] = useState(false);
+  return (
+    <View style={{ gap: 6 }}>
+      <T v="caption" muted>{label}</T>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        onFocus={() => setFocus(true)}
+        onBlur={() => setFocus(false)}
+        placeholder={placeholder}
+        placeholderTextColor={colors["ink-muted"]}
+        maxLength={maxLength}
+        autoFocus={autoFocus}
+        accessibilityLabel={label}
+        style={[
+          textStyle("body"),
+          {
+            minHeight: 56,
+            borderRadius: 16,
+            borderWidth: 1.5,
+            borderColor: focus ? colors.brand : fx.glassBorder,
+            backgroundColor: fx.glass,
+            color: colors.ink,
+            paddingHorizontal: 16,
+          },
+        ]}
+      />
+    </View>
+  );
+}

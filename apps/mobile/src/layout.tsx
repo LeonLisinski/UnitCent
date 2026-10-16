@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { Pressable, ScrollView, View } from "react-native";
+import { Safe, useInsets, useKeyboardHeight } from "./safe";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Glow, recentlySwiped } from "./fx";
+import { Glow, RoundButton, recentlySwiped } from "./fx";
 import { useTheme } from "./theme";
 import { T } from "./ui";
 
@@ -28,6 +29,52 @@ export function TabScreen({ children }: { children: ReactNode }) {
           {children}
         </ScrollView>
       </SafeAreaView>
+    </View>
+  );
+}
+
+/**
+ * Okvir modalnog ekrana (forme): naslov i zatvaranje gore, sadržaj koji skrola, a glavna radnja ("Spremi")
+ * fiksirana pri dnu, uvijek vidljiva i podignuta iznad tipkovnice.
+ */
+export function ModalScreen({
+  title,
+  eyebrow,
+  onClose,
+  footer,
+  children,
+}: {
+  title: string;
+  eyebrow?: string;
+  onClose: () => void;
+  footer?: ReactNode;
+  children: ReactNode;
+}) {
+  const { colors } = useTheme();
+  const kb = useKeyboardHeight();
+  const insets = useInsets();
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <Glow />
+      <Safe>
+        <View style={{ flex: 1, paddingBottom: Math.max(0, kb - insets.bottom) }}>
+          <View style={{ paddingHorizontal: PAD, paddingTop: 8 }}>
+            <PageHeader right={<RoundButton icon="x" label="Zatvori" onPress={onClose} />}>
+              {eyebrow ? <T v="mono-label" muted style={{ fontSize: 11, opacity: 0.8 }}>{eyebrow}</T> : null}
+              <T v="title-1" style={{ fontSize: 26, lineHeight: 32 }}>{title}</T>
+            </PageHeader>
+          </View>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingHorizontal: PAD, paddingTop: 12, paddingBottom: 24, gap: 24 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </ScrollView>
+          {footer ? <View style={{ paddingHorizontal: PAD, paddingTop: 8, paddingBottom: 12, alignItems: "center", gap: 2 }}>{footer}</View> : null}
+        </View>
+      </Safe>
     </View>
   );
 }

@@ -1,20 +1,20 @@
 import { useMemo, useState } from "react";
-import { Alert, ScrollView, Switch, TextInput, View } from "react-native";
+import { Alert, ScrollView, Switch, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Safe } from "../src/safe";
 import { POPULAR_RECURRING, yearMonthOf, type Cents, type LocalDate } from "@unitcent/core";
-import { AmountField, Button, CatIcon, Chip } from "../src/components";
+import { AmountField, Button, CatIcon, Chip, TextField } from "../src/components";
 import { DateField } from "../src/DateField";
-import { Glow, RoundButton } from "../src/fx";
-import { textStyle, useTheme } from "../src/theme";
+import { Group } from "../src/settings";
+import { ModalScreen, PAD } from "../src/layout";
+import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
 import { addRecurring, bookDueRecurring, deleteRecurring, getRecurring, listCategories, today, updateRecurring } from "../src/db/repo";
 import { rescheduleReminders } from "../src/notifications";
 
-/** Nova pretplata ili fiksni trošak. Odabir popularne stavke popunjava naziv, dan i kategoriju. */
-export default function NovaPretplata() {
-  const { colors, fx, space } = useTheme();
+/** Nova ili postojeća pretplata / fiksni trošak: podaci, kategorija i razdoblje (početak i kraj). */
+export default function Pretplata() {
+  const { colors } = useTheme();
   const router = useRouter();
   const toast = useToast();
   const cats = useMemo(() => listCategories(), []);
@@ -30,7 +30,6 @@ export default function NovaPretplata() {
   const [day, setDay] = useState(editing ? String(editing.dayOfMonth) : "1");
   const [categoryId, setCategoryId] = useState<string | null>(editing?.categoryId ?? null);
   const [iconKey, setIconKey] = useState<string | null>(editing?.iconKey ?? null);
-
   const [start, setStart] = useState<LocalDate>(editing?.startDate ?? `${yearMonthOf(today())}-01`);
   const [hasEnd, setHasEnd] = useState(!!editing?.endDate);
   const [end, setEnd] = useState<LocalDate>(editing?.endDate ?? today());
@@ -51,148 +50,107 @@ export default function NovaPretplata() {
   const save = () => {
     if (!valid || amount.cents === null) return;
     const d = Math.min(31, Math.max(1, parseInt(day, 10) || 1));
+    const endDate = hasEnd ? end : null;
     if (editing) {
-      updateRecurring(editing.id, { name, amountCents: amount.cents, dayOfMonth: d, categoryId, iconKey, startDate: start, endDate: hasEnd ? end : null });
+      updateRecurring(editing.id, { name, amountCents: amount.cents, dayOfMonth: d, categoryId, iconKey, startDate: start, endDate });
       void rescheduleReminders();
       router.back();
       toast.show("Izmjene spremljene · vrijede od sljedeće naplate");
       return;
     }
-    addRecurring({ name, amountCents: amount.cents, dayOfMonth: d, categoryId, iconKey, startDate: start, endDate: hasEnd ? end : null });
+    addRecurring({ name, amountCents: amount.cents, dayOfMonth: d, categoryId, iconKey, startDate: start, endDate });
     const booked = bookDueRecurring();
     void rescheduleReminders();
     router.back();
     toast.show(booked > 0 ? "Dodano i već knjiženo ovaj mjesec" : `Dodano · naplata ${d}. u mjesecu`);
   };
 
-  return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Glow />
-    <Safe style={{ flex: 1 }}>
-      <ScrollView
-        contentContainerStyle={{ padding: space["4"], gap: space["4"], paddingBottom: space["7"] }}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <T v="title-2">{editing ? "Uredi pretplatu" : "Dodaj pretplatu"}</T>
-          <RoundButton icon="x" label="Zatvori" onPress={() => router.back()} />
-        </View>
+  const confirmDelete = () =>
+    Alert.alert(
+      `Obrisati „${editing?.name}“?`,
+      "Briše se iz svih mjeseci. Već knjiženi troškovi ostaju. Ako si je samo otkazao, umjesto brisanja uključi „Ima kraj“, pa ostaje u povijesti.",
+      [
+        { text: "Odustani", style: "cancel" },
+        {
+          text: "Obriši",
+          style: "destructive",
+          onPress: () => {
+            deleteRecurring(editing!.id);
+            void rescheduleReminders();
+            router.back();
+          },
+        },
+      ],
+    );
 
-        {editing ? null : (
-        <View style={{ gap: space["2"] }}>
-          <T v="mono-label" muted>Popularno</T>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+  return (
+    <ModalScreen
+      eyebrow={editing ? "Pretplata" : "Nova"}
+      title={editing ? editing.name : "Dodaj pretplatu"}
+      onClose={() => router.back()}
+      footer={
+        <>
+          <Button label={editing ? "Spremi" : "Dodaj"} disabled={!valid} onPress={save} />
+          {editing ? <Button variant="danger" label="Obriši pretplatu" onPress={confirmDelete} /> : null}
+        </>
+      }
+    >
+      {editing ? null : (
+        <View style={{ gap: 10 }}>
+          <T v="mono-label" muted style={{ fontSize: 11, opacity: 0.8 }}>Brzi odabir</T>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -PAD }} contentContainerStyle={{ paddingHorizontal: PAD, gap: 8 }}>
             {POPULAR_RECURRING.map((p) => (
               <Chip key={p.key} label={p.name} selected={name === p.name} onPress={() => fill(p.key)} />
             ))}
-          </View>
+          </ScrollView>
         </View>
-        )}
+      )}
 
-        <View style={{ gap: 6 }}>
-          <T v="caption" muted>Naziv</T>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="npr. Teretana"
-            placeholderTextColor={colors["ink-muted"]}
-            accessibilityLabel="Naziv"
-            style={[
-              textStyle("body"),
-              {
-                minHeight: 56,
-                borderRadius: 16,
-                borderWidth: 1.5,
-                borderColor: fx.glassBorder,
-                backgroundColor: fx.glass,
-                color: colors.ink,
-                paddingHorizontal: 16,
-              },
-            ]}
-          />
-        </View>
-
-        <View style={{ flexDirection: "row", gap: space["3"] }}>
+      <View style={{ gap: 16 }}>
+        <TextField label="Naziv" value={name} onChangeText={setName} placeholder="npr. Teretana" maxLength={30} />
+        <View style={{ flexDirection: "row", gap: 12 }}>
           <View style={{ flex: 2 }}>
             <AmountField label="Iznos" value={amount.text} onChange={(text, cents) => setAmount({ text, cents })} />
           </View>
-          <View style={{ flex: 1, gap: 6 }}>
-            <T v="caption" muted>Dan u mjesecu</T>
-            <TextInput
-              value={day}
-              onChangeText={(t) => setDay(t.replace(/\D/g, "").slice(0, 2))}
-              keyboardType="number-pad"
-              accessibilityLabel="Dan u mjesecu"
-              style={{
-                minHeight: 56,
-                borderRadius: 16,
-                borderWidth: 1.5,
-                borderColor: fx.glassBorder,
-                backgroundColor: fx.glass,
-                color: colors.ink,
-                fontSize: 20,
-                textAlign: "center",
-              }}
+          <View style={{ flex: 1 }}>
+            <TextField label="Dan u mjesecu" value={day} onChangeText={(t) => setDay(t.replace(/\D/g, "").slice(0, 2))} placeholder="1" />
+          </View>
+        </View>
+      </View>
+
+      <View style={{ gap: 10 }}>
+        <T v="mono-label" muted style={{ fontSize: 11, opacity: 0.8 }}>Kategorija</T>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+          {cats.map((c) => (
+            <Chip
+              key={c.id}
+              label={c.name}
+              selected={categoryId === c.id}
+              onPress={() => setCategoryId(c.id)}
+              left={<CatIcon colorToken={c.colorToken} icon={c.icon} size={26} />}
             />
-          </View>
+          ))}
         </View>
+      </View>
 
-        <View style={{ gap: space["2"] }}>
-          <T v="caption" muted>Kategorija</T>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-            {cats.map((c) => (
-              <Chip
-                key={c.id}
-                label={c.name}
-                selected={categoryId === c.id}
-                onPress={() => setCategoryId(c.id)}
-                left={<CatIcon colorToken={c.colorToken} icon={c.icon} size={28} />}
-              />
-            ))}
-          </View>
-        </View>
-
-        <View style={{ gap: space["2"] }}>
-          <T v="caption" muted>Razdoblje</T>
+      <Group title="Razdoblje">
+        <View style={{ paddingHorizontal: 16 }}>
           <DateField plain label="Počinje" value={start} onChange={setStart} />
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 48 }}>
-            <View style={{ flex: 1 }}>
-              <T v="headline">Ima kraj</T>
-              <T v="caption" muted>Otkazana pretplata ostaje u povijesti do tog datuma.</T>
-            </View>
-            <Switch value={hasEnd} onValueChange={setHasEnd} trackColor={{ false: colors["border-strong"], true: colors.brand }} thumbColor="#ffffff" ios_backgroundColor={colors["border-strong"]} />
-          </View>
-          {hasEnd ? <DateField plain label="Zadnja naplata" value={end} onChange={setEnd} /> : null}
-          {!rangeOk ? <T v="caption" color={colors.danger}>Kraj mora biti nakon početka.</T> : null}
         </View>
-
-        <Button label={editing ? "Spremi" : "Dodaj"} disabled={!valid} onPress={save} />
-        {editing ? (
-          <Button
-            variant="danger"
-            label="Obriši pretplatu"
-            onPress={() =>
-              Alert.alert(
-                `Obrisati „${editing.name}“?`,
-                "Briše se iz svih mjeseci. Već knjiženi troškovi ostaju. Ako si je samo otkazao, umjesto brisanja uključi „Ima kraj“, pa ostaje u povijesti.",
-                [
-                  { text: "Odustani", style: "cancel" },
-                  {
-                    text: "Obriši",
-                    style: "destructive",
-                    onPress: () => {
-                      deleteRecurring(editing.id);
-                      void rescheduleReminders();
-                      router.back();
-                    },
-                  },
-                ],
-              )
-            }
-          />
+        <View style={{ paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <View style={{ flex: 1 }}>
+            <T v="headline" style={{ fontWeight: "700" }}>Ima kraj</T>
+            <T v="caption" muted>Otkazana pretplata ostaje u povijesti.</T>
+          </View>
+          <Switch value={hasEnd} onValueChange={setHasEnd} trackColor={{ false: colors["border-strong"], true: colors.brand }} thumbColor="#ffffff" ios_backgroundColor={colors["border-strong"]} />
+        </View>
+        {hasEnd ? (
+          <View style={{ paddingHorizontal: 16 }}>
+            <DateField plain label="Zadnja naplata" value={end} onChange={setEnd} />
+            {!rangeOk ? <T v="caption" color={colors.danger} style={{ paddingBottom: 10 }}>Kraj mora biti nakon početka.</T> : null}
+          </View>
         ) : null}
-      </ScrollView>
-    </Safe>
-    </View>
+      </Group>
+    </ModalScreen>
   );
 }
