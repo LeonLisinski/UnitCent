@@ -1,14 +1,15 @@
 import { useMemo, useState } from "react";
-import { ScrollView, TextInput, View } from "react-native";
+import { Alert, ScrollView, Switch, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Safe } from "../src/safe";
-import { POPULAR_RECURRING, type Cents } from "@unitcent/core";
+import { POPULAR_RECURRING, yearMonthOf, type Cents, type LocalDate } from "@unitcent/core";
 import { AmountField, Button, CatIcon, Chip } from "../src/components";
+import { DateField } from "../src/DateField";
 import { Glow, RoundButton } from "../src/fx";
 import { textStyle, useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
-import { addRecurring, bookDueRecurring, getRecurring, listCategories, updateRecurring } from "../src/db/repo";
+import { addRecurring, bookDueRecurring, deleteRecurring, getRecurring, listCategories, today, updateRecurring } from "../src/db/repo";
 import { rescheduleReminders } from "../src/notifications";
 
 /** Nova pretplata ili fiksni trošak. Odabir popularne stavke popunjava naziv, dan i kategoriju. */
@@ -30,7 +31,12 @@ export default function NovaPretplata() {
   const [categoryId, setCategoryId] = useState<string | null>(editing?.categoryId ?? null);
   const [iconKey, setIconKey] = useState<string | null>(editing?.iconKey ?? null);
 
-  const valid = name.trim().length > 0 && (amount.cents ?? 0) > 0;
+  const [start, setStart] = useState<LocalDate>(editing?.startDate ?? `${yearMonthOf(today())}-01`);
+  const [hasEnd, setHasEnd] = useState(!!editing?.endDate);
+  const [end, setEnd] = useState<LocalDate>(editing?.endDate ?? today());
+
+  const rangeOk = !hasEnd || end >= start;
+  const valid = name.trim().length > 0 && (amount.cents ?? 0) > 0 && rangeOk;
 
   const fill = (key: string) => {
     const p = POPULAR_RECURRING.find((x) => x.key === key);
@@ -46,13 +52,13 @@ export default function NovaPretplata() {
     if (!valid || amount.cents === null) return;
     const d = Math.min(31, Math.max(1, parseInt(day, 10) || 1));
     if (editing) {
-      updateRecurring(editing.id, { name, amountCents: amount.cents, dayOfMonth: d, categoryId, iconKey });
+      updateRecurring(editing.id, { name, amountCents: amount.cents, dayOfMonth: d, categoryId, iconKey, startDate: start, endDate: hasEnd ? end : null });
       void rescheduleReminders();
       router.back();
       toast.show("Izmjene spremljene · vrijede od sljedeće naplate");
       return;
     }
-    addRecurring({ name, amountCents: amount.cents, dayOfMonth: d, categoryId, iconKey });
+    addRecurring({ name, amountCents: amount.cents, dayOfMonth: d, categoryId, iconKey, startDate: start, endDate: hasEnd ? end : null });
     const booked = bookDueRecurring();
     void rescheduleReminders();
     router.back();
@@ -146,7 +152,45 @@ export default function NovaPretplata() {
           </View>
         </View>
 
+        <View style={{ gap: space["2"] }}>
+          <T v="caption" muted>Razdoblje</T>
+          <DateField plain label="Počinje" value={start} onChange={setStart} />
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 48 }}>
+            <View style={{ flex: 1 }}>
+              <T v="headline">Ima kraj</T>
+              <T v="caption" muted>Otkazana pretplata ostaje u povijesti do tog datuma.</T>
+            </View>
+            <Switch value={hasEnd} onValueChange={setHasEnd} trackColor={{ false: colors["border-strong"], true: colors.brand }} thumbColor="#ffffff" ios_backgroundColor={colors["border-strong"]} />
+          </View>
+          {hasEnd ? <DateField plain label="Zadnja naplata" value={end} onChange={setEnd} /> : null}
+          {!rangeOk ? <T v="caption" color={colors.danger}>Kraj mora biti nakon početka.</T> : null}
+        </View>
+
         <Button label={editing ? "Spremi" : "Dodaj"} disabled={!valid} onPress={save} />
+        {editing ? (
+          <Button
+            variant="danger"
+            label="Obriši pretplatu"
+            onPress={() =>
+              Alert.alert(
+                `Obrisati „${editing.name}“?`,
+                "Briše se iz svih mjeseci. Već knjiženi troškovi ostaju. Ako si je samo otkazao, umjesto brisanja uključi „Ima kraj“, pa ostaje u povijesti.",
+                [
+                  { text: "Odustani", style: "cancel" },
+                  {
+                    text: "Obriši",
+                    style: "destructive",
+                    onPress: () => {
+                      deleteRecurring(editing.id);
+                      void rescheduleReminders();
+                      router.back();
+                    },
+                  },
+                ],
+              )
+            }
+          />
+        ) : null}
       </ScrollView>
     </Safe>
     </View>

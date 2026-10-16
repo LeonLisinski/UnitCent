@@ -334,6 +334,10 @@ export function Donut({
 
 /* ---------- povlačenje retka za brisanje ---------- */
 
+let lastSwipeAt = 0;
+/** Istinito neposredno nakon povlačenja retka: dodir koji prati otpuštanje prsta se ignorira (nema slučajnog otvaranja). */
+export const recentlySwiped = (): boolean => Date.now() - lastSwipeAt < 450;
+
 function SwipeAction({ progress }: { progress: SharedValue<number> }) {
   const { colors } = useTheme();
   const style = useAnimatedStyle(() => ({ opacity: Math.min(1, progress.value * 5) }));
@@ -359,7 +363,17 @@ export function SwipeRow({ children, onDelete }: { children: ReactNode; onDelete
       friction={2}
       rightThreshold={72}
       overshootRight={false}
+      onSwipeableOpenStartDrag={() => {
+        lastSwipeAt = Date.now();
+      }}
+      onSwipeableCloseStartDrag={() => {
+        lastSwipeAt = Date.now();
+      }}
+      onSwipeableWillOpen={() => {
+        lastSwipeAt = Date.now();
+      }}
       onSwipeableOpen={(direction) => {
+        lastSwipeAt = Date.now();
         if (direction === "right" || direction === "left") onDelete();
       }}
       renderRightActions={(progress) => <SwipeAction progress={progress} />}

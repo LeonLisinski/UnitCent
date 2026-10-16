@@ -26,10 +26,6 @@ export function FloatingTabBar({ state, descriptors, navigation }: TabBarProps) 
   const router = useRouter();
 
   return (
-    <>
-    <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 150 + insets.bottom }}>
-      <LinearGradient colors={["transparent", fx.bgBottom]} locations={[0, 0.7]} style={{ flex: 1 }} />
-    </View>
     <View
       pointerEvents="box-none"
       style={{ position: "absolute", left: 16, right: 16, bottom: Math.max(insets.bottom, 12) + 4 }}
@@ -46,10 +42,10 @@ export function FloatingTabBar({ state, descriptors, navigation }: TabBarProps) 
           justifyContent: "space-around",
           paddingHorizontal: 8,
           shadowColor: "#000",
-          shadowOpacity: 0.35,
-          shadowRadius: 22,
-          shadowOffset: { width: 0, height: 12 },
-          elevation: 12,
+          shadowOpacity: 0.18,
+          shadowRadius: 14,
+          shadowOffset: { width: 0, height: 6 },
+          elevation: 6,
         }}
       >
         {state.routes.map((route, i) => {
@@ -125,6 +121,5 @@ export function FloatingTabBar({ state, descriptors, navigation }: TabBarProps) 
         })}
       </View>
     </View>
-    </>
   );
 }

@@ -17,14 +17,27 @@ function parse(d: LocalDate): Date {
  * Datum s uređivanjem: kompaktan izbornik (iOS) ili dijalog (Android). Ispod pokazuje što datum znači za limit:
  * u budućnosti, iz drugog mjeseca (ne ulazi u dnevni limit) ili običan dan ovog mjeseca. „Danas“ vraća na današnji dan.
  */
-export function DateField({ label, value, onChange }: { label: string; value: LocalDate; onChange: (d: LocalDate) => void }) {
+export function DateField({
+  label,
+  value,
+  onChange,
+  plain,
+}: {
+  label: string;
+  value: LocalDate;
+  onChange: (d: LocalDate) => void;
+  /** Bez objašnjenja o dnevnom limitu (za datume koji nisu datum troška). */
+  plain?: boolean;
+}) {
   const { colors, fx, scheme } = useTheme();
   const now = today();
   const set = (d: Date) => onChange(toLocalDate(d.getFullYear(), d.getMonth() + 1, d.getDate()));
 
   const future = value > now;
   const otherMonth = value.slice(0, 7) !== now.slice(0, 7);
-  const note = future
+  const note = plain
+    ? null
+    : future
     ? "Datum je u budućnosti. Provjeri je li ispravan."
     : otherMonth
       ? "Iz drugog mjeseca: ne ulazi u današnji limit."

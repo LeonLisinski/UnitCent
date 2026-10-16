@@ -371,6 +371,7 @@ export function addRecurring(input: {
   categoryId: string | null;
   iconKey?: string | null;
   startDate?: LocalDate;
+  endDate?: LocalDate | null;
 }): RecurringRecord {
   const db = getDb();
   const id = newId();
@@ -380,7 +381,7 @@ export function addRecurring(input: {
     day_of_month: Math.min(31, Math.max(1, Math.round(input.dayOfMonth))),
     category_id: input.categoryId, active: 1,
     // Zadano od 1. u mjesecu: stavka s već prošlim danom odmah se knjiži i ulazi u „obavezno”.
-    start_date: input.startDate ?? `${yearMonthOf(today())}-01`, end_date: null as string | null,
+    start_date: input.startDate ?? `${yearMonthOf(today())}-01`, end_date: (input.endDate ?? null) as string | null,
     icon_key: input.iconKey ?? null,
   };
   db.withTransactionSync(() => {
@@ -391,8 +392,62 @@ export function addRecurring(input: {
     );
     enqueue("recurring_items", id, "upsert", { ...row, active: true, client_updated_at: t });
   });
+  reconcileBookings(id); // stavka s početkom u prošlosti knjiži i prošle mjesece (povijest je točna)
   notifyDbChanged();
   return mapRec(row);
+}
+
+/**
+ * Usklađuje knjiženja pretplate s njezinim razdobljem (početak/kraj):
+ *  - knjiženja izvan razdoblja (prije početka ili nakon kraja) se meko brišu;
+ *  - za svaki mjesec u razdoblju do danas koji nema knjiženje, stvara se jedno (deterministički ID, pa je sigurno ponoviti).
+ * Dan u mjesecu i iznos se ne primjenjuju unatrag na već knjižene mjesece.
+ */
+export function reconcileBookings(id: string, todayDate: LocalDate = today()): void {
+  const db = getDb();
+  const it = getRecurring(id);
+  if (!it) return;
+  const t = nowIso();
+  db.withTransactionSync(() => {
+    const rows = db.getAllSync<{ id: string; local_date: string }>(
+      "select id, local_date from transactions where recurring_id = ? and source = 'recurring' and deleted_at is null",
+      [id],
+    );
+    for (const r of rows) {
+      const outside = r.local_date < it.startDate || (it.endDate != null && r.local_date > it.endDate);
+      if (!outside) continue;
+      db.runSync("update transactions set deleted_at = ?, client_updated_at = ?, rev = rev + 1 where id = ?", [t, t, r.id]);
+      const row = db.getFirstSync<TxRow>("select * from transactions where id = ?", [r.id]);
+      if (row) enqueue("transactions", r.id, "upsert", row);
+    }
+    const thisMonth = yearMonthOf(todayDate);
+    let month = yearMonthOf(it.startDate);
+    while (month <= thisMonth) {
+      const date = occurrenceDate(it, month);
+      if (date && date <= todayDate) {
+        const existing =
+          db.getFirstSync<{ n: number }>(
+            "select count(*) as n from transactions where recurring_id = ? and source = 'recurring' and local_date >= ? and local_date <= ?",
+            [id, `${month}-01`, `${month}-31`],
+          )?.n ?? 0;
+        if (existing === 0) {
+          const bid = bookingId(it.id, date);
+          const res = db.runSync(
+            `insert or ignore into transactions
+               (id, amount_cents, type, category_id, note, merchant, local_date, occurred_at, source, recurring_id, created_at, client_updated_at)
+             values (?, ?, 'expense', ?, ?, null, ?, ?, 'recurring', ?, ?, ?)`,
+            [bid, it.amountCents, it.categoryId, it.name, date, `${date}T06:00:00.000Z`, it.id, t, t],
+          );
+          if (res.changes > 0) {
+            const row = db.getFirstSync<TxRow>("select * from transactions where id = ?", [bid]);
+            if (row) enqueue("transactions", bid, "upsert", row);
+          }
+        }
+      }
+      const [y, m] = month.split("-").map(Number) as [number, number];
+      month = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
+    }
+  });
 }
 
 export function getRecurring(id: string): RecurringRecord | null {
@@ -403,22 +458,35 @@ export function getRecurring(id: string): RecurringRecord | null {
 /** Izmjena vrijedi od sljedećeg knjiženja; već knjiženi troškovi se ne mijenjaju. */
 export function updateRecurring(
   id: string,
-  input: { name: string; amountCents: Cents; dayOfMonth: number; categoryId: string | null; iconKey?: string | null },
+  input: {
+    name: string;
+    amountCents: Cents;
+    dayOfMonth: number;
+    categoryId: string | null;
+    iconKey?: string | null;
+    startDate?: LocalDate;
+    /** null = bez kraja. */
+    endDate?: LocalDate | null;
+  },
 ): void {
   const db = getDb();
   const t = nowIso();
+  const cur = getRecurring(id);
+  const start = input.startDate ?? cur?.startDate ?? `${yearMonthOf(today())}-01`;
+  const end = input.endDate === undefined ? cur?.endDate ?? null : input.endDate;
   db.withTransactionSync(() => {
     db.runSync(
       `update recurring_items set name = ?, amount_cents = ?, day_of_month = ?, category_id = ?, icon_key = ?,
-         client_updated_at = ?, rev = rev + 1 where id = ?`,
+         start_date = ?, end_date = ?, client_updated_at = ?, rev = rev + 1 where id = ?`,
       [
         input.name.trim(), Math.round(input.amountCents), Math.min(31, Math.max(1, Math.round(input.dayOfMonth))),
-        input.categoryId, input.iconKey ?? null, t, id,
+        input.categoryId, input.iconKey ?? null, start, end, t, id,
       ],
     );
     const r = db.getFirstSync<RecRow>("select * from recurring_items where id = ?", [id]);
     if (r) enqueue("recurring_items", id, "upsert", r);
   });
+  reconcileBookings(id);
   notifyDbChanged();
 }
 

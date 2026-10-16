@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Glow } from "./fx";
+import { Glow, recentlySwiped } from "./fx";
 import { useTheme } from "./theme";
 import { T } from "./ui";
 
@@ -111,8 +111,12 @@ export function ListRow({
       accessibilityLabel={title}
       accessibilityHint={hint}
       delayLongPress={450}
-      onPress={onPress}
-      onLongPress={onLongPress}
+      onPress={() => {
+        if (!recentlySwiped()) onPress?.();
+      }}
+      onLongPress={() => {
+        if (!recentlySwiped()) onLongPress?.();
+      }}
       style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
     >
       {body}

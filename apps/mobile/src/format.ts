@@ -80,3 +80,9 @@ export function fullDate(date: LocalDate): string {
   const p = parts(date);
   return `${p.day}. ${p.m}. ${p.y}.`;
 }
+
+/** Sljedeći mjesec za "YYYY-MM". */
+export function nextMonthOf(ym: string): string {
+  const [y, m] = ym.split("-").map(Number) as [number, number];
+  return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
+}
