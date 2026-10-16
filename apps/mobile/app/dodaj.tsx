@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Keyboard, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { parseAmount } from "@unitcent/core";
 import { Button, CatIcon, Keypad } from "../src/components";
 import { useDb } from "../src/data";
@@ -29,6 +29,17 @@ export default function Dodaj() {
   const [showNote, setShowNote] = useState(false);
   const [noteFocus, setNoteFocus] = useState(false); // tipkovnica telefona otvorena: sakrij našu numeričku, da „Spremi“ ostane vidljiv
   const [type, setType] = useState<Kind>("expense");
+  const insets = useSafeAreaInsets();
+  // Visina tipkovnice telefona mjeri se izravno (KeyboardAvoidingView u modalu pogrešno računa pomak).
+  const [kb, setKb] = useState(0);
+  useEffect(() => {
+    const show = Keyboard.addListener(Platform.OS === "ios" ? "keyboardWillChangeFrame" : "keyboardDidShow", (e) => setKb(e.endCoordinates.height));
+    const hide = Keyboard.addListener(Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide", () => setKb(0));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
   const [selected, setSelected] = useState<string | null>(null);
   const cats = useDb(() => listCategoriesByUsage());
 
@@ -50,7 +61,7 @@ export default function Dodaj() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
       <SafeAreaView style={{ flex: 1 }}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, paddingHorizontal: space["4"] + 4, paddingTop: space["3"], paddingBottom: space["3"], gap: space["3"] }}>
+        <View style={{ flex: 1, paddingHorizontal: space["4"] + 4, paddingTop: space["3"], paddingBottom: space["3"] + Math.max(0, kb - insets.bottom), gap: space["3"] }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <View style={{ flexDirection: "row", gap: 4 }}>
               {(
@@ -173,7 +184,7 @@ export default function Dodaj() {
           )}
           {noteFocus ? null : <Keypad value={value} onChange={setValue} />}
           <Button label="Spremi" disabled={!cents || cents <= 0} onPress={save} />
-        </KeyboardAvoidingView>
+        </View>
       </SafeAreaView>
     </View>
   );
