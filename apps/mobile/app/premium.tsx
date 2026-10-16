@@ -13,6 +13,12 @@ import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
 
+/**
+ * Mjesto za pravu društvenu potvrdu (npr. „Premium korisnici bilježe troškove X puta češće“). Ostaje null dok ne
+ * postoji stvarna mjera iz analitike: izmišljene brojke u oglašavanju su obmanjujuće (zakon o zaštiti potrošača).
+ */
+const SOCIAL_PROOF: string | null = null;
+
 /** Što Premium otključava: ikona + kratak naziv, bez kutija. Zlatna i zelena naizmjence. */
 const PERKS: { icon: string; title: string; hint: string; soon?: boolean }[] = [
   { icon: "calendar", title: "Cijela povijest", hint: `Besplatno je zadnjih ${FREE_HISTORY_MONTHS} mjeseci` },
@@ -128,6 +134,15 @@ export default function Premium() {
             <Icon name="star" size={38} color="#2a1d00" stroke={2.1} />
           </LinearGradient>
         </View>
+      </View>
+
+      <View style={{ alignItems: "center", gap: 6 }}>
+        <T v="title-1" style={{ fontSize: 22, lineHeight: 28, textAlign: "center" }}>
+          {premium ? "Dobrodošao u Premium" : "Pridruži se Premium korisnicima"}
+        </T>
+        <T muted style={{ textAlign: "center", maxWidth: 300 }}>
+          {SOCIAL_PROOF ?? "Za one koji žele znati kamo odlazi svaki euro, bez ograničenja i bez ručnog prepisivanja računa."}
+        </T>
       </View>
 
       <View style={{ gap: 20 }}>
