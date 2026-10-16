@@ -7,6 +7,7 @@ import { parseAmount } from "@unitcent/core";
 import { Button, CatIcon, GoldBadge, Keypad } from "../src/components";
 import { refreshScanUsage, useScanQuota } from "../src/scanQuota";
 import { DateChip } from "../src/DateField";
+import { track } from "../src/analytics";
 import { useDb } from "../src/data";
 import { Icon } from "../src/icons";
 import { Glow, RoundButton } from "../src/fx";
@@ -73,6 +74,7 @@ export default function Dodaj() {
       return;
     }
     const tx = addTransaction({ amountCents: cents, type, categoryId, note, localDate: date });
+    track("tx_added", { type, source: "manual", hasNote: note.trim().length > 0 });
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.back();
     toast.show("Spremljeno", { label: "Poništi", run: () => deleteTransaction(tx.id) });

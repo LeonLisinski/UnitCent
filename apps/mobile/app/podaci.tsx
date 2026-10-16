@@ -1,4 +1,5 @@
-import { Alert, Linking, ScrollView, View } from "react-native";
+import { useState } from "react";
+import { Alert, Linking, ScrollView, Switch, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { Glow, RoundButton } from "../src/fx";
 import { Safe } from "../src/safe";
@@ -7,6 +8,7 @@ import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
 import { deleteAccountAndData, exportData } from "../src/dataTools";
+import { analyticsEnabled, setAnalyticsEnabled } from "../src/analytics";
 import { restorePurchases } from "../src/purchases";
 import { signOutAndClear, useAccount } from "../src/account";
 
@@ -18,6 +20,7 @@ export default function Podaci() {
   const router = useRouter();
   const toast = useToast();
   const account = useAccount();
+  const [stats, setStats] = useState(analyticsEnabled());
 
   const doSignOut = async (force: boolean) => {
     const r = await signOutAndClear(force);
@@ -107,6 +110,26 @@ export default function Podaci() {
                 const r = await restorePurchases();
                 toast.show(r === "ok" ? "Kupnja je vraćena" : r === "unavailable" ? "Dostupno u službenoj verziji aplikacije" : "Nema kupnje za vratiti");
               }}
+            />
+          </Group>
+
+          <Group title="Privatnost">
+            <Row
+              icon="chart"
+              title="Anonimna statistika"
+              subtitle="Pomaže nam poboljšati aplikaciju. Bez iznosa i osobnih podataka."
+              right={
+                <Switch
+                  value={stats}
+                  onValueChange={(v) => {
+                    setStats(v);
+                    setAnalyticsEnabled(v);
+                  }}
+                  trackColor={{ false: colors["border-strong"], true: colors.brand }}
+                  thumbColor="#ffffff"
+                  ios_backgroundColor={colors["border-strong"]}
+                />
+              }
             />
           </Group>
 

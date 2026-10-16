@@ -12,6 +12,7 @@ import { Icon } from "../src/icons";
 import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
+import { track } from "../src/analytics";
 import { refreshScanUsage, scansWord, setScanUsed, useScanQuota } from "../src/scanQuota";
 import { ScanFailure, parseFiscalQr, prepareImage, scanReceipt, setLastScan, type FiscalQr } from "../src/scan";
 
@@ -41,7 +42,8 @@ export default function Skeniraj() {
     try {
       const b64 = await prepareImage(uri);
       const result = await scanReceipt(b64, qr?.totalCents);
-      setScanUsed(result.usage.used); // poslužitelj ne naplaćuje nečitljive račune: broj je uvijek točan
+      setScanUsed(result.usage.used);
+      track("scan_result", { status: result.status, items: result.items.length, ms: Math.round(((result as unknown as { ms?: number }).ms ?? 0)), qr: !!qr?.totalCents }); // poslužitelj ne naplaćuje nečitljive račune: broj je uvijek točan
       if (result.status === "unreadable") {
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         toast.show("Račun nije čitljiv. Probaj bliže i uz više svjetla.");
@@ -52,6 +54,7 @@ export default function Skeniraj() {
       router.replace("/pregledaj" as Href);
     } catch (e) {
       const kind = e instanceof ScanFailure ? e.kind : "failed";
+      track("scan_failed", { kind });
       if (kind === "quota") {
         Alert.alert(
           "Besplatna skeniranja su iskorištena",

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
+import { track } from "./analytics";
 import { kvGet, kvSet } from "./db/repo";
 import { pendingCount, resetSyncState, syncNow } from "./sync";
 import { wipeLocalData } from "./dataTools";
@@ -119,6 +120,7 @@ export async function signInWith(provider: Provider): Promise<SignInResult> {
         const r = await browse(data.url, redirectTo);
         if (r.ok) {
           void syncNow();
+          track("sign_in", { provider, result: "linked" });
           return "linked";
         }
         if (r.cancelled) return "cancelled";
@@ -138,6 +140,7 @@ export async function signInWith(provider: Provider): Promise<SignInResult> {
     const { data: after } = await supabase.auth.getSession();
     if (after.session?.user.id !== before) resetSyncState();
     void syncNow();
+    track("sign_in", { provider, result: "signed-in" });
     return "signed-in";
   } catch {
     return "error";

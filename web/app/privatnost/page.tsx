@@ -31,8 +31,16 @@ export default function Privatnost() {
       <h2>Kako se koriste slike računa</h2>
       <p>Slika računa šalje se na našu uslugu radi čitanja stavki i razvrstavanja po kategorijama. Obradu radi AI model putem našeg poslužitelja. Sliku brišemo nakon obrade, osim ako sam odabereš da je želiš čuvati uz trošak.</p>
 
-      <h2>Kome se podaci šalju</h2>
-      <p>Pružateljima usluga koji nam trebaju za rad: hosting i baza podataka, obrada AI modelom, naplata pretplata putem App Storea i Google Playa. Ne dijelimo ih s oglašivačima.</p>
+      <h2>Kome se podaci šalju (obrađivači)</h2>
+      <ul>
+        <li><strong>Supabase</strong> (baza podataka i prijava, EU, Frankfurt): tvoji troškovi, kategorije, pretplate i plan, vezani uz tvoj račun.</li>
+        <li><strong>Google (Gemini API)</strong>: samo slika računa koji skeniraš, radi čitanja stavki. Slika se ne sprema kod nas i briše se nakon obrade; uvjeti plaćene usluge Googlea ne dopuštaju korištenje tih podataka za poboljšanje njihovih proizvoda.</li>
+        <li><strong>Apple i Google (trgovine)</strong> te <strong>RevenueCat</strong>: naplata i status Premium pretplate. Ne vidimo podatke o tvojoj kartici.</li>
+        <li><strong>Sentry</strong> (EU): tehnički izvještaji o greškama i rušenjima, bez korisnika i bez iznosa.</li>
+        <li><strong>PostHog</strong> (EU): anonimna statistika korištenja (npr. „otvoren Premium“, „skeniranje uspjelo“), bez iznosa i osobnih podataka. Možeš je isključiti u aplikaciji (Profil, Podaci i privatnost).</li>
+        <li><strong>Vercel</strong>: hosting ove web stranice.</li>
+      </ul>
+      <p>Ne prodajemo podatke i ne dijelimo ih s oglašivačima.</p>
 
       <h2>Tvoja prava</h2>
       <p>Imaš pravo na pristup, ispravak, prijenos i brisanje svojih podataka te na prigovor nadzornom tijelu (AZOP). Brisanje računa dostupno je u aplikaciji. Za sve ostalo piši na <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>

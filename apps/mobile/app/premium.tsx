@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { Linking, Pressable, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Linking, Pressable, View, useWindowDimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Path, RadialGradient, Rect, Stop } from "react-native-svg";
 import { formatEur } from "@unitcent/core";
+import { track } from "../src/analytics";
 import { Button } from "../src/components";
 import { Icon } from "../src/icons";
 import { ModalScreen } from "../src/layout";
@@ -45,9 +46,9 @@ function sparkle(cx: number, cy: number, s: number): string {
 }
 
 /** Glavni znak: metalna zlatna medalja s ispunjenom zvijezdom, koncentričnim prstenovima, sjajem i odsjajima. */
-function Medallion({ hi, base, lo }: { hi: string; base: string; lo: string }) {
+function Medallion({ hi, base, lo, scale = 1 }: { hi: string; base: string; lo: string; scale?: number }) {
   return (
-    <Svg width={260} height={190} viewBox="0 0 260 190">
+    <Svg width={260 * scale} height={190 * scale} viewBox="0 0 260 190">
       <Defs>
         <RadialGradient id="gl" gradientUnits="userSpaceOnUse" cx={130} cy={95} r={92}>
           <Stop offset="0" stopColor={base} stopOpacity={0.4} />
@@ -132,6 +133,9 @@ export default function Premium() {
   const premium = usePremium();
   const [plan, setPlan] = useState<PlanKey>("yearly");
   const [busy, setBusy] = useState(false);
+  useEffect(() => track("paywall_viewed"), []);
+  const { height } = useWindowDimensions();
+  const compact = height < 780; // manji ekrani: manji znak da sve stane bez skrolanja
   const p = PLANS[plan];
   const perMonth = plan === "yearly" ? formatEur(Math.round(PLANS.yearly.cents / 12)) : null;
 
@@ -144,7 +148,10 @@ export default function Premium() {
   };
   const buy = async () => {
     setBusy(true);
-    handle(await purchasePlan(plan));
+    track("purchase_started", { plan });
+    const result = await purchasePlan(plan);
+    track("purchase_result", { plan, result });
+    handle(result);
     setBusy(false);
   };
 
@@ -156,6 +163,7 @@ export default function Premium() {
 
   return (
     <ModalScreen
+      scroll={false}
       onClose={() => router.back()}
       footer={
         premium ? (
@@ -163,6 +171,11 @@ export default function Premium() {
         ) : (
           <>
             <Button label={`Nastavi · ${p.priceLabel} ${p.per}`} disabled={busy} onPress={() => void buy()} />
+            {__DEV__ ? (
+              <Pressable accessibilityRole="button" hitSlop={8} onLongPress={() => setDevPremium(!premium)} style={{ minHeight: 24, justifyContent: "center" }}>
+                <T v="caption" muted style={{ fontSize: 10, opacity: 0.5 }}>razvoj: drži dugo za test Premium</T>
+              </Pressable>
+            ) : null}
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               {quiet("Uvjeti", () => void Linking.openURL("https://unitcent.com/uvjeti"))}
               <T v="caption" muted>·</T>
@@ -173,7 +186,7 @@ export default function Premium() {
       }
     >
       <View style={{ alignItems: "center" }}>
-        <Medallion hi={fx.goldHi} base={fx.gold} lo={fx.goldLo} />
+        <Medallion hi={fx.goldHi} base={fx.gold} lo={fx.goldLo} scale={compact ? 0.78 : 1} />
         <View style={{ alignItems: "center", marginTop: -26, gap: 0 }}>
           <T v="mono-label" muted style={{ fontSize: 11, letterSpacing: 4 }}>UNITCENT</T>
           <T v="serif-accent" color={fx.gold} style={{ fontSize: 44, lineHeight: 52 }}>{premium ? "Premium je aktivan" : "Premium"}</T>
@@ -216,9 +229,6 @@ export default function Premium() {
         </View>
       )}
 
-      {__DEV__ ? (
-        <Button variant="text" size="sm" label={premium ? "(razvoj) Isključi Premium" : "(razvoj) Uključi Premium za test"} onPress={() => setDevPremium(!premium)} />
-      ) : null}
     </ModalScreen>
   );
 }

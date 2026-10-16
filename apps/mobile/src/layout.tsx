@@ -52,12 +52,15 @@ export function ModalScreen({
   onClose,
   footer,
   children,
+  scroll = true,
 }: {
   title?: string;
   eyebrow?: string;
   onClose: () => void;
   footer?: ReactNode;
   children: ReactNode;
+  /** false = sadržaj se ne skrola nego se raspoređuje po visini (npr. Premium). */
+  scroll?: boolean;
 }) {
   const { colors } = useTheme();
   const kb = useKeyboardHeight();
@@ -73,14 +76,18 @@ export function ModalScreen({
               {title ? <T v="title-1" style={{ fontSize: 26, lineHeight: 32 }}>{title}</T> : null}
             </PageHeader>
           </View>
-          <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{ paddingHorizontal: PAD, paddingTop: 12, paddingBottom: 24, gap: 24 }}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            {children}
-          </ScrollView>
+          {scroll ? (
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{ paddingHorizontal: PAD, paddingTop: 12, paddingBottom: 24, gap: 24 }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {children}
+            </ScrollView>
+          ) : (
+            <View style={{ flex: 1, paddingHorizontal: PAD, paddingTop: 4, paddingBottom: 12, justifyContent: "space-evenly" }}>{children}</View>
+          )}
           {footer ? <View style={{ paddingHorizontal: PAD, paddingTop: 8, paddingBottom: 12, alignItems: "center", gap: 2 }}>{footer}</View> : null}
         </View>
       </Safe>

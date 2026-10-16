@@ -19,9 +19,13 @@ import { ToastProvider } from "../src/toast";
 import { getDb } from "../src/db/client";
 import { bookDueRecurring, ensureCategories } from "../src/db/repo";
 import { applyProfileName } from "../src/account";
+import { initAnalytics } from "../src/analytics";
+import { initMonitoring, wrapRoot } from "../src/monitoring";
 import { startSync } from "../src/sync";
 import { supabase } from "../src/supabase";
 import { rescheduleReminders } from "../src/notifications";
+
+initMonitoring(); // greške se prate od prvog trenutka
 
 // Splash drži ekran dok se fontovi ne učitaju (nema skakanja teksta na prvom ekranu).
 void SplashScreen.preventAutoHideAsync();
@@ -29,6 +33,7 @@ void SplashScreen.preventAutoHideAsync();
 /** Baza se otvara sinkrono prije prvog renderiranja ekrana: početni ekran se crta iz lokalnih podataka. */
 function initLocalData(): true {
   getDb();
+  initAnalytics();
   ensureCategories();
   bookDueRecurring();
   return true;
@@ -57,7 +62,7 @@ function Shell() {
   );
 }
 
-export default function RootLayout() {
+function RootLayout() {
   const [ready] = useState(initLocalData);
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
@@ -99,3 +104,5 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
+
+export default wrapRoot(RootLayout);
