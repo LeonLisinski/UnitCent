@@ -9,7 +9,14 @@ import { supabase } from "./supabase";
  * pa gating radi i bez interneta. Besplatna verzija: pregled zadnjih FREE_HISTORY_MONTHS mjeseci i ograničen broj skeniranja.
  * Kupnja još nije povezana (RevenueCat traži build i račune trgovina), zato u razvoju postoji ručni prekidač.
  */
-export const PRICE = { amount: "3,99 €", period: "mjesečno" } as const; // radna cijena (D-03), mijenja se na jednom mjestu
+export type PlanKey = "monthly" | "yearly";
+/** Cijene su radne (D-03) i mijenjaju se samo ovdje; prave cijene dolaze iz trgovine kad se poveže RevenueCat. */
+export const PLANS: Record<PlanKey, { cents: number; priceLabel: string; per: string; storeId: string }> = {
+  monthly: { cents: 299, priceLabel: "2,99 €", per: "mjesečno", storeId: "unitcent_premium_monthly" },
+  yearly: { cents: 1999, priceLabel: "19,99 €", per: "godišnje", storeId: "unitcent_premium_yearly" },
+};
+/** Ušteda godišnjeg u odnosu na 12 mjesečnih (u postocima). */
+export const YEARLY_SAVING_PCT = Math.round((1 - PLANS.yearly.cents / (PLANS.monthly.cents * 12)) * 100);
 export const FREE_HISTORY_MONTHS = 6;
 
 export function isPremiumNow(): boolean {

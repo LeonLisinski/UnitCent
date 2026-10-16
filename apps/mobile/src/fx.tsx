@@ -491,7 +491,20 @@ export function SwipeRow({ children, onDelete }: { children: ReactNode; onDelete
 
 /* ---------- gumb-ikona (zatvori, mjesec +/−) ---------- */
 
-export function RoundButton({ icon, onPress, label, disabled }: { icon: string; onPress: () => void; label: string; disabled?: boolean }) {
+export function RoundButton({
+  icon,
+  onPress,
+  label,
+  disabled,
+  tone,
+}: {
+  icon: string;
+  onPress: () => void;
+  label: string;
+  disabled?: boolean;
+  /** "gold" = Premium (zaključano): zlatna ikona i rub. */
+  tone?: "gold";
+}) {
   const { colors, fx } = useTheme();
   return (
     <Pressable
@@ -505,13 +518,13 @@ export function RoundButton({ icon, onPress, label, disabled }: { icon: string; 
         borderRadius: 22,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: fx.glass,
+        backgroundColor: tone === "gold" ? fx.goldSoft : fx.glass,
         borderWidth: 1,
-        borderColor: fx.glassBorder,
+        borderColor: tone === "gold" ? fx.gold : fx.glassBorder,
         opacity: disabled ? 0.35 : 1,
       }}
     >
-      <Icon name={icon} size={20} color={colors.ink} />
+      <Icon name={icon} size={20} color={tone === "gold" ? fx.gold : colors.ink} />
     </Pressable>
   );
 }

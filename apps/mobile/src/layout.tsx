@@ -226,6 +226,7 @@ export function MonthSwitcher({
   return (
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
       <RoundButton
+        tone={lockedBefore && month <= lockedBefore ? "gold" : undefined}
         icon={lockedBefore && month <= lockedBefore ? "lock" : "back"}
         label={lockedBefore && month <= lockedBefore ? "Stariji mjeseci su u Premiumu" : "Prethodni mjesec"}
         disabled={month <= min}
@@ -296,7 +297,7 @@ export function MonthSwitcher({
                           <T v="headline" color={selected ? colors["on-brand"] : colors.ink} style={{ fontSize: 15, textTransform: "capitalize" }}>
                             {monthShort(ym)}
                           </T>
-                          {locked ? <Icon name="lock" size={12} color={colors["ink-muted"]} /> : null}
+                          {locked ? <Icon name="lock" size={12} color={fx.gold} /> : null}
                         </View>
                       </Pressable>
                     </View>

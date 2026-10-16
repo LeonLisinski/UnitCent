@@ -27,6 +27,9 @@ export interface Fx {
   sheenBottom: string;
   edge: string;
   shadowOpacity: number;
+  /** Zlatna: oznaka Premiuma (lokoti, zvijezda, značke). */
+  gold: string;
+  goldSoft: string;
 }
 
 const FX: Record<Scheme, Fx> = {
@@ -46,6 +49,8 @@ const FX: Record<Scheme, Fx> = {
     sheenBottom: "rgba(255,255,255,0.015)",
     edge: "rgba(255,255,255,0.30)",
     shadowOpacity: 0,
+    gold: "#f2c14e",
+    goldSoft: "rgba(242,193,78,0.16)",
   },
   light: {
     glass: "rgba(255,255,255,0.86)",
@@ -63,6 +68,8 @@ const FX: Record<Scheme, Fx> = {
     sheenBottom: "rgba(255,255,255,0.78)",
     edge: "rgba(255,255,255,1)",
     shadowOpacity: 0.08,
+    gold: "#c98a07",
+    goldSoft: "rgba(201,138,7,0.14)",
   },
 };
 

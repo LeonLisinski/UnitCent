@@ -38,6 +38,7 @@ export function Row({
   onPress,
   danger,
   external,
+  gold,
 }: {
   icon?: string;
   left?: ReactNode;
@@ -48,6 +49,8 @@ export function Row({
   onPress?: () => void;
   danger?: boolean;
   external?: boolean;
+  /** Premium redak: zlatna ikona. */
+  gold?: boolean;
 }) {
   const { colors, fx } = useTheme();
   const tone = danger ? colors.danger : colors.ink;
@@ -55,7 +58,7 @@ export function Row({
     <View style={{ minHeight: 60, flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 10 }}>
       {left ?? (
         <View style={{ width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: fx.track }}>
-          <Icon name={icon ?? "dots"} size={19} color={danger ? colors.danger : colors.brand} />
+          <Icon name={icon ?? "dots"} size={19} color={danger ? colors.danger : gold ? fx.gold : colors.brand} />
         </View>
       )}
       <View style={{ flex: 1, minWidth: 0 }}>
