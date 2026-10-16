@@ -36,6 +36,13 @@
         {
           "photosPermission": "UnitCent čita sliku računa koju odabereš."
         }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "unitlift",
+          "project": "react-native"
+        }
       ]
     ],
     "experiments": {
