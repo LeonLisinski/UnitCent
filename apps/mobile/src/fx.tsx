@@ -203,7 +203,11 @@ export function MonthBar({ spent, available, expected }: { spent: number; availa
   }, [used, fill]);
   const fillStyle = useAnimatedStyle(() => ({ width: `${fill.value * 100}%` }));
   return (
-    <View style={{ height: 22, justifyContent: "center" }} accessibilityLabel={fast ? "Potrošnja je brža od plana" : "Potrošnja je po planu"}>
+    <View
+      style={{ height: 40 }}
+      accessibilityLabel={`Potrošeno ${Math.round(used * 100)} % mjesečnog budžeta, a do danas bi po planu trebalo biti ${Math.round(mark * 100)} %. ${fast ? "Potrošnja je brža od plana." : "Potrošnja je po planu."}`}
+    >
+      <View style={{ height: 22, justifyContent: "center" }}>
       <View style={{ height: 10, borderRadius: 5, backgroundColor: fx.track, overflow: "hidden" }}>
         <Animated.View style={[{ height: "100%", borderRadius: 5, overflow: "hidden" }, fillStyle]}>
           <Sheen
@@ -226,6 +230,15 @@ export function MonthBar({ spent, available, expected }: { spent: number; availa
           opacity: 0.85,
         }}
       />
+      </View>
+      {/* Oznaka ispod crte: gdje bi po planu trebalo biti danas (ravnomjerna potrošnja kroz mjesec) */}
+      <T
+        v="caption"
+        muted
+        style={{ position: "absolute", top: 24, width: 56, textAlign: "center", fontSize: 11, left: `${Math.max(8, Math.min(92, mark * 100))}%`, marginLeft: -28 }}
+      >
+        danas
+      </T>
     </View>
   );
 }
