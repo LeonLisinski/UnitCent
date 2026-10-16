@@ -24,8 +24,10 @@ export function TxRow({
   hideDate?: boolean;
 }) {
   const { colors } = useTheme();
+  // Naziv je bilješka (ili kategorija); kategorija se u podnaslovu ponavlja samo kad naziv nije ona.
   const title = tx.note ?? category?.name ?? "Trošak";
-  const sub = [hideDate ? null : relativeDay(tx.localDate, today()), category?.name]
+  const source = tx.source === "recurring" ? "Pretplata" : tx.source === "scan" ? "Račun" : null;
+  const sub = [hideDate ? null : relativeDay(tx.localDate, today()), tx.note ? category?.name : null, source]
     .filter(Boolean)
     .join(" · ");
   const amount = tx.type === "income" ? `+${formatEur(tx.amountCents)}` : formatEur(-tx.amountCents);

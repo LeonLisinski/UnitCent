@@ -6,6 +6,7 @@ import * as Haptics from "expo-haptics";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { formatEur, yearMonthOf } from "@unitcent/core";
 import { useAccount } from "../../src/account";
+import { Avatar } from "../../src/components";
 import { AccountCta, SyncLine } from "../../src/AccountSection";
 import { useDb } from "../../src/data";
 import { Glow } from "../../src/fx";
@@ -89,11 +90,7 @@ export default function Profil() {
           showsVerticalScrollIndicator={false}
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-            <View style={{ width: 68, height: 68, borderRadius: 34, alignItems: "center", justifyContent: "center", backgroundColor: colors["brand-soft"] }}>
-              <T v="title-1" color={colors["brand-ink"]} style={{ fontSize: 28, lineHeight: 34 }}>
-                {(name.trim() || account.email || "?").charAt(0).toUpperCase()}
-              </T>
-            </View>
+            <Avatar size={68} initial={(name.trim() || account.email || "?").charAt(0)} />
             <View style={{ flex: 1, minWidth: 0 }}>
               <TextInput
                 value={name}
@@ -129,7 +126,7 @@ export default function Profil() {
             <Row
               icon="bell"
               title="Podsjetnici naplata"
-              right={<Switch value={reminders} onValueChange={(v) => void toggleReminders(v)} trackColor={{ false: colors["border-strong"], true: colors.brand }} thumbColor="#ffffff" />}
+              right={<Switch value={reminders} onValueChange={(v) => void toggleReminders(v)} trackColor={{ false: colors["border-strong"], true: colors.brand }} thumbColor="#ffffff" ios_backgroundColor={colors["border-strong"]} />}
             />
             <Row icon="sun" title="Izgled" right={<ThemeSwitch value={preference} onChange={setPreference} />} />
           </Group>

@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Pressable, TextInput, View, type StyleProp, type ViewStyle } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { parseAmount, type Cents } from "@unitcent/core";
 import { Icon } from "./icons";
@@ -251,5 +252,28 @@ export function Keypad({ value, onChange }: { value: string; onChange: (v: strin
         </Pressable>
       ))}
     </View>
+  );
+}
+
+/** Krug s inicijalom: isti prikaz na Početnoj i u Profilu (brand gradijent, tamno slovo). */
+export function Avatar({ initial, size = 44, onPress }: { initial: string; size?: number; onPress?: () => void }) {
+  const { colors, fx } = useTheme();
+  const body = (
+    <LinearGradient
+      colors={[colors.brand, fx.accent2]}
+      start={{ x: 0, y: 1 }}
+      end={{ x: 1, y: 0 }}
+      style={{ width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center" }}
+    >
+      <T v="headline" color="#04241a" style={{ fontWeight: "800", fontSize: Math.round(size * 0.4), lineHeight: Math.round(size * 0.5) }}>
+        {initial.toUpperCase()}
+      </T>
+    </LinearGradient>
+  );
+  if (!onPress) return body;
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel="Profil" hitSlop={8} onPress={onPress}>
+      {body}
+    </Pressable>
   );
 }

@@ -62,7 +62,7 @@ export function Calendar({
             const isToday = c.date === todayDate;
             const past = !!c.date && c.date < todayDate;
             return (
-              <View key={ci} style={{ flex: 1, alignItems: "center", minHeight: 62, paddingTop: 2, gap: 4 }}>
+              <View key={ci} style={{ flex: 1, alignItems: "center", minHeight: 46, paddingTop: 2, gap: 3, paddingBottom: 4 }}>
                 <View
                   style={{
                     width: 26,
@@ -85,7 +85,7 @@ export function Calendar({
                   const cat = catById.get(s.categoryId ?? "");
                   return (
                     <View key={s.id} style={{ opacity: past ? 0.55 : 1 }}>
-                      <CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={s.iconKey ?? cat?.icon ?? "repeat"} size={26} />
+                      <CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={s.iconKey ?? cat?.icon ?? "repeat"} size={24} />
                     </View>
                   );
                 })}

@@ -63,7 +63,7 @@ export default function Pretplate() {
           <T v="headline" numberOfLines={1} style={{ fontWeight: "700" }}>{it.name}</T>
           <T v="caption" muted>{sub}</T>
         </View>
-        <T v="amount" style={{ fontWeight: "800" }}>{formatEur(-it.amountCents)}</T>
+        <T v="amount" style={{ fontWeight: "800" }}>{formatEur(it.amountCents)}</T>
       </Pressable>
     );
   };
@@ -92,7 +92,7 @@ export default function Pretplate() {
               </View>
               <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                 <T v="mono-label" muted>plaćeno {paidPct} %</T>
-                <T v="mono-label" muted>{items.length} stavki</T>
+                <T v="mono-label" muted>{items.length} {items.length === 1 ? "stavka" : items.length < 5 ? "stavke" : "stavki"}</T>
               </View>
             </View>
           </Animated.View>

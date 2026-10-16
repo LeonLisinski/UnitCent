@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
 import Svg, { Circle, Defs, G, LinearGradient, Path, RadialGradient, Rect, Stop } from "react-native-svg";
-import Animated, { Easing, useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, { Easing, useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from "react-native-reanimated";
 import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import { LinearGradient as Sheen } from "expo-linear-gradient";
 import { formatEur, type Cents } from "@unitcent/core";
@@ -337,8 +337,26 @@ export function Donut({
 
 /* ---------- povlačenje retka za brisanje ---------- */
 
-export function SwipeRow({ children, onDelete }: { children: ReactNode; onDelete: () => void }) {
+function SwipeAction({ progress }: { progress: SharedValue<number> }) {
   const { colors } = useTheme();
+  const style = useAnimatedStyle(() => ({ opacity: Math.min(1, progress.value * 5) }));
+  return (
+    <Animated.View
+      style={[
+        { width: 88, alignItems: "center", justifyContent: "center", backgroundColor: colors.danger, borderRadius: 18, marginVertical: 6 },
+        style,
+      ]}
+    >
+      <Icon name="trash" size={22} color="#ffffff" />
+    </Animated.View>
+  );
+}
+
+/**
+ * Redak koji se briše povlačenjem ulijevo. Redak nema vlastitu pozadinu (stoji na pozadini ekrana),
+ * pa se crvena radnja prikazuje tek kad se redak pomakne.
+ */
+export function SwipeRow({ children, onDelete }: { children: ReactNode; onDelete: () => void }) {
   return (
     <ReanimatedSwipeable
       friction={2}
@@ -347,11 +365,7 @@ export function SwipeRow({ children, onDelete }: { children: ReactNode; onDelete
       onSwipeableOpen={(direction) => {
         if (direction === "right" || direction === "left") onDelete();
       }}
-      renderRightActions={() => (
-        <View style={{ width: 88, alignItems: "center", justifyContent: "center", backgroundColor: colors.danger, borderRadius: 18, marginVertical: 6 }}>
-          <Icon name="trash" size={22} color="#ffffff" />
-        </View>
-      )}
+      renderRightActions={(progress) => <SwipeAction progress={progress} />}
     >
       {children}
     </ReanimatedSwipeable>

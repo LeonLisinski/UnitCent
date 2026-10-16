@@ -1,10 +1,9 @@
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import { ScrollView, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { daysInMonth, formatEur, parseYearMonth, upcomingInMonth, yearMonthOf } from "@unitcent/core";
-import { CatIcon } from "../../src/components";
+import { Avatar, CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
 import { Amount, Glass, Glow, MonthBar, Ring, SwipeRow, type RingState } from "../../src/fx";
 import { longDate, relativeDay } from "../../src/format";
@@ -82,14 +81,7 @@ export default function Pocetna() {
                 {name ? <T v="serif-accent" color={colors.brand} style={{ fontSize: 32, lineHeight: 38 }}>{name}</T> : null}
               </View>
             </View>
-            <LinearGradient
-              colors={[colors.brand, fx.accent2]}
-              start={{ x: 0, y: 1 }}
-              end={{ x: 1, y: 0 }}
-              style={{ width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center" }}
-            >
-              <T v="headline" color="#04241a" style={{ fontWeight: "800" }}>{initial}</T>
-            </LinearGradient>
+            <Avatar initial={initial} onPress={() => router.navigate("/profil" as Href)} />
           </Animated.View>
 
           <Animated.View entering={enter(1)} style={{ alignItems: "center", gap: space["3"] }}>
@@ -156,7 +148,7 @@ export default function Pocetna() {
                         toast.show("Obrisano", { label: "Poništi", run: () => restoreTransaction(t.id) });
                       }}
                     >
-                      <View style={{ backgroundColor: colors.bg }}>
+                      <View>
                         <TxRow tx={t} category={t.categoryId ? catById.get(t.categoryId) : undefined} hideDate onPress={() => router.push({ pathname: "/dodaj", params: { id: t.id } })} />
                       </View>
                     </SwipeRow>
