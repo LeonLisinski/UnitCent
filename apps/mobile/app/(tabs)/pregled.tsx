@@ -14,7 +14,7 @@ import { CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
 import { Amount, DayBars, Donut, RoundButton } from "../../src/fx";
 import { monthShort, monthTitle } from "../../src/format";
-import { HERO, ListRow, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
+import { HERO, Hero, ListRow, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
 import { useTheme } from "../../src/theme";
 import { T } from "../../src/ui";
 import { listCategories, listTransactionsInMonth, today } from "../../src/db/repo";
@@ -71,7 +71,8 @@ export default function Pregled() {
         </PageHeader>
       </Animated.View>
 
-      <Animated.View entering={enter(1)} style={{ alignItems: "center" }}>
+      <Animated.View entering={enter(1)}>
+        <Hero>
         <Donut size={HERO} slices={slices}>
           <T v="mono-label" muted>Potrošeno</T>
           <Amount cents={total} maxWidth={170} />
@@ -83,6 +84,7 @@ export default function Pregled() {
             <T v="caption" muted>{change === 0 ? "isto kao prošli mjesec" : "nema usporedbe"}</T>
           )}
         </Donut>
+        </Hero>
       </Animated.View>
 
       {variable > 0 ? (
@@ -111,14 +113,16 @@ export default function Pregled() {
                     left={<CatIcon colorToken={c?.colorToken ?? "cat-ostalo"} icon={c?.icon ?? "dots"} size={40} />}
                     title={c?.name ?? "Bez kategorije"}
                     subtitle={
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                        <View style={{ flex: 1, height: 5, borderRadius: 3, backgroundColor: fx.track, overflow: "hidden" }}>
-                          <View style={{ width: `${Math.max(2, share * 100)}%`, height: "100%", borderRadius: 3, backgroundColor: col }} />
-                        </View>
-                        <T v="caption" muted style={{ width: 38, textAlign: "right" }}>{pct} %</T>
+                      <View style={{ height: 5, borderRadius: 3, backgroundColor: fx.track, overflow: "hidden", marginTop: 4 }}>
+                        <View style={{ width: `${Math.max(2, share * 100)}%`, height: "100%", borderRadius: 3, backgroundColor: col }} />
                       </View>
                     }
-                    right={<RowAmount>{formatEur(row.totalCents)}</RowAmount>}
+                    right={
+                      <View style={{ alignItems: "flex-end", gap: 2 }}>
+                        <RowAmount>{formatEur(row.totalCents)}</RowAmount>
+                        <T v="caption" muted>{pct} %</T>
+                      </View>
+                    }
                   />
                 );
               })}

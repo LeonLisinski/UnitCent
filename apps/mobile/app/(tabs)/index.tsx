@@ -1,12 +1,12 @@
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import { ScrollView, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { daysInMonth, formatEur, parseYearMonth, upcomingInMonth, yearMonthOf } from "@unitcent/core";
-import { CatIcon } from "../../src/components";
+import { Avatar, CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
 import { Amount, Glass, MonthBar, Ring, SwipeRow, type RingState } from "../../src/fx";
 import { longDate, relativeDay } from "../../src/format";
-import { HERO, PAD, PageHeader, Section, TabScreen } from "../../src/layout";
+import { HERO, Hero, PAD, PageHeader, Section, TabScreen } from "../../src/layout";
 import { useTheme } from "../../src/theme";
 import { useToast } from "../../src/toast";
 import { TxRow } from "../../src/TxRow";
@@ -65,7 +65,7 @@ export default function Pocetna() {
   return (
     <TabScreen>
       <Animated.View entering={enter(0)}>
-        <PageHeader>
+        <PageHeader right={<Avatar initial={(name?.trim()[0] ?? "U")} onPress={() => router.navigate("/profil" as Href)} />}>
           <T v="caption" muted>{longDate(day)}</T>
           <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6 }}>
             <T v="title-1" style={{ fontSize: 24, lineHeight: 32 }}>Bok</T>
@@ -74,12 +74,14 @@ export default function Pocetna() {
         </PageHeader>
       </Animated.View>
 
-      <Animated.View entering={enter(1)} style={{ alignItems: "center" }}>
+      <Animated.View entering={enter(1)}>
+        <Hero>
         <Ring size={HERO} remaining={remaining} state={state}>
           <T v="mono-label" muted>{limit.isOver ? "Danas si preko" : "Danas još smiješ"}</T>
           <Amount cents={limit.isOver ? -limit.overByCents : limit.leftTodayCents} color={limit.isOver ? colors.danger : colors.ink} maxWidth={170} />
           <T v="caption" muted>od {formatEur(limit.dailyCents)}</T>
         </Ring>
+        </Hero>
       </Animated.View>
 
       <Animated.View entering={enter(2)}>

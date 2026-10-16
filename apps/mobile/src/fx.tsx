@@ -315,8 +315,8 @@ export function Donut({
           <Circle cx={125} cy={125} r={R} stroke={fx.track} strokeWidth={W} fill="none" />
           {/* Sjaj: dva šira prozirna sloja ispod isječaka */}
           {[
-            { w: W + 20, o: 0.08 },
-            { w: W + 11, o: 0.14 },
+            { w: W + 14, o: 0.05 },
+            { w: W + 7, o: 0.09 },
           ].map((g) =>
             arcs.map((a, i) => (
               <Circle key={`${g.w}-${i}`} cx={125} cy={125} r={R} stroke={a.color} strokeWidth={g.w} opacity={g.o} fill="none" strokeDasharray={`${a.len} ${C}`} strokeDashoffset={-a.start} />

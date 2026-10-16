@@ -42,6 +42,11 @@ export function PageHeader({ children, right }: { children: ReactNode; right?: R
   );
 }
 
+/** Prostor glavnog grafa: ista visina i isti položaj na svakom ekranu (graf se ne „seli“ između tabova). */
+export function Hero({ children }: { children: ReactNode }) {
+  return <View style={{ height: HERO, alignItems: "center", justifyContent: "center" }}>{children}</View>;
+}
+
 /** Sekcija: mala oznaka (uz opcionalan podatak ili radnju desno) i sadržaj. */
 export function Section({ title, right, children }: { title: string; right?: ReactNode; children: ReactNode }) {
   return (

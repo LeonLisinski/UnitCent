@@ -7,7 +7,7 @@ import { CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
 import { Amount, Ring, RoundButton } from "../../src/fx";
 import { monthTitle } from "../../src/format";
-import { ListRow, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
+import { HERO, Hero, ListRow, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
 import { useTheme } from "../../src/theme";
 import { T } from "../../src/ui";
 import { deleteRecurring, listCategories, listRecurring, today } from "../../src/db/repo";
@@ -55,12 +55,14 @@ export default function Pretplate() {
         </PageHeader>
       </Animated.View>
 
-      <Animated.View entering={enter(1)} style={{ alignItems: "center" }}>
-        <Ring size={220} remaining={paidRatio} state="ok">
+      <Animated.View entering={enter(1)}>
+        <Hero>
+        <Ring size={HERO} remaining={paidRatio} state="ok">
           <T v="mono-label" muted>Svaki mjesec</T>
-          <Amount cents={total} maxWidth={150} base={44} />
+          <Amount cents={total} maxWidth={170} />
           <T v="caption" muted>plaćeno {Math.round(paidRatio * 100)} %</T>
         </Ring>
+        </Hero>
       </Animated.View>
 
       {items.length > 0 ? (
