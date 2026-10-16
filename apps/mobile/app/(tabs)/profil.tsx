@@ -10,6 +10,8 @@ import { textStyle, useTheme, type ThemePreference } from "../../src/theme";
 import { useToast } from "../../src/toast";
 import { T } from "../../src/ui";
 import { getLatestPlanBefore, listCategories, getPlan, kvGet, kvSet, today, upsertPlan } from "../../src/db/repo";
+import { agoText } from "../../src/format";
+import { syncNow, useSyncStatus } from "../../src/sync";
 import { disableReminders, enableReminders, remindersEnabled } from "../../src/notifications";
 
 const THEMES: { key: ThemePreference; label: string }[] = [
@@ -33,6 +35,7 @@ export default function Profil() {
   const [name, setName] = useState(savedName);
   const [income, setIncome] = useState<{ text: string; cents: Cents | null }>({ text: "", cents: null });
   const [savings, setSavings] = useState<{ text: string; cents: Cents | null }>({ text: "", cents: null });
+  const sync = useSyncStatus();
   const [reminders, setReminders] = useState(remindersEnabled());
 
   useEffect(() => {
@@ -95,6 +98,39 @@ export default function Profil() {
               }}
             />
           </Glass>
+
+          <View style={{ gap: space["2"] }}>
+            <T v="mono-label" muted>Podaci</T>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 48 }}>
+              <View
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: sync.state === "idle" ? colors.brand : sync.state === "local" ? colors["ink-muted"] : colors.warning,
+                }}
+              />
+              <View style={{ flex: 1 }}>
+                <T v="headline" style={{ fontWeight: "700" }}>
+                  {sync.state === "idle"
+                    ? "Sve je spremljeno u oblaku"
+                    : sync.state === "syncing"
+                      ? "Sinkroniziram…"
+                      : sync.state === "waiting"
+                        ? `Čeka slanje: ${sync.pending} ${sync.pending === 1 ? "izmjena" : sync.pending < 5 ? "izmjene" : "izmjena"}`
+                        : "Samo na ovom uređaju"}
+                </T>
+                <T v="caption" muted>
+                  {sync.state === "local"
+                    ? "Nema veze s računom. Podaci su sigurni na mobitelu."
+                    : sync.lastAt
+                      ? `Zadnja sinkronizacija ${agoText(sync.lastAt)}`
+                      : "Još nije sinkronizirano"}
+                </T>
+              </View>
+            </View>
+            <Button variant="soft" label="Sinkroniziraj sada" disabled={sync.state === "syncing"} onPress={() => void syncNow()} />
+          </View>
 
           <View style={{ gap: 4 }}>
             <T v="mono-label" muted>Kategorije</T>

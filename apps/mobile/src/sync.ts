@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import { AppState } from "react-native";
 import {
   DEFAULT_CATEGORIES,
@@ -176,6 +177,42 @@ async function pullAll(): Promise<boolean> {
   return changed;
 }
 
+/* ---------- stanje za prikaz (Profil) ---------- */
+
+export type SyncState = "local" | "idle" | "syncing" | "waiting";
+
+export interface SyncStatus {
+  state: SyncState; // local: bez računa/okruženja; waiting: izmjene čekaju mrežu
+  lastAt: string | null; // zadnja uspješna sinkronizacija (ISO)
+  pending: number; // izmijenjenih redaka koji još nisu poslani
+}
+
+let status: SyncStatus = { state: "local", lastAt: null, pending: 0 };
+const listeners = new Set<() => void>();
+
+function setStatus(patch: Partial<SyncStatus>): void {
+  status = { ...status, ...patch };
+  listeners.forEach((l) => l());
+}
+
+function pendingCount(): number {
+  return (
+    getDb().getFirstSync<{ n: number }>("select count(*) as n from (select 1 from outbox group by table_name, row_id)")?.n ?? 0
+  );
+}
+
+/** Sinkronizacija je nevidljiva dok sve radi; Profil prikazuje ovo stanje. */
+export function useSyncStatus(): SyncStatus {
+  return useSyncExternalStore(
+    (cb) => {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
+    () => status,
+    () => status,
+  );
+}
+
 /* ---------- upravljanje ---------- */
 
 let running = false;
@@ -201,12 +238,23 @@ export async function syncNow(): Promise<void> {
   running = true;
   try {
     const { data } = await supabase.auth.getSession();
-    if (!data.session) return;
+    if (!data.session) {
+      setStatus({ state: "local", pending: pendingCount() });
+      return;
+    }
+    setStatus({ state: "syncing", pending: pendingCount() });
     await pushAll();
     if (await pullAll()) notifyDbChanged();
     failures = 0;
+    const at = new Date().toISOString();
+    getDb().runSync(
+      "insert into kv (key, value) values ('sync.lastAt', ?) on conflict(key) do update set value = excluded.value",
+      [at],
+    );
+    setStatus({ state: "idle", lastAt: at, pending: pendingCount() });
   } catch (e) {
     failures += 1;
+    setStatus({ state: "waiting", pending: pendingCount() });
     if (__DEV__) console.warn("[sync]", e instanceof Error ? e.message : e);
     schedule(backoffSeconds(failures) * 1000);
   } finally {
@@ -221,7 +269,11 @@ export async function syncNow(): Promise<void> {
 /** Pokreće sinkronizaciju: nakon sesije, nakon svake izmjene (odgoda 2 s), pri povratku u aplikaciju i svakih 5 min. */
 export function startSync(): () => void {
   if (!supabase) return () => undefined;
-  setSyncHandler(() => schedule(2000));
+  status = { ...status, lastAt: kvGet("sync.lastAt"), pending: pendingCount() };
+  setSyncHandler(() => {
+    setStatus({ pending: pendingCount(), state: status.state === "local" ? "local" : "waiting" });
+    schedule(2000);
+  });
   const sub = AppState.addEventListener("change", (s) => {
     if (s === "active") schedule(500);
   });

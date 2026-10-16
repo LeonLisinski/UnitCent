@@ -65,3 +65,12 @@ export function fitFontSize(text: string, maxWidth: number, base: number, min = 
   if (em === 0) return base;
   return Math.max(min, Math.min(base, Math.floor(maxWidth / em)));
 }
+
+/** "upravo", "prije 5 min", "prije 3 h", "prije 2 d" (iz ISO vremena). */
+export function agoText(iso: string, nowMs = Date.now()): string {
+  const min = Math.max(0, Math.round((nowMs - Date.parse(iso)) / 60000));
+  if (min < 1) return "upravo";
+  if (min < 60) return `prije ${min} min`;
+  if (min < 24 * 60) return `prije ${Math.round(min / 60)} h`;
+  return `prije ${Math.round(min / 1440)} d`;
+}
