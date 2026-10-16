@@ -406,9 +406,11 @@ export function SwipeRow({ children, onDelete }: { children: ReactNode; onDelete
 
   const outer = useAnimatedStyle(() => (collapsing.value ? { height: rowH.value * collapse.value, opacity: collapse.value } : {}));
   const rowStyle = useAnimatedStyle(() => ({ transform: [{ translateX: tx.value }] }));
-  const reveal = useAnimatedStyle(() => ({ opacity: Math.min(1, -tx.value / 24) }));
+  // Crvena se popunjava s desne strane do prstiju (širina = udaljenost povlačenja), a ne cijelom širinom odjednom.
+  const reveal = useAnimatedStyle(() => ({ width: Math.max(0, -tx.value), opacity: Math.min(1, -tx.value / 28) }));
   const iconStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 0.7 + Math.min(0.5, (-tx.value / Math.max(1, width.value)) * 1.6) }],
+    opacity: Math.min(1, Math.max(0, (-tx.value - 36) / 40)),
+    transform: [{ scale: 0.75 + Math.min(0.35, (-tx.value / Math.max(1, width.value)) * 1.2) }],
   }));
 
   return (
@@ -425,15 +427,19 @@ export function SwipeRow({ children, onDelete }: { children: ReactNode; onDelete
     >
       <Animated.View
         pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          { backgroundColor: colors.danger, borderRadius: 18, marginVertical: 4, alignItems: "flex-end", justifyContent: "center", paddingRight: 26 },
-          reveal,
-        ]}
+        style={[{ position: "absolute", right: 0, top: 4, bottom: 4, borderRadius: 18, overflow: "hidden" }, reveal]}
       >
-        <Animated.View style={iconStyle}>
-          <Icon name="trash" size={24} color="#ffffff" />
-        </Animated.View>
+        <Sheen
+          colors={[`${colors.danger}00`, `${colors.danger}38`, `${colors.danger}8c`]}
+          locations={[0, 0.55, 1]}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          style={{ ...StyleSheet.absoluteFill as object, alignItems: "flex-end", justifyContent: "center", paddingRight: 22 }}
+        >
+          <Animated.View style={iconStyle}>
+            <Icon name="trash" size={22} color={colors.danger} />
+          </Animated.View>
+        </Sheen>
       </Animated.View>
       <GestureDetector gesture={pan}>
         <Animated.View style={rowStyle}>{children}</Animated.View>

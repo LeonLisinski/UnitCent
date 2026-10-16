@@ -15,10 +15,10 @@ import { CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
 import { Amount, DayBars, Donut, RoundButton } from "../../src/fx";
 import { monthShort, monthTitle } from "../../src/format";
-import { HERO, Hero, ListRow, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
+import { HERO, Hero, ListRow, MonthSwitcher, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
 import { useTheme } from "../../src/theme";
 import { T } from "../../src/ui";
-import { listCategories, listTransactionsInMonth, today } from "../../src/db/repo";
+import { earliestTxMonth, listCategories, listTransactionsInMonth, today } from "../../src/db/repo";
 
 function nextMonth(ym: YearMonth): YearMonth {
   const [y, m] = ym.split("-").map(Number) as [number, number];
@@ -33,6 +33,8 @@ export default function Pregled() {
   const router = useRouter();
   const thisMonth = yearMonthOf(today());
   const [month, setMonth] = useState<YearMonth>(thisMonth);
+  const first = useDb(() => earliestTxMonth());
+  const earliest = first && first < thisMonth ? first : thisMonth;
 
   const cats = useDb(() => listCategories());
   const txs = useDb(() => listTransactionsInMonth(month), [month]);
@@ -65,11 +67,7 @@ export default function Pregled() {
     <TabScreen>
       <Animated.View entering={enter(0)}>
         <PageHeader>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <RoundButton icon="back" label="Prethodni mjesec" onPress={() => setMonth(previousMonth(month))} />
-            <T v="title-2" style={{ fontSize: 19 }}>{monthTitle(month)}</T>
-            <RoundButton icon="chev" label="Sljedeći mjesec" disabled={month >= thisMonth} onPress={() => setMonth(nextMonth(month))} />
-          </View>
+          <MonthSwitcher month={month} onChange={setMonth} min={earliest} max={thisMonth} />
         </PageHeader>
       </Animated.View>
 

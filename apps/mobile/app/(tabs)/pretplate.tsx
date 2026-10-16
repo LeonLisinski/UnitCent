@@ -8,7 +8,7 @@ import { CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
 import { Amount, Ring, RoundButton } from "../../src/fx";
 import { monthTitle, nextMonthOf } from "../../src/format";
-import { HERO, Hero, ListRow, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
+import { HERO, Hero, ListRow, MonthSwitcher, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
 import { useTheme } from "../../src/theme";
 import { T } from "../../src/ui";
 import { deleteRecurring, listCategories, listRecurring, today } from "../../src/db/repo";
@@ -73,11 +73,7 @@ export default function Pretplate() {
     <TabScreen>
       <Animated.View entering={enter(0)}>
         <PageHeader>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <RoundButton icon="back" label="Prethodni mjesec" disabled={month <= earliest} onPress={() => setMonth(previousMonth(month))} />
-            <T v="title-2" style={{ fontSize: 19 }}>{monthTitle(month)}</T>
-            <RoundButton icon="chev" label="Sljedeći mjesec" disabled={month >= latest} onPress={() => setMonth(nextMonthOf(month))} />
-          </View>
+          <MonthSwitcher month={month} onChange={setMonth} min={earliest} max={latest} />
         </PageHeader>
       </Animated.View>
 

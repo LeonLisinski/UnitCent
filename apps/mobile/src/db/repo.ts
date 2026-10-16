@@ -617,3 +617,9 @@ export function getMonthSummary(todayDate: LocalDate = today()): { limit: LimitR
 }
 
 export { previousMonth };
+
+/** Najraniji mjesec koji ima ijedan trošak (za granicu kretanja po mjesecima); null ako nema troškova. */
+export function earliestTxMonth(): YearMonth | null {
+  const r = getDb().getFirstSync<{ d: string | null }>("select min(local_date) as d from transactions where deleted_at is null");
+  return r?.d ? r.d.slice(0, 7) : null;
+}

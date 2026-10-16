@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { useState } from "react";
+import { Modal, Pressable, ScrollView, View } from "react-native";
 import { Safe, useInsets, useKeyboardHeight } from "./safe";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Glow, RoundButton, recentlySwiped } from "./fx";
+import { Glass, Glow, RoundButton, recentlySwiped } from "./fx";
+import { Icon } from "./icons";
+import { monthShort, monthTitle } from "./format";
 import { useTheme } from "./theme";
 import { T } from "./ui";
 
@@ -177,5 +180,105 @@ export function RowAmount({ children, color }: { children: ReactNode; color?: st
     <T v="amount" color={color} style={{ fontWeight: "800" }}>
       {children}
     </T>
+  );
+}
+
+function shiftMonth(ym: string, delta: number): string {
+  const [y, m] = ym.split("-").map(Number) as [number, number];
+  const idx = y * 12 + (m - 1) + delta;
+  return `${Math.floor(idx / 12)}-${String((idx % 12) + 1).padStart(2, "0")}`;
+}
+
+/**
+ * Odabir mjeseca: strelice za susjedne mjesece i, dodirom na naslov (ikona kalendara), izbornik s godinom i mjesecima
+ * da se do daljnjeg ili prošlog mjeseca stigne jednim dodirom. `min` i `max` su granice ("YYYY-MM").
+ */
+export function MonthSwitcher({ month, onChange, min, max }: { month: string; onChange: (m: string) => void; min: string; max: string }) {
+  const { colors, fx } = useTheme();
+  const [open, setOpen] = useState(false);
+  const [year, setYear] = useState(Number(month.slice(0, 4)));
+  const minY = Number(min.slice(0, 4));
+  const maxY = Number(max.slice(0, 4));
+  const nowMonth = new Date();
+  const current = `${nowMonth.getFullYear()}-${String(nowMonth.getMonth() + 1).padStart(2, "0")}`;
+
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+      <RoundButton icon="back" label="Prethodni mjesec" disabled={month <= min} onPress={() => onChange(shiftMonth(month, -1))} />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${monthTitle(month)}. Odaberi mjesec i godinu`}
+        onPress={() => {
+          setYear(Number(month.slice(0, 4)));
+          setOpen(true);
+        }}
+        style={({ pressed }) => ({
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          minHeight: 44,
+          paddingHorizontal: 16,
+          borderRadius: 999,
+          backgroundColor: pressed ? fx.track : "transparent",
+        })}
+      >
+        <T v="title-2" style={{ fontSize: 19 }}>{monthTitle(month)}</T>
+        <Icon name="calendar" size={18} color={colors.brand} />
+      </Pressable>
+      <RoundButton icon="chev" label="Sljedeći mjesec" disabled={month >= max} onPress={() => onChange(shiftMonth(month, 1))} />
+
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)} statusBarTranslucent>
+        <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", padding: PAD }} onPress={() => setOpen(false)}>
+          <Pressable onPress={() => undefined}>
+            <Glass radius={28} style={{ padding: 18, gap: 14, backgroundColor: colors.surface }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <RoundButton icon="back" label="Prethodna godina" disabled={year <= minY} onPress={() => setYear(year - 1)} />
+                <T v="title-1" style={{ fontSize: 24, lineHeight: 30 }}>{year}.</T>
+                <RoundButton icon="chev" label="Sljedeća godina" disabled={year >= maxY} onPress={() => setYear(year + 1)} />
+              </View>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: 8 }}>
+                {Array.from({ length: 12 }, (_, i) => {
+                  const ym = `${year}-${String(i + 1).padStart(2, "0")}`;
+                  const disabled = ym < min || ym > max;
+                  const selected = ym === month;
+                  return (
+                    <View key={ym} style={{ width: "25%", alignItems: "center" }}>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityState={{ selected, disabled }}
+                        accessibilityLabel={monthTitle(ym)}
+                        disabled={disabled}
+                        onPress={() => {
+                          setOpen(false);
+                          onChange(ym);
+                        }}
+                        style={{
+                          width: 66,
+                          height: 46,
+                          borderRadius: 23,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          backgroundColor: selected ? colors.brand : "transparent",
+                          borderWidth: ym === current && !selected ? 1.5 : 0,
+                          borderColor: colors.brand,
+                          opacity: disabled ? 0.25 : 1,
+                        }}
+                      >
+                        <T v="headline" color={selected ? colors["on-brand"] : colors.ink} style={{ fontSize: 15, textTransform: "capitalize" }}>
+                          {monthShort(ym)}
+                        </T>
+                      </Pressable>
+                    </View>
+                  );
+                })}
+              </View>
+              <Pressable accessibilityRole="button" hitSlop={8} onPress={() => { setOpen(false); onChange(current < min ? min : current > max ? max : current); }} style={{ alignSelf: "center", minHeight: 40, justifyContent: "center" }}>
+                <T v="headline" color={colors.brand} style={{ fontSize: 15 }}>Ovaj mjesec</T>
+              </Pressable>
+            </Glass>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </View>
   );
 }
