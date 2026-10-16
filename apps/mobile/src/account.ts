@@ -7,6 +7,8 @@ import { supabase } from "./supabase";
 WebBrowser.maybeCompleteAuthSession();
 
 export interface Account {
+  /** Davatelj prijave ("google" | "apple"), ako je prijavljen. */
+  provider: string | null;
   /** Ima sesiju (anonimnu ili prijavljenu). */
   hasSession: boolean;
   /** Anonimni račun: podaci su u oblaku, ali se bez prijave ne mogu vratiti na drugom uređaju. */
@@ -14,10 +16,14 @@ export interface Account {
   email: string | null;
 }
 
-const NONE: Account = { hasSession: false, anonymous: false, email: null };
+const NONE: Account = { hasSession: false, anonymous: false, email: null, provider: null };
 
-function toAccount(user: { is_anonymous?: boolean; email?: string } | null | undefined): Account {
-  return user ? { hasSession: true, anonymous: !!user.is_anonymous, email: user.email ?? null } : NONE;
+function toAccount(
+  user: { is_anonymous?: boolean; email?: string; app_metadata?: { provider?: string }; identities?: { provider: string }[] } | null | undefined,
+): Account {
+  if (!user) return NONE;
+  const provider = user.identities?.find((i) => i.provider !== "anonymous")?.provider ?? null;
+  return { hasSession: true, anonymous: !!user.is_anonymous, email: user.email ?? null, provider };
 }
 
 export function useAccount(): Account {
@@ -34,6 +40,8 @@ export function useAccount(): Account {
   }, []);
   return account;
 }
+
+export type Provider = "google" | "apple";
 
 export type SignInResult = "linked" | "signed-in" | "cancelled" | "error";
 
@@ -70,20 +78,21 @@ async function browse(authUrl: string, redirectTo: string): Promise<{ ok: true }
 }
 
 /**
- * Prijava Googleom. Anonimni račun se povezuje (isti korisnik, podaci ostaju). Ako je taj Google račun
+ * Prijava Googleom ili Appleom. Anonimni račun se povezuje (isti korisnik, podaci ostaju). Ako je taj račun davatelja
  * već povezan s drugim korisnikom (npr. novi mobitel), prijavljujemo se u taj račun, a lokalni podaci
  * se dodaju njemu pri sljedećoj sinkronizaciji.
  */
-export async function signInWithGoogle(): Promise<SignInResult> {
+export async function signInWith(provider: Provider): Promise<SignInResult> {
   if (!supabase) return "error";
   const redirectTo = Linking.createURL("auth-callback");
+  if (__DEV__) console.log("[auth] redirectTo =", redirectTo); // mora odgovarati Redirect URLs u Supabaseu
   try {
     const { data: s } = await supabase.auth.getSession();
     const before = s.session?.user.id ?? null;
 
     if (s.session?.user.is_anonymous) {
       const { data, error } = await supabase.auth.linkIdentity({
-        provider: "google",
+        provider,
         options: { redirectTo, skipBrowserRedirect: true },
       });
       if (!error && data?.url) {
@@ -100,7 +109,7 @@ export async function signInWithGoogle(): Promise<SignInResult> {
     }
 
     const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
+      provider,
       options: { redirectTo, skipBrowserRedirect: true },
     });
     if (error || !data?.url) return "error";

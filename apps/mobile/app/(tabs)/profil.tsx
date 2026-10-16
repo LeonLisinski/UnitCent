@@ -10,9 +10,7 @@ import { textStyle, useTheme, type ThemePreference } from "../../src/theme";
 import { useToast } from "../../src/toast";
 import { T } from "../../src/ui";
 import { getLatestPlanBefore, listCategories, getPlan, kvGet, kvSet, today, upsertPlan } from "../../src/db/repo";
-import { signInWithGoogle, useAccount } from "../../src/account";
-import { agoText } from "../../src/format";
-import { syncNow, useSyncStatus } from "../../src/sync";
+import { AccountSection } from "../../src/AccountSection";
 import { disableReminders, enableReminders, remindersEnabled } from "../../src/notifications";
 
 const THEMES: { key: ThemePreference; label: string }[] = [
@@ -36,9 +34,6 @@ export default function Profil() {
   const [name, setName] = useState(savedName);
   const [income, setIncome] = useState<{ text: string; cents: Cents | null }>({ text: "", cents: null });
   const [savings, setSavings] = useState<{ text: string; cents: Cents | null }>({ text: "", cents: null });
-  const sync = useSyncStatus();
-  const account = useAccount();
-  const [signingIn, setSigningIn] = useState(false);
   const [reminders, setReminders] = useState(remindersEnabled());
 
   useEffect(() => {
@@ -85,6 +80,8 @@ export default function Profil() {
             />
           </View>
 
+          <AccountSection />
+
           <Glass style={{ padding: space["4"], gap: space["4"] }}>
             <T v="title-2">Plan za ovaj mjesec</T>
             <AmountField label="Primanja" value={income.text} onChange={(text, cents) => setIncome({ text, cents })} />
@@ -101,70 +98,6 @@ export default function Profil() {
               }}
             />
           </Glass>
-
-          {account.hasSession ? (
-            <View style={{ gap: space["2"] }}>
-              <T v="mono-label" muted>Račun</T>
-              {account.anonymous ? (
-                <>
-                  <T v="headline" style={{ fontWeight: "700" }}>Račun još nije zaštićen</T>
-                  <T v="caption" muted>
-                    Prijavi se da podaci prežive novi mobitel ili reinstalaciju. Prijava ne mijenja ništa u tvojim podacima.
-                  </T>
-                  <Button
-                    label={signingIn ? "Prijavljujem…" : "Nastavi s Googleom"}
-                    disabled={signingIn}
-                    onPress={async () => {
-                      setSigningIn(true);
-                      const r = await signInWithGoogle();
-                      setSigningIn(false);
-                      if (r === "linked") toast.show("Račun je zaštićen");
-                      else if (r === "signed-in") toast.show("Prijavljen u postojeći račun");
-                      else if (r === "error") toast.show("Prijava nije uspjela, pokušaj ponovno");
-                    }}
-                  />
-                </>
-              ) : (
-                <>
-                  <T v="headline" style={{ fontWeight: "700" }}>{account.email ?? "Prijavljen"}</T>
-                  <T v="caption" muted>Podaci su vezani uz tvoj Google račun.</T>
-                </>
-              )}
-            </View>
-          ) : null}
-
-          <View style={{ gap: space["2"] }}>
-            <T v="mono-label" muted>Podaci</T>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 48 }}>
-              <View
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 5,
-                  backgroundColor: sync.state === "idle" ? colors.brand : sync.state === "local" ? colors["ink-muted"] : colors.warning,
-                }}
-              />
-              <View style={{ flex: 1 }}>
-                <T v="headline" style={{ fontWeight: "700" }}>
-                  {sync.state === "idle"
-                    ? "Sve je spremljeno u oblaku"
-                    : sync.state === "syncing"
-                      ? "Sinkroniziram…"
-                      : sync.state === "waiting"
-                        ? `Čeka slanje: ${sync.pending} ${sync.pending === 1 ? "izmjena" : sync.pending < 5 ? "izmjene" : "izmjena"}`
-                        : "Samo na ovom uređaju"}
-                </T>
-                <T v="caption" muted>
-                  {sync.state === "local"
-                    ? "Nema veze s računom. Podaci su sigurni na mobitelu."
-                    : sync.lastAt
-                      ? `Zadnja sinkronizacija ${agoText(sync.lastAt)}`
-                      : "Još nije sinkronizirano"}
-                </T>
-              </View>
-            </View>
-            <Button variant="soft" label="Sinkroniziraj sada" disabled={sync.state === "syncing"} onPress={() => void syncNow()} />
-          </View>
 
           <View style={{ gap: 4 }}>
             <T v="mono-label" muted>Kategorije</T>
