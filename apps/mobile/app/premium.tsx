@@ -49,7 +49,7 @@ function Medallion({ hi, base, lo }: { hi: string; base: string; lo: string }) {
   return (
     <Svg width={260} height={190} viewBox="0 0 260 190">
       <Defs>
-        <RadialGradient id="gl" cx="50%" cy="50%" r="50%">
+        <RadialGradient id="gl" gradientUnits="userSpaceOnUse" cx={130} cy={95} r={92}>
           <Stop offset="0" stopColor={base} stopOpacity={0.4} />
           <Stop offset="0.6" stopColor={base} stopOpacity={0.08} />
           <Stop offset="1" stopColor={base} stopOpacity={0} />
@@ -172,7 +172,7 @@ export default function Premium() {
         )
       }
     >
-      <View style={{ alignItems: "center", marginTop: -34 }}>
+      <View style={{ alignItems: "center" }}>
         <Medallion hi={fx.goldHi} base={fx.gold} lo={fx.goldLo} />
         <View style={{ alignItems: "center", marginTop: -26, gap: 0 }}>
           <T v="mono-label" muted style={{ fontSize: 11, letterSpacing: 4 }}>UNITCENT</T>
