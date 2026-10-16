@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<title>UnitCent aplikacija: vizualni smjer v2</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@1&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Smjer v2: jedan izvor svjetla, staklene površine (bez punih kutija), veliki brojevi, ringovi i grafovi umjesto popisa. */
+:root{--sans:Manrope,system-ui,sans-serif;--serif:"Instrument Serif",Georgia,serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+*{box-sizing:border-box;margin:0}
+body{background:#1b1f1e;font-family:var(--sans);color:#fff;padding:40px;display:flex;flex-direction:column;gap:48px;align-items:center}
+h1{font-size:14px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#9aa6a1;font-family:var(--mono)}
+.row{display:flex;gap:36px;flex-wrap:wrap;justify-content:center}
+.cap{font:500 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#8d9994;text-align:center;margin-top:12px}
+
+/* ---- teme ---- */
+.phone{--bg:#070b0b;--ink:#f2f4f1;--muted:#8d9a95;--glass:rgba(255,255,255,.055);--glass-b:rgba(255,255,255,.09);--line:rgba(255,255,255,.08);--brand:#3dd6a3;--brand2:#c8f169;--on-brand:#04241a;--glow:rgba(61,214,163,.28);--track:rgba(255,255,255,.07);--tab:rgba(18,26,25,.72);--warn:#f5a524;--danger:#f97066;--shadow:0 30px 60px -20px rgba(0,0,0,.7)}
+.phone.light{--bg:#f4f6f2;--ink:#0f1515;--muted:#5b6964;--glass:rgba(255,255,255,.78);--glass-b:rgba(15,21,21,.06);--line:rgba(15,21,21,.08);--brand:#0e7a5f;--brand2:#7cb518;--on-brand:#fff;--glow:rgba(14,122,95,.16);--track:rgba(15,21,21,.07);--tab:rgba(255,255,255,.8);--warn:#a15c07;--danger:#b42318;--shadow:0 24px 50px -22px rgba(30,60,50,.35)}
+
+.phone{width:390px;height:812px;border-radius:46px;background:var(--bg);color:var(--ink);position:relative;overflow:hidden;box-shadow:0 0 0 10px #0c0f0f,0 40px 80px -30px #000}
+.phone.light{box-shadow:0 0 0 10px #d9dedb,0 40px 80px -30px rgba(0,0,0,.35)}
+.glow{position:absolute;left:50%;top:-120px;width:560px;height:560px;margin-left:-280px;border-radius:50%;background:radial-gradient(closest-side,var(--glow),transparent 72%);pointer-events:none}
+.status{position:absolute;top:0;left:0;right:0;height:48px;display:flex;justify-content:space-between;align-items:center;padding:6px 30px 0;font-weight:700;font-size:15px;z-index:5}
+.island{position:absolute;top:10px;left:50%;margin-left:-56px;width:112px;height:32px;border-radius:20px;background:#000;z-index:6}
+.screen{position:absolute;inset:0;padding:56px 20px 110px;overflow:hidden}
+.num{font-variant-numeric:tabular-nums}
+.mono{font:500 11px var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.glass{background:var(--glass);border:1px solid var(--glass-b);border-radius:24px;backdrop-filter:blur(14px)}
+
+/* ---- zaglavlje ---- */
+.top{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.hello small{display:block;font-size:13px;color:var(--muted);font-weight:500}
+.hello b{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:800;background:linear-gradient(145deg,var(--brand),var(--brand2));color:#04241a}
+
+/* ---- početna: ring ---- */
+.hero{position:relative;width:262px;height:262px;margin:0 auto 0}
+.hero svg{width:262px;height:262px;overflow:visible}
+.hero .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding-top:6px}
+.hero .big{font-size:54px;font-weight:800;letter-spacing:-.045em;line-height:1}
+.hero .sub{font-size:14px;color:var(--muted);font-weight:600}
+.pills{display:flex;gap:8px;justify-content:center;margin-top:-6px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;font-size:13px;font-weight:700;background:var(--glass);border:1px solid var(--glass-b)}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--brand);box-shadow:0 0 10px var(--brand)}
+
+/* ---- ritam mjeseca ---- */
+.sec{display:flex;justify-content:space-between;align-items:baseline;margin:16px 2px 8px}
+.sec b{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.bars{height:64px;display:flex;align-items:flex-end;gap:3px;padding:0 2px;position:relative}
+.bars i{flex:1;border-radius:3px;background:var(--brand);opacity:.9;min-height:3px}
+.bars i.over{background:var(--warn)}
+.bars i.today{background:linear-gradient(var(--brand2),var(--brand));box-shadow:0 0 14px var(--glow)}
+.bars i.future{background:var(--track);opacity:1}
+.bars .limit{position:absolute;left:0;right:0;border-top:1.5px dashed var(--muted);opacity:.55}
+
+/* ---- uskoro: vodoravne kartice ---- */
+.hs{display:flex;gap:10px;overflow:hidden;margin:0 -20px;padding:0 20px}
+.up{flex:none;width:150px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.ic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none}
+.ic svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.up b{font-size:15px;font-weight:700;display:block}
+.up small{font-size:12px;color:var(--muted);font-weight:600}
+.up .a{font-size:19px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+
+/* ---- popis ---- */
+.list{display:flex;flex-direction:column}
+.li{display:flex;align-items:center;gap:14px;padding:11px 2px}
+.li .t{flex:1;min-width:0}
+.li .t b{display:block;font-size:15.5px;font-weight:700}
+.li .t small{font-size:12.5px;color:var(--muted);font-weight:500}
+.li .a{font-weight:800;font-size:16px;letter-spacing:-.01em}
+.day{font:700 11px var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:14px 2px 2px}
+
+/* ---- tab traka ---- */
+.tabbar{position:absolute;left:16px;right:16px;bottom:22px;height:68px;border-radius:34px;background:var(--tab);border:1px solid var(--glass-b);backdrop-filter:blur(22px);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:4}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;width:56px;color:var(--muted);font-size:10.5px;font-weight:700}
+.tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab.on{color:var(--brand)}
+.fab{width:60px;height:60px;border-radius:50%;margin-top:-26px;background:linear-gradient(145deg,var(--brand),var(--brand2));display:grid;place-items:center;color:#04241a;box-shadow:0 12px 28px -6px var(--glow),0 0 0 6px var(--bg)}
+.fab svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:2.6;stroke-linecap:round}
+
+/* ---- dodaj ---- */
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:6px auto 14px}
+.seg{display:flex;gap:4px;justify-content:center}
+.seg span{padding:8px 18px;border-radius:999px;font-size:14px;font-weight:700;color:var(--muted)}
+.seg span.on{background:var(--glass);border:1px solid var(--glass-b);color:var(--ink)}
+.amt{text-align:center;margin:20px 0 4px;font-size:76px;font-weight:800;letter-spacing:-.05em;line-height:1}
+.amt .cur{font-size:36px;color:var(--muted);font-weight:700;margin-left:6px}
+.amt .caret{display:inline-block;width:3px;height:56px;background:var(--brand);margin-left:2px;vertical-align:-6px;border-radius:2px}
+.hint{text-align:center;font-size:13px;color:var(--muted);font-weight:600}
+.cgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px;margin:22px 0 14px}
+.cc{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:11.5px;font-weight:700;text-align:center}
+.cc .ic{width:54px;height:54px}
+.cc .ic svg{width:25px;height:25px}
+.cc.sel .ic{box-shadow:0 0 0 2px var(--brand),0 0 22px var(--glow)}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);margin-top:6px}
+.pad span{height:54px;display:grid;place-items:center;font-size:28px;font-weight:600;letter-spacing:-.02em}
+
+/* ---- pregled ---- */
+.mnav{display:flex;justify-content:space-between;align-items:center;margin:10px 0 0}
+.mnav b{font-size:16px;font-weight:800}
+.mnav span{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--glass);border:1px solid var(--glass-b);color:var(--muted)}
+.donut{position:relative;width:250px;height:250px;margin:14px auto 6px}
+.donut svg{width:250px;height:250px;transform:rotate(-90deg)}
+.donut .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.donut .big{font-size:38px;font-weight:800;letter-spacing:-.04em}
+.delta{display:inline-flex;gap:6px;align-items:center;padding:5px 11px;border-radius:999px;font-size:12.5px;font-weight:800;background:rgba(61,214,163,.14);color:var(--brand)}
+.light .delta{background:rgba(14,122,95,.12)}
+.leg{display:flex;flex-direction:column}
+.lr{display:grid;grid-template-columns:12px 1fr auto;gap:12px;align-items:center;padding:11px 2px;border-top:1px solid var(--line)}
+.lr:first-child{border-top:0}
+.lr .d{width:12px;height:12px;border-radius:4px}
+.lr b{font-size:15px;font-weight:700}
+.lr small{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.lr .a{font-weight:800;font-size:15.5px}
+
+/* ---- pretplate ---- */
+.big2{font-size:44px;font-weight:800;letter-spacing:-.04em;line-height:1.05;margin-top:4px}
+.mini{height:6px;border-radius:3px;background:var(--track);overflow:hidden;margin:12px 0 4px}
+.mini i{display:block;height:100%;width:78%;background:linear-gradient(90deg,var(--brand),var(--brand2));border-radius:3px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);row-gap:2px;margin-top:10px}
+.cal .w{text-align:center;font:500 9.5px var(--mono);letter-spacing:.08em;color:var(--muted);padding-bottom:6px;text-transform:uppercase}
+.cal .d{display:flex;flex-direction:column;align-items:center;gap:3px;min-height:52px;font-size:13px;font-weight:600}
+.cal .d.out{opacity:.22}
+.cal .d.past{opacity:.5}
+.cal .n{width:24px;height:24px;border-radius:50%;display:grid;place-items:center}
+.cal .d.today .n{background:var(--brand);color:var(--on-brand);font-weight:800}
+.cal .ic{width:26px;height:26px}
+.cal .ic svg{width:14px;height:14px}
+</style>
+</head>
+<body>
+<h1>UnitCent · vizualni smjer aplikacije v2 · tamna i svijetla tema</h1>
+
+<div class="row" id="row-dark"></div>
+<div class="row" id="row-light"></div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="gr" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#3dd6a3"/><stop offset="1" stop-color="#c8f169"/></linearGradient>
+    <linearGradient id="grl" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#0e7a5f"/><stop offset="1" stop-color="#7cb518"/></linearGradient>
+  </defs>
+</svg>
+
+<script>
+const ICON={
+ home:'<path d="M4 10.5 12 4l8 6.5V20h-5v-5h-6v5H4z"/>',
+ chart:'<path d="M4 20h16M7 20v-7M12 20V6M17 20v-10"/>',
+ cal:'<path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/>',
+ user:'<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20a7.5 7.5 0 0 1 15 0"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ cart:'<path d="M3 4h2l2.4 11h10.2L20 8H6.2M9 20h.01M17 20h.01"/>',
+ car:'<path d="M5 16h14v-4l-2-5H7l-2 5zM7 19v-3M17 19v-3M8 12.5h.01M16 12.5h.01"/>',
+ house:'<path d="M4 11 12 4l8 7M6 9.5V20h12V9.5"/>',
+ music:'<path d="M9 18V6l10-2v12M9 18a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM19 16a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>',
+ play:'<path d="M7 4.5l12 7.5-12 7.5z"/>',
+ dumb:'<path d="M2 9v6M5 7v10M19 7v10M22 9v6M5 12h14"/>',
+ phone:'<path d="M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM11 18h2"/>',
+ glass:'<path d="M7 3h10l-1 7a4 4 0 0 1-8 0zM12 14v6M8 20h8"/>',
+ heart:'<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
+ gift:'<path d="M4 11h16v9H4zM3 8h18v3H3zM12 8v12M12 8C10 4 6.5 5 7.5 8M12 8c2-4 5.5-3 4.5 0"/>',
+ smoke:'<path d="M3 14h13v3H3zM18.5 14v3M21 14v3M17 4c0 2-2 2-2 4s2 2 2 4"/>',
+ repeat:'<path d="M17 3l3 3-3 3M20 6H8a4 4 0 0 0-4 4M7 21l-3-3 3-3M4 18h12a4 4 0 0 0 4-4"/>',
+ dots:'<path d="M6 12h.01M12 12h.01M18 12h.01" stroke-width="3"/>',
+ bolt:'<path d="M13 3 5 13h6l-1 8 8-10h-6z"/>',
+ shield:'<path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/>',
+};
+const ic=(n,c)=>`<span class="ic" style="color:${c};background:${c}26"><svg viewBox="0 0 24 24">${ICON[n]}</svg></span>`;
+const CAT={hrana:'#4cc38a',auto:'#6ea2f5',stan:'#b195f0',zabava:'#f59a6b',zdravlje:'#f28bb0',pretplate:'#5fcbdc',cig:'#d1a679',obitelj:'#b5c870'};
+const CATL={hrana:'#23955f',auto:'#2f6fd6',stan:'#7a55d6',zabava:'#d4622e',zdravlje:'#c93d73',pretplate:'#1b8da1',cig:'#9a6c3c',obitelj:'#6b7d2a'};
+
+function status(){return '<div class="island"></div><div class="status"><span>9:41</span><span>●●● 5G</span></div>'}
+function tabs(active){
+  const t=(k,n,l)=>`<div class="tab ${active===k?'on':''}"><svg viewBox="0 0 24 24">${ICON[n]}</svg>${l}</div>`;
+  return `<div class="tabbar">${t('home','home','Početna')}${t('pre','chart','Pregled')}<div class="fab"><svg viewBox="0 0 24 24">${ICON.plus}</svg></div>${t('pre2','cal','Pretplate')}${t('prof','user','Profil')}</div>`;
+}
+function arc(cx,cy,r,a0,a1){const p=a=>[cx+r*Math.cos(a*Math.PI/180),cy+r*Math.sin(a*Math.PI/180)];const [x0,y0]=p(a0),[x1,y1]=p(a1);return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 1 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`}
+
+/* ---------- POČETNA ---------- */
+function home(light){
+  const C=light?CATL:CAT;
+  const spent=[18,22,9,31,14,0,26,17,12,35,8,21,15,27];  // dani 1..14 (€) — uzorak
+  const today=7.6, limit=19.96;
+  const days=[...spent.map(v=>({v})),{v:today,t:1},...Array(16).fill(0).map(()=>({f:1}))];
+  const max=40;
+  const bars=days.map((d,i)=>d.f?`<i class="future" style="height:${10+((i*7)%9)}px"></i>`:`<i class="${d.t?'today':d.v>limit?'over':''}" style="height:${Math.max(3,d.v/max*64)}px"></i>`).join('');
+  const lim=limit/max*64;
+  const gid=light?'grl':'gr';
+  const ring=`<svg viewBox="0 0 300 300"><path d="${arc(150,150,124,135,405)}" fill="none" stroke="var(--track)" stroke-width="20" stroke-linecap="round"/>
+    <path d="${arc(150,150,124,135,405)}" fill="none" stroke="url(#${gid})" stroke-width="20" stroke-linecap="round" pathLength="100" stroke-dasharray="${(100-today/limit*100).toFixed(1)} 100"/></svg>`;
+  return `<div class="phone ${light?'light':''}"><div class="glow"></div>${status()}
+  <div class="screen">
+    <div class="top"><div class="hello"><small>Četvrtak, 15. listopada</small><b>Bok, Luka</b></div><div class="avatar">L</div></div>
+    <div class="hero">${ring}<div class="c"><span class="mono">Danas još smiješ</span><span class="big num">12,36 €</span><span class="sub num">od 19,96 € · još 17 dana</span></div></div>
+    <div class="pills"><span class="pill"><i></i>Mjesec: ostalo 339,27 €</span><span class="pill">Po planu</span></div>
+    <div class="sec"><b>Ritam mjeseca</b><span class="mono">limit 19,96 €</span></div>
+    <div class="bars"><div class="limit" style="bottom:${lim}px"></div>${bars}</div>
+    <div class="sec"><b>Uskoro naplata</b><span class="mono">sve</span></div>
+    <div class="hs">
+      <div class="glass up">${ic('phone',C.pretplate)}<div><b>Mobitel</b><small>danas</small><div class="a num">30,00 €</div></div></div>
+      <div class="glass up">${ic('bolt',C.stan)}<div><b>Struja</b><small>za 3 dana</small><div class="a num">44,87 €</div></div></div>
+      <div class="glass up">${ic('play',C.pretplate)}<div><b>HBO Max</b><small>za 6 dana</small><div class="a num">9,99 €</div></div></div>
+    </div>
+  </div>${tabs('home')}</div>`;
+}
+
+/* ---------- DODAJ ---------- */
+function add(light){
+  const C=light?CATL:CAT;
+  const cats=[['hrana','cart','Hrana'],['auto','car','Auto'],['stan','house','Stan'],['zabava','glass','Zabava'],['zdravlje','heart','Zdravlje'],['pretplate','repeat','Pretplate'],['obitelj','gift','Obitelj'],['cig','smoke','Cigarete']];
+  return `<div class="phone ${light?'light':''}"><div class="glow"></div>${status()}
+  <div class="screen" style="padding-bottom:30px">
+    <div class="grab"></div>
+    <div class="seg"><span class="on">Trošak</span><span>Prihod</span></div>
+    <div class="amt num">12,40<span class="caret"></span><span class="cur">€</span></div>
+    <div class="hint">Dodirni kategoriju i spremljeno je</div>
+    <div class="cgrid">${cats.map((c,i)=>`<div class="cc ${i===0?'sel':''}">${ic(c[1],C[c[0]])}${c[2]}</div>`).join('')}</div>
+    <div class="pad"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>,</span><span>0</span><span>⌫</span></div>
+  </div></div>`;
+}
+
+/* ---------- PREGLED ---------- */
+function overview(light){
+  const C=light?CATL:CAT;
+  const data=[['Hrana','hrana',146.75],['Auto','auto',121.98],['Obitelj','obitelj',100],['Cigarete','cig',45.2],['Zabava','zabava',18.5],['Zdravlje','zdravlje',12.4]];
+  const total=data.reduce((s,d)=>s+d[2],0), R=100, CIRC=2*Math.PI*R;
+  let off=0; const gap=3;
+  const segs=data.map(d=>{const len=d[2]/total*CIRC;const el=`<circle cx="125" cy="125" r="${R}" fill="none" stroke="${C[d[1]]}" stroke-width="22" stroke-linecap="round" stroke-dasharray="${Math.max(0,len-gap-10)} ${CIRC}" stroke-dashoffset="${-off-5}"/>`;off+=len;return el}).join('');
+  const f=n=>n.toFixed(2).replace('.',',')+' €';
+  return `<div class="phone ${light?'light':''}"><div class="glow"></div>${status()}
+  <div class="screen">
+    <div class="top"><div class="hello"><b style="font-size:28px">Pregled</b></div></div>
+    <div class="mnav"><span>‹</span><b>Listopad 2026.</b><span style="opacity:.3">›</span></div>
+    <div class="donut"><svg viewBox="0 0 250 250"><circle cx="125" cy="125" r="${R}" fill="none" stroke="var(--track)" stroke-width="22"/>${segs}</svg>
+      <div class="c"><span class="mono">Potrošeno</span><span class="big num">${f(total).replace(' €','')}<small style="font-size:20px;color:var(--muted);margin-left:3px">€</small></span><span class="delta">▲ 12 % vs rujan</span></div></div>
+    <div class="leg">${data.map(d=>`<div class="lr"><span class="d" style="background:${C[d[1]]}"></span><div><b>${d[0]}</b><small>${Math.round(d[2]/total*100)} %</small></div><span class="a num">${f(d[2])}</span></div>`).join('')}</div>
+  </div>${tabs('pre')}</div>`;
+}
+
+/* ---------- PRETPLATE ---------- */
+function subs(light){
+  const C=light?CATL:CAT;
+  const S={1:['house',C.stan],3:['repeat',C.stan],5:['music',C.pretplate],8:['dots',C.stan],11:['play',C.pretplate],12:['dumb',C.zdravlje],15:['phone',C.pretplate],18:['bolt',C.stan],21:['play',C.pretplate],24:['dots',C.pretplate],28:['shield',C.auto]};
+  const cells=[];['Pon','Uto','Sri','Čet','Pet','Sub','Ned'].forEach(w=>cells.push(`<div class="w">${w}</div>`));
+  [28,29,30].forEach(d=>cells.push(`<div class="d out"><span class="n">${d}</span></div>`));
+  for(let d=1;d<=31;d++){const s=S[d];cells.push(`<div class="d ${d<15?'past':''} ${d===15?'today':''}"><span class="n">${d}</span>${s?ic(s[0],s[1]):''}</div>`)}
+  cells.push(`<div class="d out"><span class="n">1</span></div>`);
+  const L=[['Mobitel','phone',C.pretplate,'danas','30,00 €'],['Struja','bolt',C.stan,'18. listopada','44,87 €'],['HBO Max','play',C.pretplate,'21. listopada','9,99 €']];
+  return `<div class="phone ${light?'light':''}"><div class="glow"></div>${status()}
+  <div class="screen">
+    <div class="top"><div class="hello"><b style="font-size:28px">Pretplate</b></div></div>
+    <div style="margin-top:16px"><span class="mono">Svaki mjesec</span><div class="big2 num">856,33 €</div></div>
+    <div class="mini"><i></i></div><div style="display:flex;justify-content:space-between" class="mono"><span>plaćeno 78 %</span><span>11 stavki</span></div>
+    <div class="cal">${cells.join('')}</div>
+    <div class="day">Sljedeće</div>
+    <div class="list">${L.map(l=>`<div class="li">${ic(l[1],l[2])}<div class="t"><b>${l[0]}</b><small>${l[3]}</small></div><span class="a num">${l[4]}</span></div>`).join('')}</div>
+  </div>${tabs('pre2')}</div>`;
+}
+
+const wrap=(label,html)=>`<div>${html}<div class="cap">${label}</div></div>`;
+document.getElementById('row-dark').innerHTML=wrap('Početna',home(false))+wrap('Brzi unos',add(false))+wrap('Pregled',overview(false))+wrap('Pretplate',subs(false));
+document.getElementById('row-light').innerHTML=wrap('Početna · svijetla',home(true))+wrap('Brzi unos · svijetla',add(true))+wrap('Pregled · svijetla',overview(true))+wrap('Pretplate · svijetla',subs(true));
+</script>
+</body>
+</html>

@@ -8,8 +8,41 @@ export type Scheme = "light" | "dark";
 // Svijetla i tamna paleta imaju iste ključeve (testira se u packages/tokens); vrijednosti su obični stringovi.
 type Palette = Record<keyof typeof tokens.color.dark, string>;
 
+/** Efekti koji nisu u tokenima boja: staklene površine, sjaj, tragovi grafova. */
+export interface Fx {
+  glass: string;
+  glassBorder: string;
+  track: string;
+  tabBg: string;
+  glow: string;
+  accent2: string;
+  line: string;
+}
+
+const FX: Record<Scheme, Fx> = {
+  dark: {
+    glass: "rgba(255,255,255,0.055)",
+    glassBorder: "rgba(255,255,255,0.09)",
+    track: "rgba(255,255,255,0.07)",
+    tabBg: "rgba(18,26,25,0.95)",
+    glow: "rgba(61,214,163,0.28)",
+    accent2: "#c8f169",
+    line: "rgba(255,255,255,0.08)",
+  },
+  light: {
+    glass: "rgba(255,255,255,0.86)",
+    glassBorder: "rgba(15,21,21,0.06)",
+    track: "rgba(15,21,21,0.07)",
+    tabBg: "rgba(255,255,255,0.96)",
+    glow: "rgba(14,122,95,0.16)",
+    accent2: "#7cb518",
+    line: "rgba(15,21,21,0.08)",
+  },
+};
+
 interface ThemeValue {
   scheme: Scheme;
+  fx: Fx;
   preference: ThemePreference;
   setPreference: (p: ThemePreference) => void;
   colors: Palette;
@@ -31,6 +64,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const scheme: Scheme = preference === "system" ? (system === "light" ? "light" : "dark") : preference;
     return {
       scheme,
+      fx: FX[scheme],
       preference,
       setPreference,
       colors: tokens.color[scheme],

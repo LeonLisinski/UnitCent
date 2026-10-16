@@ -43,3 +43,9 @@ export function firstWeekdayMondayIndex(y: number, m: number): number {
   const sun0 = new Date(Date.UTC(y, m - 1, 1)).getUTCDay();
   return (sun0 + 6) % 7;
 }
+
+/** Kratki naziv mjeseca za "YYYY-MM" (npr. "rujan" → "ruj"). */
+export function monthShort(ym: string): string {
+  const m = Number(ym.split("-")[1]);
+  return MONTHS_SHORT[m - 1] ?? "";
+}

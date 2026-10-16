@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, TextInput, View } from "react-native";
+import { ScrollView, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { POPULAR_RECURRING, type Cents } from "@unitcent/core";
 import { AmountField, Button, CatIcon, Chip } from "../src/components";
-import { Icon } from "../src/icons";
+import { Glow, RoundButton } from "../src/fx";
 import { textStyle, useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
@@ -13,7 +13,7 @@ import { rescheduleReminders } from "../src/notifications";
 
 /** Nova pretplata ili fiksni trošak. Odabir popularne stavke popunjava naziv, dan i kategoriju. */
 export default function NovaPretplata() {
-  const { colors, radius, space } = useTheme();
+  const { colors, fx, space } = useTheme();
   const router = useRouter();
   const toast = useToast();
   const cats = useMemo(() => listCategories(), []);
@@ -47,21 +47,16 @@ export default function NovaPretplata() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <Glow />
+    <SafeAreaView style={{ flex: 1 }}>
       <ScrollView
         contentContainerStyle={{ padding: space["4"], gap: space["4"], paddingBottom: space["7"] }}
         keyboardShouldPersistTaps="handled"
       >
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <T v="title-2">Dodaj pretplatu</T>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Zatvori"
-            onPress={() => router.back()}
-            style={{ width: 48, height: 48, alignItems: "center", justifyContent: "center" }}
-          >
-            <Icon name="x" size={24} color={colors.ink} />
-          </Pressable>
+          <RoundButton icon="x" label="Zatvori" onPress={() => router.back()} />
         </View>
 
         <View style={{ gap: space["2"] }}>
@@ -85,12 +80,12 @@ export default function NovaPretplata() {
               textStyle("body"),
               {
                 minHeight: 56,
-                borderRadius: radius.sm + 2,
+                borderRadius: 16,
                 borderWidth: 1.5,
-                borderColor: colors["border-strong"],
-                backgroundColor: colors.surface,
+                borderColor: fx.glassBorder,
+                backgroundColor: fx.glass,
                 color: colors.ink,
-                paddingHorizontal: 14,
+                paddingHorizontal: 16,
               },
             ]}
           />
@@ -109,10 +104,10 @@ export default function NovaPretplata() {
               accessibilityLabel="Dan u mjesecu"
               style={{
                 minHeight: 56,
-                borderRadius: radius.sm + 2,
+                borderRadius: 16,
                 borderWidth: 1.5,
-                borderColor: colors["border-strong"],
-                backgroundColor: colors.surface,
+                borderColor: fx.glassBorder,
+                backgroundColor: fx.glass,
                 color: colors.ink,
                 fontSize: 20,
                 textAlign: "center",
@@ -139,5 +134,6 @@ export default function NovaPretplata() {
         <Button label="Dodaj" disabled={!valid} onPress={save} />
       </ScrollView>
     </SafeAreaView>
+    </View>
   );
 }

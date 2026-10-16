@@ -76,7 +76,7 @@ export function Calendar({
                   <T
                     v="caption"
                     color={isToday ? colors["on-brand"] : c.out ? colors["ink-muted"] : colors.ink}
-                    style={{ opacity: c.out ? 0.25 : past ? 0.55 : 1, fontWeight: subs.length || isToday ? "800" : "500" }}
+                    style={{ opacity: c.out ? 0.22 : past ? 0.5 : 1, fontWeight: subs.length || isToday ? "800" : "500" }}
                   >
                     {c.label}
                   </T>
@@ -85,7 +85,7 @@ export function Calendar({
                   const cat = catById.get(s.categoryId ?? "");
                   return (
                     <View key={s.id} style={{ opacity: past ? 0.55 : 1 }}>
-                      <CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={s.iconKey ?? cat?.icon ?? "repeat"} size={28} />
+                      <CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={s.iconKey ?? cat?.icon ?? "repeat"} size={26} />
                     </View>
                   );
                 })}

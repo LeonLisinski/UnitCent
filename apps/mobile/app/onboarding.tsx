@@ -11,6 +11,7 @@ import {
 } from "@unitcent/core";
 import { AmountField, Button, Chip } from "../src/components";
 import { Icon } from "../src/icons";
+import { Glass, Glow } from "../src/fx";
 import { useTheme } from "../src/theme";
 import { T } from "../src/ui";
 import {
@@ -34,7 +35,7 @@ interface Pick {
  * Na kraju se odmah prikaže preporučeni dnevni trošak: prvi „aha“ trenutak.
  */
 export default function Onboarding() {
-  const { colors, radius, space } = useTheme();
+  const { colors, fx, radius, space } = useTheme();
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [income, setIncome] = useState<{ text: string; cents: Cents | null }>({ text: "", cents: null });
@@ -86,7 +87,9 @@ export default function Onboarding() {
   const canNext = step === 0 ? (income.cents ?? 0) > 0 : true;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <Glow />
+    <SafeAreaView style={{ flex: 1 }}>
       <ScrollView
         contentContainerStyle={{ padding: space["4"], paddingBottom: space["7"], gap: space["5"] }}
         keyboardShouldPersistTaps="handled"
@@ -132,10 +135,7 @@ export default function Onboarding() {
             {POPULAR_RECURRING.filter((p) => picks[p.key]).map((p) => {
               const pick = picks[p.key]!;
               return (
-                <View
-                  key={p.key}
-                  style={{ backgroundColor: colors.surface, borderRadius: radius.md, padding: space["4"], gap: space["3"] }}
-                >
+                <Glass key={p.key} style={{ padding: space["4"], gap: space["3"] }}>
                   <T v="headline">{p.name}</T>
                   <View style={{ flexDirection: "row", gap: space["3"] }}>
                     <View style={{ flex: 2 }}>
@@ -160,8 +160,8 @@ export default function Onboarding() {
                           minHeight: 56,
                           borderRadius: radius.sm + 2,
                           borderWidth: 1.5,
-                          borderColor: colors["border-strong"],
-                          backgroundColor: colors.surface,
+                          borderColor: fx.glassBorder,
+                          backgroundColor: fx.glass,
                           color: colors.ink,
                           fontSize: 20,
                           textAlign: "center",
@@ -169,7 +169,7 @@ export default function Onboarding() {
                       />
                     </View>
                   </View>
-                </View>
+                </Glass>
               );
             })}
           </View>
@@ -184,7 +184,7 @@ export default function Onboarding() {
             </View>
             <AmountField label="Štednja mjesečno" value={savings.text} onChange={(text, cents) => setSavings({ text, cents })} placeholder="0,00" />
 
-            <View style={{ backgroundColor: colors.accent, borderRadius: radius.lg, padding: space["5"], gap: space["1"] }}>
+            <View style={{ backgroundColor: colors.accent, borderRadius: radius.lg + 8, padding: space["5"], gap: space["1"] }}>
               <T v="mono-label" color={colors["on-accent"]}>Preporučeni dnevni trošak</T>
               <T v="amount-hero" color={colors["on-accent"]}>{formatEur(Math.max(0, preview.dailyCents))}</T>
               <T v="caption" color={colors["on-accent"]}>
@@ -204,5 +204,6 @@ export default function Onboarding() {
         </View>
       </ScrollView>
     </SafeAreaView>
+    </View>
   );
 }

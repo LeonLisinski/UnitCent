@@ -60,7 +60,7 @@ export function Button({
       style={({ pressed }) => [
         {
           minHeight: 52,
-          borderRadius: radius.md,
+          borderRadius: 999,
           alignItems: "center",
           justifyContent: "center",
           backgroundColor: pressed && variant === "primary" ? colors["brand-pressed"] : bg,
@@ -98,7 +98,7 @@ export function Chip({ label, selected, onPress, left }: { label: string; select
   );
 }
 
-/** Segmentirani prekidač (npr. Trošak / Prihod, tema). */
+/** Prekidač u pilulji (Trošak / Prihod, tema). Odabrana opcija je staklena pločica. */
 export function Segmented<K extends string>({
   options,
   value,
@@ -108,9 +108,9 @@ export function Segmented<K extends string>({
   value: K;
   onChange: (k: K) => void;
 }) {
-  const { colors, radius } = useTheme();
+  const { colors, fx } = useTheme();
   return (
-    <View style={{ flexDirection: "row", backgroundColor: colors["surface-2"], borderRadius: radius.md, padding: 4 }}>
+    <View style={{ flexDirection: "row", backgroundColor: fx.track, borderRadius: 999, padding: 4, gap: 2 }}>
       {options.map((o) => {
         const on = o.key === value;
         return (
@@ -118,14 +118,19 @@ export function Segmented<K extends string>({
             key={o.key}
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
-            onPress={() => onChange(o.key)}
+            onPress={() => {
+              void Haptics.selectionAsync();
+              onChange(o.key);
+            }}
             style={{
               flex: 1,
               minHeight: 40,
               alignItems: "center",
               justifyContent: "center",
-              borderRadius: radius.sm + 2,
+              borderRadius: 999,
               backgroundColor: on ? colors.surface : "transparent",
+              borderWidth: on ? 1 : 0,
+              borderColor: fx.glassBorder,
             }}
           >
             <T v="headline" muted={!on}>{o.label}</T>
@@ -148,7 +153,7 @@ export function AmountField({
   onChange: (text: string, cents: Cents | null) => void;
   placeholder?: string;
 }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, fx } = useTheme();
   const [focus, setFocus] = useState(false);
   return (
     <View style={{ gap: 6 }}>
@@ -156,10 +161,10 @@ export function AmountField({
       <View
         style={{
           minHeight: 56,
-          borderRadius: radius.sm + 2,
+          borderRadius: radius.md,
           borderWidth: 1.5,
-          borderColor: focus ? colors.brand : colors["border-strong"],
-          backgroundColor: colors.surface,
+          borderColor: focus ? colors.brand : fx.glassBorder,
+          backgroundColor: fx.glass,
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: 14,
@@ -185,9 +190,8 @@ export function AmountField({
 
 const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ",", "0", "⌫"] as const;
 
-/** Numerička tipkovnica za brzi unos (iznos kao tekst: najviše 7 znamenki i 2 decimale). */
+/** Numerička tipkovnica za brzi unos: samo velike znamenke, bez kutija (najviše 7 znamenki i 2 decimale). */
 export function Keypad({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const { colors, radius } = useTheme();
   const press = (k: (typeof KEYS)[number]) => {
     void Haptics.selectionAsync();
     let v = value;
@@ -203,7 +207,7 @@ export function Keypad({ value, onChange }: { value: string; onChange: (v: strin
     onChange(v);
   };
   return (
-    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+    <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
       {KEYS.map((k) => (
         <Pressable
           key={k}
@@ -211,16 +215,14 @@ export function Keypad({ value, onChange }: { value: string; onChange: (v: strin
           accessibilityLabel={k === "⌫" ? "Obriši" : k}
           onPress={() => press(k)}
           style={({ pressed }) => ({
-            width: "32%",
-            flexGrow: 1,
-            minHeight: 54,
-            borderRadius: radius.md - 2,
+            width: "33.333%",
+            minHeight: 56,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: pressed ? colors["surface-2"] : colors.surface,
+            opacity: pressed ? 0.45 : 1,
           })}
         >
-          <T v="title-1" style={{ fontSize: 24, lineHeight: 28 }}>{k}</T>
+          <T v="title-1" style={{ fontSize: 28, lineHeight: 32, fontWeight: "600" }}>{k}</T>
         </Pressable>
       ))}
     </View>

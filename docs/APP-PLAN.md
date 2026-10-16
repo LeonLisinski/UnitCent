@@ -305,6 +305,7 @@ Svaka faza završava demonstracijom, ažuriranjem ovog dokumenta (§12) i odluko
   - provjere: `tsc` čist, `expo-doctor` 21/21, Android i iOS bundle prolaze, SQL shema i idempotentno knjiženje provjereni na pravom SQLite-u; domena 28 + tokeni 27 testova. **Nije isprobano na uređaju/emulatoru** (vizualni pregled i dodiri tek slijede).
   - još nedostaje do izlaznog kriterija Faze 1: izvršavanje na uređaju, uređivanje postojeće pretplate/transakcije, 2 tjedna stvarne uporabe.
 
+- **2026-10-16: vizualni smjer aplikacije v2** (docs/design-v2/preview.html i shot-full.png), prenesen u aplikaciju: prsten dnevnog limita (isti oblik kao logotip), „ritam mjeseca“ (potrošnja po danima s linijom limita), staklene površine umjesto punih kutija, jedan izvor svjetla, veliki brojevi, mreža kategorija u unosu, donut u pregledu, plutajuća tab traka, povlačenje za brisanje, ulazne animacije. Nove ovisnosti: react-native-reanimated, react-native-worklets, react-native-gesture-handler, expo-linear-gradient. Provjereno: tsc, expo-doctor 21/21, Android + iOS bundle; **vizualno na uređaju još nije provjereno**.
 **Sljedeće:** dovršiti Fazu 0 (stavke koje traže vlasnika) pa Faza 1. Preostalo u Fazi 0:
 1. rezervirati bundle ID i developer račune (D-05, D-06);
 2. napraviti `dev`/`staging` Supabase projekte, primijeniti migraciju, uključiti anonimnu prijavu;
