@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { formatEur, occurrenceDate, upcomingInMonth, yearMonthOf } from "@unitcent/core";
+import { formatEur, occurrenceDate, yearMonthOf } from "@unitcent/core";
 import { Calendar } from "../../src/Calendar";
 import { Button, CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
@@ -32,7 +32,6 @@ export default function Pretplate() {
     return d && d <= day ? s + i.amountCents : s;
   }, 0);
   const paidPct = total > 0 ? Math.round((paid / total) * 100) : 0;
-  const next = upcomingInMonth(active, day, 3);
 
   const confirmDelete = (id: string, name: string) =>
     Alert.alert(`Obrisati „${name}“?`, "Već knjiženi troškovi ostaju.", [
@@ -104,25 +103,17 @@ export default function Pretplate() {
             </Animated.View>
           ) : null}
 
-          {next.length > 0 ? (
-            <Animated.View entering={enter(2)} style={{ gap: 4 }}>
-              <T v="mono-label" muted>Sljedeće</T>
-              <View>
-                {next.map(({ item, date }, i) => {
-                  const rec = items.find((r) => r.id === item.id)!;
-                  const d = Number(date.slice(8)) - Number(day.slice(8));
-                  return row(rec, d === 0 ? "danas" : d === 1 ? "sutra" : `${Number(date.slice(8))}. u mjesecu`, i);
-                })}
-              </View>
-            </Animated.View>
-          ) : null}
-
-          <Animated.View entering={enter(3)} style={{ gap: 4 }}>
-            <T v="mono-label" muted>Sve stavke</T>
+          <Animated.View entering={enter(2)} style={{ gap: 4 }}>
+            <T v="mono-label" muted>Stavke</T>
             {items.length === 0 ? (
               <T muted>Upišeš jednom, knjiže se same. Dodaj prvu pretplatu ili fiksni trošak.</T>
             ) : (
-              <View>{items.map((it, i) => row(it, `Mjesečno · ${it.dayOfMonth}.`, i))}</View>
+              <View>{[...items].sort((a, b) => a.dayOfMonth - b.dayOfMonth).map((it, i) => {
+                  const d = it.active ? occurrenceDate(it, month) : null;
+                  const diff = d ? Number(d.slice(8)) - Number(day.slice(8)) : null;
+                  const sub = diff === null ? "Neaktivno" : diff < 0 ? `plaćeno ${Number(d!.slice(8))}.` : diff === 0 ? "danas" : diff === 1 ? "sutra" : `za ${diff} dana`;
+                  return row(it, sub, i);
+                })}</View>
             )}
           </Animated.View>
 

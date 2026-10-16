@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
 import Svg, { Circle, Defs, G, LinearGradient, Path, RadialGradient, Rect, Stop } from "react-native-svg";
-import Animated, { Easing, useAnimatedProps, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, { Easing, useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import { LinearGradient as Sheen } from "expo-linear-gradient";
 import { formatEur, type Cents } from "@unitcent/core";
@@ -183,6 +183,50 @@ export function Amount({
     >
       {text}
     </T>
+  );
+}
+
+/* ---------- mjesec na prvi pogled ---------- */
+
+/**
+ * Jedna traka za cijeli mjesec: koliko je od raspoloživog potrošeno (ispuna) i gdje bi trebao biti danas
+ * (oznaka). Ispuna iza oznake = trošiš brže od plana, pa postaje žuta. Zamjenjuje tekstualne oznake.
+ */
+export function MonthBar({ spent, available, expected }: { spent: number; available: number; expected: number }) {
+  const { colors, fx } = useTheme();
+  const used = available > 0 ? Math.max(0, Math.min(1, spent / available)) : spent > 0 ? 1 : 0;
+  const mark = Math.max(0, Math.min(1, expected));
+  const fast = used > mark + 0.04;
+  const fill = useSharedValue(0);
+  useEffect(() => {
+    fill.value = withTiming(used, { duration: 800, easing: Easing.out(Easing.cubic) });
+  }, [used, fill]);
+  const fillStyle = useAnimatedStyle(() => ({ width: `${fill.value * 100}%` }));
+  return (
+    <View style={{ height: 22, justifyContent: "center" }} accessibilityLabel={fast ? "Potrošnja je brža od plana" : "Potrošnja je po planu"}>
+      <View style={{ height: 10, borderRadius: 5, backgroundColor: fx.track, overflow: "hidden" }}>
+        <Animated.View style={[{ height: "100%", borderRadius: 5, overflow: "hidden" }, fillStyle]}>
+          <Sheen
+            colors={fast ? [colors.warning, colors.warning] : [colors.brand, fx.accent2]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+      </View>
+      <View
+        style={{
+          position: "absolute",
+          left: `${mark * 100}%`,
+          marginLeft: -1.5,
+          width: 3,
+          height: 22,
+          borderRadius: 2,
+          backgroundColor: colors.ink,
+          opacity: 0.85,
+        }}
+      />
+    </View>
   );
 }
 

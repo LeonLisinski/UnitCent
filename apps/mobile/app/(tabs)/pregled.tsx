@@ -13,7 +13,7 @@ import {
 } from "@unitcent/core";
 import { CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
-import { Donut, Glow, RoundButton } from "../../src/fx";
+import { DayBars, Donut, Glow, RoundButton } from "../../src/fx";
 import { fitFontSize, monthShort, monthTitle } from "../../src/format";
 import { useTheme } from "../../src/theme";
 import { T } from "../../src/ui";
@@ -47,6 +47,16 @@ export default function Pregled() {
     color: colorOf((r.categoryId ? catById.get(r.categoryId)?.colorToken : undefined) ?? "cat-ostalo"),
   }));
   const up = change !== null && change > 0;
+
+  // Ritam po danima: potrošnja bez knjiženih pretplata; crta pokazuje prosječnu dnevnu potrošnju.
+  const [py, pm] = month.split("-").map(Number) as [number, number];
+  const dim = new Date(py, pm, 0).getDate();
+  const isCurrent = month === thisMonth;
+  const dayNo = isCurrent ? Number(today().slice(8)) : dim;
+  const perDay = Array.from({ length: dim }, () => 0);
+  for (const t of txs) if (t.type === "expense" && t.source !== "recurring") perDay[Number(t.localDate.slice(8)) - 1]! += t.amountCents;
+  const variable = perDay.reduce((s, v) => s + v, 0);
+  const avgPerDay = dayNo > 0 ? Math.round(variable / dayNo) : 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -89,7 +99,17 @@ export default function Pregled() {
             </Donut>
           </Animated.View>
 
-          <Animated.View entering={enter(2)}>
+          {variable > 0 ? (
+            <Animated.View entering={enter(2)} style={{ gap: space["2"] }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
+                <T v="mono-label" muted>Po danima</T>
+                <T v="caption" muted>prosjek {formatEur(avgPerDay)} / dan</T>
+              </View>
+              <DayBars values={perDay} daysInMonth={dim} todayIndex={dayNo - 1} limitCents={avgPerDay} />
+            </Animated.View>
+          ) : null}
+
+          <Animated.View entering={enter(3)}>
             {byCat.length === 0 ? (
               <T muted style={{ textAlign: "center" }}>Još nema troškova u ovom mjesecu.</T>
             ) : (
