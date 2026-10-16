@@ -306,6 +306,14 @@ Svaka faza završava demonstracijom, ažuriranjem ovog dokumenta (§12) i odluko
   - još nedostaje do izlaznog kriterija Faze 1: izvršavanje na uređaju, uređivanje postojeće pretplate/transakcije, 2 tjedna stvarne uporabe.
 
 - **2026-10-16: vizualni smjer aplikacije v2** (docs/design-v2/preview.html i shot-full.png), prenesen u aplikaciju: prsten dnevnog limita (isti oblik kao logotip), „ritam mjeseca“ (potrošnja po danima s linijom limita), staklene površine umjesto punih kutija, jedan izvor svjetla, veliki brojevi, mreža kategorija u unosu, donut u pregledu, plutajuća tab traka, povlačenje za brisanje, ulazne animacije. Nove ovisnosti: react-native-reanimated, react-native-worklets, react-native-gesture-handler, expo-linear-gradient. Provjereno: tsc, expo-doctor 21/21, Android + iOS bundle; **vizualno na uređaju još nije provjereno**.
+- **2026-10-16: Faza 2 (sinkronizacija), prvi dio, napisano i provjereno na dev bazi:**
+  - `packages/core/src/sync.ts` (+ testovi, ukupno 37): pravilo sukoba (vrijeme izmjene na uređaju, pa `rev`), ograničenje sata u budućnosti, kursor s preklopom 5 s, grupiranje outboxa, čekanje pri greškama;
+  - migracija `20261016000000_sync_push.sql` (primijenjena na dev kao `sync_push_and_hardening` i `sync_push_column_defaults`): primarni/strani ključevi su sada složeni `(user_id, id)` jer determinističke ID-eve (zadane kategorije, plan mjeseca) svaki korisnik generira sam i smiju se ponavljati među korisnicima; RPC `sync_push` (whitelist tablica, `user_id` uvijek `auth.uid()`, RLS vrijedi, ≤ 100 redaka, upsert samo ako je izmjena novija, meko brisanje); `set_updated_at` dobiva `search_path`; indeksi na strane ključeve;
+  - provjereno na dev bazi s dva simulirana korisnika (transakcija poništena): starija izmjena se preskače, novija pobjeđuje, tuđi `user_id` u payloadu se ignorira, korisnik B ne vidi A-ove retke i ne može ih pregaziti, `entitlements` se odbija, meko brisanje radi;
+  - klijent `apps/mobile/src/sync.ts`: outbox je oznaka „izmijenjeno“, a šalje se trenutno stanje retka (spajanje uzastopnih izmjena); push redom roditelji pa djeca; pull po stranicama od 500 s kursorom po tablici (`sync.cursor.*` u kv); iste pravila sukoba lokalno; pokreće se nakon sesije, 2 s nakon izmjene, pri povratku u aplikaciju i svakih 5 min; bez mreže/sesije tiho se preskače s eksponencijalnim čekanjem;
+  - zadane kategorije imaju „najstariju“ izmjenu (1970.), pa preimenovanje na drugom uređaju uvijek pobjeđuje svježe zadane vrijednosti.
+  - **Nije isprobano na uređaju** (dva uređaja, offline pa online); nema vidljive oznake stanja sinkronizacije u UI-u; veza računa (Google/Apple) i staging tek slijede.
+
 **Sljedeće:** dovršiti Fazu 0 (stavke koje traže vlasnika) pa Faza 1. Preostalo u Fazi 0:
 1. rezervirati bundle ID i developer račune (D-05, D-06);
 2. napraviti `dev`/`staging` Supabase projekte, primijeniti migraciju, uključiti anonimnu prijavu;

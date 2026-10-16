@@ -18,6 +18,7 @@ import {
 } from "@unitcent/core";
 import { getDb } from "./client";
 import { notifyDbChanged } from "./events";
+import { requestSync } from "./syncSignal";
 
 /* ---------- pomoćno ---------- */
 
@@ -33,6 +34,7 @@ function enqueue(table: string, rowId: string, op: "upsert" | "delete", payload:
     "insert into outbox (table_name, row_id, op, payload, created_at) values (?, ?, ?, ?, ?)",
     [table, rowId, op, JSON.stringify(payload), nowIso()],
   );
+  requestSync();
 }
 
 /* ---------- tipovi ---------- */
@@ -87,6 +89,9 @@ export function ensureCategories(): void {
   const have = db.getFirstSync<{ n: number }>("select count(*) as n from categories")?.n ?? 0;
   if (have > 0) return;
   const t = nowIso();
+  // Zadane kategorije imaju "najstariju" izmjenu: ako ih je korisnik već preimenovao na drugom
+  // uređaju, ta izmjena pobjeđuje pri sinkronizaciji, a ne svježe zadane vrijednosti.
+  const EPOCH = "1970-01-01T00:00:00.000Z";
   db.withTransactionSync(() => {
     DEFAULT_CATEGORIES.forEach((c, i) => {
       // Deterministički ID po ključu: isti na svim uređajima, pa se sync ne udvostruči.
@@ -94,10 +99,10 @@ export function ensureCategories(): void {
       db.runSync(
         `insert or ignore into categories (id, key, name, icon, color_token, sort, is_system, created_at, client_updated_at)
          values (?, ?, ?, ?, ?, ?, 1, ?, ?)`,
-        [id, c.key, c.name, c.icon, c.colorToken, i, t, t],
+        [id, c.key, c.name, c.icon, c.colorToken, i, t, EPOCH],
       );
       enqueue("categories", id, "upsert", {
-        id, key: c.key, name: c.name, icon: c.icon, color_token: c.colorToken, sort: i, is_system: true, client_updated_at: t,
+        id, key: c.key, name: c.name, icon: c.icon, color_token: c.colorToken, sort: i, is_system: true, client_updated_at: EPOCH,
       });
     });
   });
