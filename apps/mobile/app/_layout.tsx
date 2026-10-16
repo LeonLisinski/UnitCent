@@ -50,6 +50,7 @@ function Shell() {
         <Stack.Screen name="plan" options={{ presentation: "modal" }} />
         <Stack.Screen name="kategorije" options={{ presentation: "modal" }} />
         <Stack.Screen name="podaci" options={{ presentation: "modal" }} />
+        <Stack.Screen name="transakcije" options={{ presentation: "modal" }} />
       </Stack>
     </>
   );

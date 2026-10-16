@@ -91,3 +91,25 @@ export function DateField({
     </View>
   );
 }
+
+/** Kompaktan odabir datuma (jedna pilula) za brzi unos: „Danas“ ili odabrani datum. */
+export function DateChip({ value, onChange }: { value: LocalDate; onChange: (d: LocalDate) => void }) {
+  const { fx, scheme, colors } = useTheme();
+  const now = today();
+  const set = (d: Date) => onChange(toLocalDate(d.getFullYear(), d.getMonth() + 1, d.getDate()));
+  if (Platform.OS === "ios") {
+    return (
+      <DateTimePicker value={parse(value)} mode="date" display="compact" themeVariant={scheme} accentColor={colors.brand} onChange={(_, d) => d && set(d)} />
+    );
+  }
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Datum troška: ${value === now ? "danas" : fullDate(value)}. Promijeni`}
+      onPress={() => DateTimePickerAndroid.open({ value: parse(value), mode: "date", onChange: (_, d) => d && set(d) })}
+      style={{ paddingHorizontal: 14, minHeight: 40, borderRadius: 999, justifyContent: "center", backgroundColor: fx.track }}
+    >
+      <T v="headline" style={{ fontSize: 15 }}>{value === now ? "Danas" : fullDate(value)}</T>
+    </Pressable>
+  );
+}

@@ -1,5 +1,5 @@
 import { useRouter, type Href } from "expo-router";
-import { ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { daysInMonth, formatEur, parseYearMonth, upcomingInMonth, yearMonthOf } from "@unitcent/core";
 import { Avatar, CatIcon } from "../../src/components";
@@ -60,8 +60,13 @@ export default function Pocetna() {
   const paceLabel = pace === "fast" ? "Brže od plana" : pace === "slow" ? "Ispod plana" : "Po planu";
   const monthOver = limit.monthLeftCents < 0;
 
-  const sections = new Map<string, typeof recent>();
-  for (const t of recent) sections.set(t.localDate, [...(sections.get(t.localDate) ?? []), t]);
+  // Zadnje uneseno, grupirano po datumu troška (uzastopni isti datumi čine jednu skupinu).
+  const sections: [string, typeof recent][] = [];
+  for (const t of recent) {
+    const last = sections[sections.length - 1];
+    if (last && last[0] === t.localDate) last[1].push(t);
+    else sections.push([t.localDate, [t]]);
+  }
 
   return (
     <TabScreen>
@@ -133,12 +138,21 @@ export default function Pocetna() {
       ) : null}
 
       <Animated.View entering={enter(4)}>
-        <Section title="Zadnje">
+        <Section
+          title="Zadnje"
+          right={
+            recent.length > 0 ? (
+              <Pressable accessibilityRole="button" hitSlop={10} onPress={() => router.push("/transakcije" as Href)}>
+                <T v="caption" color={colors.brand} style={{ fontWeight: "700" }}>Svi troškovi</T>
+              </Pressable>
+            ) : undefined
+          }
+        >
           {recent.length === 0 ? (
             <T muted>Još nema troškova. Dodaj prvi s +.</T>
           ) : (
             <View>
-              {[...sections.entries()].map(([date, list], si) => (
+              {sections.map(([date, list], si) => (
                 <View key={date}>
                   <T v="caption" muted style={{ marginTop: si === 0 ? 0 : 16, fontWeight: "600" }}>{relativeDay(date, day)}</T>
                   {list.map((t, i) => (

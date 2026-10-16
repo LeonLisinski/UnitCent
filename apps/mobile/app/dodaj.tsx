@@ -5,6 +5,7 @@ import * as Haptics from "expo-haptics";
 import { Safe, useInsets } from "../src/safe";
 import { parseAmount } from "@unitcent/core";
 import { Button, CatIcon, Keypad } from "../src/components";
+import { DateChip } from "../src/DateField";
 import { useDb } from "../src/data";
 import { Icon } from "../src/icons";
 import { Glow, RoundButton } from "../src/fx";
@@ -12,7 +13,7 @@ import { fitFontSize } from "../src/format";
 import { textStyle, useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
-import { addTransaction, deleteTransaction, getTransaction, listCategoriesByUsage, updateTransaction } from "../src/db/repo";
+import { addTransaction, deleteTransaction, getTransaction, listCategoriesByUsage, today, updateTransaction } from "../src/db/repo";
 
 type Kind = "expense" | "income";
 
@@ -49,6 +50,7 @@ export default function Dodaj() {
       hide.remove();
     };
   }, []);
+  const [date, setDate] = useState(editing?.localDate ?? today());
   const [selected, setSelected] = useState<string | null>(editing?.categoryId ?? null);
   const cats = useDb(() => listCategoriesByUsage());
 
@@ -61,13 +63,13 @@ export default function Dodaj() {
       return;
     }
     if (editing) {
-      updateTransaction(editing.id, { amountCents: cents, type, categoryId, note });
+      updateTransaction(editing.id, { amountCents: cents, type, categoryId, note, localDate: date });
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
       toast.show("Izmjene spremljene");
       return;
     }
-    const tx = addTransaction({ amountCents: cents, type, categoryId, note });
+    const tx = addTransaction({ amountCents: cents, type, categoryId, note, localDate: date });
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.back();
     toast.show("Spremljeno", { label: "Poništi", run: () => deleteTransaction(tx.id) });
@@ -197,9 +199,12 @@ export default function Dodaj() {
               ]}
             />
           ) : (
-            <Pressable onPress={() => setShowNote(true)} accessibilityRole="button" style={{ alignSelf: "center", minHeight: 44, justifyContent: "center" }}>
-              <T v="headline" color={colors.brand}>+ Dodaj bilješku</T>
-            </Pressable>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
+              <DateChip value={date} onChange={setDate} />
+              <Pressable onPress={() => setShowNote(true)} accessibilityRole="button" hitSlop={8} style={{ minHeight: 44, justifyContent: "center" }}>
+                <T v="headline" color={colors.brand}>+ Bilješka</T>
+              </Pressable>
+            </View>
           )}
           {noteFocus ? null : <Keypad value={value} onChange={setValue} />}
           <Button label={editing ? "Spremi izmjene" : "Spremi"} disabled={!cents || cents <= 0} onPress={save} />

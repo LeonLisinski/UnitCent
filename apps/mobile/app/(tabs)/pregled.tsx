@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
+import { useRouter, type Href } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import {
   formatEur,
@@ -29,6 +30,7 @@ const enter = (i: number) => FadeInDown.delay(i * 70).duration(420);
 /** Pregled: mjesec → krug po kategorijama → ritam po danima → kategorije s udjelom. */
 export default function Pregled() {
   const { colors, fx } = useTheme();
+  const router = useRouter();
   const thisMonth = yearMonthOf(today());
   const [month, setMonth] = useState<YearMonth>(thisMonth);
 
@@ -96,7 +98,16 @@ export default function Pregled() {
       ) : null}
 
       <Animated.View entering={enter(3)}>
-        <Section title="Kategorije">
+        <Section
+          title="Kategorije"
+          right={
+            byCat.length > 0 ? (
+              <Pressable accessibilityRole="button" hitSlop={10} onPress={() => router.push({ pathname: "/transakcije", params: { month } } as Href)}>
+                <T v="caption" color={colors.brand} style={{ fontWeight: "700" }}>Svi troškovi</T>
+              </Pressable>
+            ) : undefined
+          }
+        >
           {byCat.length === 0 ? (
             <T muted>Još nema troškova u ovom mjesecu.</T>
           ) : (
@@ -116,6 +127,9 @@ export default function Pregled() {
                       <View style={{ height: 5, borderRadius: 3, backgroundColor: fx.track, overflow: "hidden", marginTop: 4 }}>
                         <View style={{ width: `${Math.max(2, share * 100)}%`, height: "100%", borderRadius: 3, backgroundColor: col }} />
                       </View>
+                    }
+                    onPress={() =>
+                      router.push({ pathname: "/transakcije", params: { month, categoryId: row.categoryId ?? "none" } } as Href)
                     }
                     right={
                       <View style={{ alignItems: "flex-end", gap: 2 }}>

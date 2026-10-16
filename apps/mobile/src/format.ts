@@ -19,7 +19,7 @@ export function relativeDay(date: LocalDate, todayDate: LocalDate): string {
   const yesterday = new Date(Date.UTC(t.y, t.m - 1, t.day - 1)).toISOString().slice(0, 10);
   if (date === yesterday) return "Jučer";
   const p = parts(date);
-  return `${p.day}. ${MONTHS_SHORT[p.m - 1]}`;
+  return p.y === t.y ? `${p.day}. ${MONTHS_SHORT[p.m - 1]}` : `${p.day}. ${MONTHS_SHORT[p.m - 1]} ${p.y}.`;
 }
 
 export function monthTitle(ym: string): string {

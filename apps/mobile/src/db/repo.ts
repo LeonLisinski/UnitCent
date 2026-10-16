@@ -3,6 +3,7 @@ import {
   DEFAULT_CATEGORIES,
   bookingId,
   occurrenceDate,
+  parseAmount,
   summarizeMonth,
   todayInZone,
   uuidV5,
@@ -274,11 +275,57 @@ export function listTransactionsInMonth(month: YearMonth): Transaction[] {
     .map(mapTx);
 }
 
+/**
+ * „Zadnje“ na početnoj: zadnje UNESENO (ne zadnje po datumu), pa račun ili trošak unesen sad s datumom iz prošlosti
+ * ostaje na vrhu. Automatska knjiženja pretplata ulaze samo ako su svježa (zadnja 3 dana), da ne preplave popis.
+ */
 export function listRecentTransactions(limit = 8): Transaction[] {
   return getDb()
     .getAllSync<TxRow>(
-      "select * from transactions where deleted_at is null order by local_date desc, occurred_at desc limit ?",
+      `select * from transactions
+        where deleted_at is null and (source != 'recurring' or local_date >= date('now', '-3 day'))
+        order by created_at desc, id desc limit ?`,
       [limit],
+    )
+    .map(mapTx);
+}
+
+/** Pretraga i filtriranje troškova: po mjesecu, kategoriji i tekstu (bilješka, trgovina, kategorija ili iznos). */
+export function searchTransactions(opts: {
+  month?: YearMonth | null;
+  categoryId?: string | "none" | null;
+  query?: string;
+  limit?: number;
+}): Transaction[] {
+  const where = ["t.deleted_at is null"];
+  const args: (string | number)[] = [];
+  if (opts.month) {
+    where.push("t.local_date >= ? and t.local_date <= ?");
+    args.push(`${opts.month}-01`, `${opts.month}-31`);
+  }
+  if (opts.categoryId === "none") where.push("t.category_id is null");
+  else if (opts.categoryId) {
+    where.push("t.category_id = ?");
+    args.push(opts.categoryId);
+  }
+  const q = opts.query?.trim();
+  if (q) {
+    const like = `%${q.replace(/[%_]/g, "")}%`;
+    const cents = parseAmount(q);
+    const parts = ["t.note like ?", "t.merchant like ?", "c.name like ?"];
+    args.push(like, like, like);
+    if (cents) {
+      parts.push("t.amount_cents = ?");
+      args.push(cents);
+    }
+    where.push(`(${parts.join(" or ")})`);
+  }
+  return getDb()
+    .getAllSync<TxRow>(
+      `select t.* from transactions t left join categories c on c.id = t.category_id
+        where ${where.join(" and ")}
+        order by t.local_date desc, t.occurred_at desc limit ?`,
+      [...args, opts.limit ?? 300],
     )
     .map(mapTx);
 }
@@ -290,14 +337,15 @@ export function getTransaction(id: string): Transaction | null {
 
 export function updateTransaction(
   id: string,
-  input: { amountCents: Cents; type: "expense" | "income"; categoryId: string | null; note?: string },
+  input: { amountCents: Cents; type: "expense" | "income"; categoryId: string | null; note?: string; localDate?: LocalDate },
 ): void {
   const db = getDb();
   const t = nowIso();
   db.withTransactionSync(() => {
     db.runSync(
-      "update transactions set amount_cents = ?, type = ?, category_id = ?, note = ?, client_updated_at = ?, rev = rev + 1 where id = ?",
-      [Math.round(input.amountCents), input.type, input.categoryId, input.note?.trim() ? input.note.trim() : null, t, id],
+      `update transactions set amount_cents = ?, type = ?, category_id = ?, note = ?,
+         local_date = coalesce(?, local_date), client_updated_at = ?, rev = rev + 1 where id = ?`,
+      [Math.round(input.amountCents), input.type, input.categoryId, input.note?.trim() ? input.note.trim() : null, input.localDate ?? null, t, id],
     );
     const r = db.getFirstSync<TxRow>("select * from transactions where id = ?", [id]);
     if (r) enqueue("transactions", id, "upsert", r);
