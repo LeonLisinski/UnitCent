@@ -47,6 +47,8 @@ function Shell() {
         <Stack.Screen name="kategorija" options={{ presentation: "modal" }} />
         <Stack.Screen name="skeniraj" options={{ presentation: "fullScreenModal", animation: "fade" }} />
         <Stack.Screen name="pregledaj" options={{ presentation: "modal" }} />
+        <Stack.Screen name="plan" options={{ presentation: "modal" }} />
+        <Stack.Screen name="kategorije" options={{ presentation: "modal" }} />
       </Stack>
     </>
   );

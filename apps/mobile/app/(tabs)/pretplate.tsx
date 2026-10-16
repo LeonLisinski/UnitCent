@@ -74,11 +74,10 @@ export default function Pretplate() {
       <Glow />
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <ScrollView
-          contentContainerStyle={{ padding: space["4"] + 4, paddingBottom: 140, gap: space["5"] }}
+          contentContainerStyle={{ padding: space["4"] + 4, paddingTop: space["5"], paddingBottom: 140, gap: space["5"] }}
           showsVerticalScrollIndicator={false}
         >
           <Animated.View entering={enter(0)} style={{ gap: space["4"] }}>
-            <T v="title-1" style={{ fontSize: 30, lineHeight: 36 }}>Pretplate</T>
             <View style={{ gap: 4 }}>
               <T v="mono-label" muted>Svaki mjesec</T>
               <T v="amount-hero" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={{ fontSize: fitFontSize(formatEur(total), 320, 46), lineHeight: 52, letterSpacing: -2 }}>{formatEur(total)}</T>

@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { useColorScheme, type TextStyle } from "react-native";
 import { tokens } from "@unitcent/tokens";
+import { kvGet, kvSet } from "./db/repo";
 
 export type ThemePreference = "system" | "light" | "dark";
 export type Scheme = "light" | "dark";
@@ -61,7 +62,14 @@ const ThemeContext = createContext<ThemeValue | null>(null);
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const system = useColorScheme();
-  const [preference, setPreference] = useState<ThemePreference>("system");
+  const [preference, setPref] = useState<ThemePreference>(() => {
+    const saved = kvGet("theme");
+    return saved === "light" || saved === "dark" ? saved : "system";
+  });
+  const setPreference = (p: ThemePreference) => {
+    setPref(p);
+    kvSet("theme", p);
+  };
 
   const value = useMemo<ThemeValue>(() => {
     const scheme: Scheme = preference === "system" ? (system === "light" ? "light" : "dark") : preference;

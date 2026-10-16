@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, TextInput, View } from "react-native";
-import { useRouter } from "expo-router";
+import { Alert, Linking, ScrollView, Switch, TextInput, View } from "react-native";
+import { useRouter, type Href } from "expo-router";
+import Constants from "expo-constants";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { formatEur, yearMonthOf, type Cents } from "@unitcent/core";
-import { AmountField, Button, CatIcon, Segmented } from "../../src/components";
+import { formatEur, yearMonthOf } from "@unitcent/core";
+import { useAccount } from "../../src/account";
+import { AccountSection } from "../../src/AccountSection";
+import { Segmented } from "../../src/components";
+import { deleteAccountAndData, exportData } from "../../src/dataTools";
 import { useDb } from "../../src/data";
-import { Glass, Glow, SwipeRow } from "../../src/fx";
+import { Glow } from "../../src/fx";
+import { monthTitle } from "../../src/format";
+import { Group, Row } from "../../src/settings";
 import { textStyle, useTheme, type ThemePreference } from "../../src/theme";
 import { useToast } from "../../src/toast";
 import { T } from "../../src/ui";
-import { deleteCategory, restoreCategory, getLatestPlanBefore, listCategories, getPlan, kvGet, kvSet, today, upsertPlan } from "../../src/db/repo";
-import { useAccount } from "../../src/account";
-import { AccountSection } from "../../src/AccountSection";
-import { deleteAccountAndData, exportData } from "../../src/dataTools";
+import { getLatestPlanBefore, getPlan, kvGet, kvSet, listCategories, today } from "../../src/db/repo";
 import { disableReminders, enableReminders, remindersEnabled } from "../../src/notifications";
 
 const THEMES: { key: ThemePreference; label: string }[] = [
@@ -21,57 +24,64 @@ const THEMES: { key: ThemePreference; label: string }[] = [
   { key: "dark", label: "Tamna" },
 ];
 
-function toText(c: Cents | undefined): string {
-  return c ? (c % 100 === 0 ? String(c / 100) : (c / 100).toFixed(2).replace(".", ",")) : "";
-}
+const SITE = "https://unitcent.com";
 
+/** Profil kao izbornik: zaglavlje s imenom, pa skupine (račun, plan, postavke, podaci, o aplikaciji). */
 export default function Profil() {
   const { colors, fx, space, preference, setPreference } = useTheme();
   const toast = useToast();
   const router = useRouter();
-  const cats = useDb(() => listCategories());
+  const account = useAccount();
   const month = yearMonthOf(today());
   const plan = useDb(() => getPlan(month) ?? getLatestPlanBefore(month));
+  const cats = useDb(() => listCategories());
   const savedName = useDb(() => kvGet("name") ?? "");
-  const account = useAccount();
   const [name, setName] = useState(savedName);
-  useEffect(() => setName(savedName), [savedName]);
-  const [income, setIncome] = useState<{ text: string; cents: Cents | null }>({ text: "", cents: null });
-  const [savings, setSavings] = useState<{ text: string; cents: Cents | null }>({ text: "", cents: null });
   const [reminders, setReminders] = useState(remindersEnabled());
+  useEffect(() => setName(savedName), [savedName]);
 
-  useEffect(() => {
-    if (plan) {
-      setIncome({ text: toText(plan.incomeCents), cents: plan.incomeCents });
-      setSavings({ text: toText(plan.savingsCents), cents: plan.savingsCents });
+  const toggleReminders = async (on: boolean) => {
+    if (on) {
+      const ok = await enableReminders();
+      setReminders(ok);
+      if (!ok) toast.show("Dopusti obavijesti u postavkama telefona");
+    } else {
+      await disableReminders();
+      setReminders(false);
     }
-  }, [plan?.incomeCents, plan?.savingsCents]);
+  };
 
-  const dirty = plan ? income.cents !== plan.incomeCents || (savings.cents ?? 0) !== plan.savingsCents : false;
+  const confirmDelete = () =>
+    Alert.alert(
+      "Obrisati račun i sve podatke?",
+      "Brišu se troškovi, pretplate, kategorije i plan, na mobitelu i u oblaku. Ovo se ne može poništiti.",
+      [
+        { text: "Odustani", style: "cancel" },
+        {
+          text: "Obriši sve",
+          style: "destructive",
+          onPress: async () => {
+            const ok = await deleteAccountAndData();
+            if (ok) router.replace("/onboarding");
+            else toast.show("Brisanje nije uspjelo, provjeri vezu i pokušaj ponovno");
+          },
+        },
+      ],
+    );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <ScrollView
-          contentContainerStyle={{ padding: space["4"] + 4, paddingBottom: 140, gap: space["5"] }}
+          contentContainerStyle={{ padding: space["4"] + 4, paddingTop: space["5"], paddingBottom: 140, gap: space["5"] }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <T v="title-1" style={{ fontSize: 30, lineHeight: 36 }}>Profil</T>
-
+          {/* Zaglavlje: avatar, ime (uređuje se izravno) i račun */}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-            <View
-              style={{
-                width: 64,
-                height: 64,
-                borderRadius: 32,
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: colors["brand-soft"],
-              }}
-            >
-              <T v="title-1" color={colors["brand-ink"]} style={{ fontSize: 26, lineHeight: 32 }}>
+            <View style={{ width: 68, height: 68, borderRadius: 34, alignItems: "center", justifyContent: "center", backgroundColor: colors["brand-soft"] }}>
+              <T v="title-1" color={colors["brand-ink"]} style={{ fontSize: 28, lineHeight: 34 }}>
                 {(name.trim() || account.email || "?").charAt(0).toUpperCase()}
               </T>
             </View>
@@ -88,90 +98,43 @@ export default function Profil() {
                 style={[textStyle("title-2"), { color: colors.ink, paddingVertical: 4, minHeight: 44 }]}
               />
               <T v="caption" muted numberOfLines={1}>
-                {account.email ?? (account.hasSession ? "Gost, račun nije zaštićen" : "Samo na ovom uređaju")}
+                {account.email ?? (account.hasSession ? "Gost" : "Samo na ovom uređaju")}
               </T>
             </View>
           </View>
 
           <AccountSection />
 
-          <Glass style={{ padding: space["4"], gap: space["4"] }}>
-            <T v="title-2">Plan za ovaj mjesec</T>
-            <AmountField label="Primanja" value={income.text} onChange={(text, cents) => setIncome({ text, cents })} />
-            <AmountField label="Štednja" value={savings.text} onChange={(text, cents) => setSavings({ text, cents })} />
-            <T v="caption" muted>
-              Trenutno: primanja {formatEur(plan?.incomeCents ?? 0)}, štednja {formatEur(plan?.savingsCents ?? 0)}.
-            </T>
-            <Button
-              label="Spremi plan"
-              disabled={!dirty || (income.cents ?? 0) <= 0}
-              onPress={() => {
-                upsertPlan({ month, incomeCents: income.cents ?? 0, savingsCents: savings.cents ?? 0 });
-                toast.show("Plan spremljen");
-              }}
+          <Group title="Moj novac">
+            <Row
+              icon="wallet"
+              title={`Plan za ${monthTitle(month).replace(/\.$/, "").toLowerCase()}`}
+              subtitle={plan ? `Primanja ${formatEur(plan.incomeCents)} · štednja ${formatEur(plan.savingsCents)}` : "Postavi primanja i štednju"}
+              onPress={() => router.push("/plan" as Href)}
             />
-          </Glass>
+            <Row icon="tag" title="Kategorije" value={String(cats.length)} onPress={() => router.push("/kategorije" as Href)} />
+          </Group>
 
-          <View style={{ gap: 4 }}>
-            <T v="mono-label" muted>Kategorije</T>
-            {cats.map((c, i) => (
-              <SwipeRow
-                key={c.id}
-                onDelete={() => {
-                  deleteCategory(c.id);
-                  toast.show(`Obrisano: ${c.name}`, { label: "Poništi", run: () => restoreCategory(c.id) });
-                }}
-              >
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Uredi kategoriju ${c.name}`}
-                  accessibilityHint="Povuci ulijevo za brisanje"
-                  onPress={() => router.push({ pathname: "/kategorija", params: { id: c.id } })}
-                  style={{ minHeight: 56, flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: colors.bg, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: fx.line }}
-                >
-                  <CatIcon colorToken={c.colorToken} icon={c.icon} size={36} />
-                  <T v="headline" style={{ flex: 1, fontWeight: "700" }} numberOfLines={1}>{c.name}</T>
-                  <T v="caption" muted>Uredi</T>
-                </Pressable>
-              </SwipeRow>
-            ))}
-            <Button variant="text" icon="plus" label="Nova kategorija" onPress={() => router.push("/kategorija")} style={{ alignSelf: "flex-start", marginLeft: -12 }} />
-          </View>
-
-          <View style={{ gap: space["2"] }}>
-            <T v="mono-label" muted>Podsjetnici naplata</T>
-            <Segmented
-              value={reminders ? "on" : "off"}
-              onChange={async (k) => {
-                if (k === "on") {
-                  const ok = await enableReminders();
-                  setReminders(ok);
-                  if (!ok) toast.show("Dopusti obavijesti u postavkama telefona");
-                } else {
-                  await disableReminders();
-                  setReminders(false);
-                }
-              }}
-              options={[
-                { key: "on", label: "Uključeno" },
-                { key: "off", label: "Isključeno" },
-              ]}
+          <Group title="Postavke">
+            <Row
+              icon="bell"
+              title="Podsjetnici naplata"
+              subtitle="Dan prije, u 9:00. Radi i bez interneta."
+              right={<Switch value={reminders} onValueChange={(v) => void toggleReminders(v)} trackColor={{ false: fx.track, true: colors.brand }} thumbColor="#ffffff" />}
             />
-            <T v="caption" muted>Dan prije svake naplate u 9:00. Radi i bez interneta.</T>
-          </View>
+            <View>
+              <Row icon="sun" title="Izgled" />
+              <View style={{ paddingHorizontal: 16, paddingBottom: 14 }}>
+                <Segmented value={preference} onChange={setPreference} options={THEMES} />
+              </View>
+            </View>
+          </Group>
 
-          <View style={{ gap: space["2"] }}>
-            <T v="mono-label" muted>Tema</T>
-            <Segmented value={preference} onChange={setPreference} options={THEMES} />
-          </View>
-
-          <View style={{ gap: space["2"] }}>
-            <T v="mono-label" muted>Moji podaci</T>
-            <Button
-              variant="secondary"
-              size="sm"
-              icon="arrow"
-              label="Izvezi podatke (JSON)"
+          <Group title="Moji podaci">
+            <Row
+              icon="download"
+              title="Izvezi podatke"
+              subtitle="Svi tvoji podaci u JSON datoteci"
               onPress={async () => {
                 try {
                   if (!(await exportData())) toast.show("Dijeljenje nije dostupno na ovom uređaju");
@@ -180,29 +143,14 @@ export default function Profil() {
                 }
               }}
             />
-            <Button
-              variant="danger"
-              label="Obriši račun i sve podatke"
-              onPress={() =>
-                Alert.alert(
-                  "Obrisati račun i sve podatke?",
-                  "Brišu se troškovi, pretplate, kategorije i plan, na mobitelu i u oblaku. Ovo se ne može poništiti.",
-                  [
-                    { text: "Odustani", style: "cancel" },
-                    {
-                      text: "Obriši sve",
-                      style: "destructive",
-                      onPress: async () => {
-                        const ok = await deleteAccountAndData();
-                        if (ok) router.replace("/onboarding");
-                        else toast.show("Brisanje nije uspjelo, provjeri vezu i pokušaj ponovno");
-                      },
-                    },
-                  ],
-                )
-              }
-            />
-          </View>
+            <Row icon="trash" danger title="Obriši račun i sve podatke" onPress={confirmDelete} />
+          </Group>
+
+          <Group title="O aplikaciji">
+            <Row icon="shield" title="Privatnost" external onPress={() => void Linking.openURL(`${SITE}/privatnost`)} />
+            <Row icon="file" title="Uvjeti korištenja" external onPress={() => void Linking.openURL(`${SITE}/uvjeti`)} />
+            <Row icon="info" title="UnitCent" value={`verzija ${Constants.expoConfig?.version ?? ""}`} />
+          </Group>
         </ScrollView>
       </SafeAreaView>
     </View>

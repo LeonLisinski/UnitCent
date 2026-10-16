@@ -200,21 +200,24 @@ export function Donut({
   children?: ReactNode;
 }) {
   const { fx } = useTheme();
-  const R = 100;
+  const R = 102;
+  const W = 18; // debljina prstena
+  const GAP = 5; // vidljiv razmak između isječaka (u jedinicama viewBoxa)
   const C = 2 * Math.PI * R;
   const total = slices.reduce((s, x) => s + x.value, 0);
+  const many = slices.length > 1;
   let off = 0;
   return (
     <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
       <Svg width={size} height={size} viewBox="0 0 250 250">
         <G rotation={-90} origin="125, 125">
-          <Circle cx={125} cy={125} r={R} stroke={fx.track} strokeWidth={22} fill="none" />
-          {total > 0 && slices.length === 1 ? (
-            <Circle cx={125} cy={125} r={R} stroke={slices[0]!.color} strokeWidth={22} fill="none" />
-          ) : null}
-          {total > 0 && slices.length > 1
+          <Circle cx={125} cy={125} r={R} stroke={fx.track} strokeWidth={W} fill="none" />
+          {total > 0 && !many ? <Circle cx={125} cy={125} r={R} stroke={slices[0]!.color} strokeWidth={W} fill="none" /> : null}
+          {total > 0 && many
             ? slices.map((s, i) => {
                 const len = (s.value / total) * C;
+                // Ravni krajevi i fiksan razmak: isječak je kraći za GAP, a pomaknut za pola razmaka.
+                const dash = Math.max(1, len - GAP);
                 const el = (
                   <Circle
                     key={i}
@@ -222,11 +225,10 @@ export function Donut({
                     cy={125}
                     r={R}
                     stroke={s.color}
-                    strokeWidth={22}
-                    strokeLinecap="round"
+                    strokeWidth={W}
                     fill="none"
-                    strokeDasharray={`${Math.max(0.5, len - 13)} ${C}`}
-                    strokeDashoffset={-off - 6}
+                    strokeDasharray={`${dash} ${C}`}
+                    strokeDashoffset={-(off + GAP / 2)}
                   />
                 );
                 off += len;
@@ -235,7 +237,7 @@ export function Donut({
             : null}
         </G>
       </Svg>
-      <View style={{ position: "absolute", alignItems: "center", gap: 4 }}>{children}</View>
+      <View style={{ position: "absolute", alignItems: "center", gap: 4, maxWidth: size * 0.62 }}>{children}</View>
     </View>
   );
 }

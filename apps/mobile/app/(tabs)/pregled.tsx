@@ -11,6 +11,7 @@ import {
   yearMonthOf,
   type YearMonth,
 } from "@unitcent/core";
+import { CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
 import { Donut, Glow, RoundButton } from "../../src/fx";
 import { fitFontSize, monthShort, monthTitle } from "../../src/format";
@@ -52,14 +53,13 @@ export default function Pregled() {
       <Glow />
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <ScrollView
-          contentContainerStyle={{ padding: space["4"] + 4, paddingBottom: 140, gap: space["5"] }}
+          contentContainerStyle={{ padding: space["4"] + 4, paddingTop: space["4"], paddingBottom: 140, gap: space["5"] }}
           showsVerticalScrollIndicator={false}
         >
           <Animated.View entering={enter(0)} style={{ gap: space["3"] }}>
-            <T v="title-1" style={{ fontSize: 30, lineHeight: 36 }}>Pregled</T>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <RoundButton icon="back" label="Prethodni mjesec" onPress={() => setMonth(previousMonth(month))} />
-              <T v="headline" style={{ fontSize: 17 }}>{monthTitle(month)}</T>
+              <T v="title-2" style={{ fontSize: 19 }}>{monthTitle(month)}</T>
               <RoundButton icon="chev" label="Sljedeći mjesec" disabled={month >= thisMonth} onPress={() => setMonth(nextMonth(month))} />
             </View>
           </Animated.View>
@@ -97,24 +97,33 @@ export default function Pregled() {
                 const c = row.categoryId ? catById.get(row.categoryId) : undefined;
                 const col = colorOf(c?.colorToken ?? "cat-ostalo");
                 const pct = total > 0 ? Math.round((row.totalCents / total) * 100) : 0;
+                const share = total > 0 ? row.totalCents / total : 0;
                 return (
                   <View
                     key={row.categoryId ?? "none"}
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
-                      gap: 12,
-                      minHeight: 60,
+                      gap: 14,
+                      minHeight: 68,
+                      paddingVertical: 8,
                       borderTopWidth: i === 0 ? 0 : 1,
                       borderTopColor: fx.line,
                     }}
                   >
-                    <View style={{ width: 12, height: 12, borderRadius: 4, backgroundColor: col }} />
-                    <View style={{ flex: 1 }}>
-                      <T v="headline" style={{ fontWeight: "700" }}>{c?.name ?? "Bez kategorije"}</T>
-                      <T v="caption" muted>{pct} %</T>
+                    <CatIcon colorToken={c?.colorToken ?? "cat-ostalo"} icon={c?.icon ?? "dots"} size={40} />
+                    <View style={{ flex: 1, gap: 7 }}>
+                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+                        <T v="headline" numberOfLines={1} style={{ fontWeight: "700", flexShrink: 1 }}>{c?.name ?? "Bez kategorije"}</T>
+                        <T v="amount" style={{ fontWeight: "800" }}>{formatEur(row.totalCents)}</T>
+                      </View>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                        <View style={{ flex: 1, height: 5, borderRadius: 3, backgroundColor: fx.track, overflow: "hidden" }}>
+                          <View style={{ width: `${Math.max(2, share * 100)}%`, height: "100%", borderRadius: 3, backgroundColor: col }} />
+                        </View>
+                        <T v="caption" muted style={{ width: 38, textAlign: "right" }}>{pct} %</T>
+                      </View>
                     </View>
-                    <T v="amount" style={{ fontWeight: "800" }}>{formatEur(row.totalCents)}</T>
                   </View>
                 );
               })
