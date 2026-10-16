@@ -14,7 +14,8 @@ export interface Fx {
   glassBorder: string;
   track: string;
   tabBg: string;
-  glow: string;
+  glowColor: string;
+  glowOpacity: number;
   accent2: string;
   line: string;
 }
@@ -25,7 +26,8 @@ const FX: Record<Scheme, Fx> = {
     glassBorder: "rgba(255,255,255,0.09)",
     track: "rgba(255,255,255,0.07)",
     tabBg: "rgba(18,26,25,0.95)",
-    glow: "rgba(61,214,163,0.28)",
+    glowColor: "#3dd6a3",
+    glowOpacity: 0.26,
     accent2: "#c8f169",
     line: "rgba(255,255,255,0.08)",
   },
@@ -34,7 +36,8 @@ const FX: Record<Scheme, Fx> = {
     glassBorder: "rgba(15,21,21,0.06)",
     track: "rgba(15,21,21,0.07)",
     tabBg: "rgba(255,255,255,0.96)",
-    glow: "rgba(14,122,95,0.16)",
+    glowColor: "#0e7a5f",
+    glowOpacity: 0.16,
     accent2: "#7cb518",
     line: "rgba(15,21,21,0.08)",
   },

@@ -8,6 +8,7 @@ import { Calendar } from "../../src/Calendar";
 import { Button, CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
 import { Glow } from "../../src/fx";
+import { fitFontSize } from "../../src/format";
 import { useTheme } from "../../src/theme";
 import { T } from "../../src/ui";
 import { deleteRecurring, listCategories, listRecurring, today } from "../../src/db/repo";
@@ -79,7 +80,7 @@ export default function Pretplate() {
             <T v="title-1" style={{ fontSize: 30, lineHeight: 36 }}>Pretplate</T>
             <View style={{ gap: 4 }}>
               <T v="mono-label" muted>Svaki mjesec</T>
-              <T v="amount-hero" style={{ fontSize: 46, lineHeight: 50, letterSpacing: -2 }}>{formatEur(total)}</T>
+              <T v="amount-hero" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={{ fontSize: fitFontSize(formatEur(total), 320, 46), lineHeight: 52, letterSpacing: -2 }}>{formatEur(total)}</T>
             </View>
             <View style={{ gap: 6 }}>
               <View style={{ height: 6, borderRadius: 3, backgroundColor: fx.track, overflow: "hidden" }}>

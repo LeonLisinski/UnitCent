@@ -49,3 +49,19 @@ export function monthShort(ym: string): string {
   const m = Number(ym.split("-")[1]);
   return MONTHS_SHORT[m - 1] ?? "";
 }
+
+/**
+ * Veličina fonta da se broj (npr. "10.000,00 €") sigurno stane u zadanu širinu.
+ * Procjena širine po znaku za Manrope ExtraBold s tabličnim znamenkama; nikad veće od `base`.
+ */
+export function fitFontSize(text: string, maxWidth: number, base: number, min = 18): number {
+  let em = 0;
+  for (const ch of text) {
+    if (ch >= "0" && ch <= "9") em += 0.64;
+    else if (ch === "," || ch === "." || ch === " " || ch === "\u00a0") em += 0.3;
+    else if (ch === "\u2212" || ch === "-" || ch === "+") em += 0.55;
+    else em += 0.7; // €, slova
+  }
+  if (em === 0) return base;
+  return Math.max(min, Math.min(base, Math.floor(maxWidth / em)));
+}

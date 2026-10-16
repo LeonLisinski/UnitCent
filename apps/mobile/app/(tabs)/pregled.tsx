@@ -13,7 +13,7 @@ import {
 } from "@unitcent/core";
 import { useDb } from "../../src/data";
 import { Donut, Glow, RoundButton } from "../../src/fx";
-import { monthShort, monthTitle } from "../../src/format";
+import { fitFontSize, monthShort, monthTitle } from "../../src/format";
 import { useTheme } from "../../src/theme";
 import { T } from "../../src/ui";
 import { listCategories, listTransactionsInMonth, today } from "../../src/db/repo";
@@ -67,7 +67,7 @@ export default function Pregled() {
           <Animated.View entering={enter(1)} style={{ alignItems: "center" }}>
             <Donut slices={slices}>
               <T v="mono-label" muted>Potrošeno</T>
-              <T v="amount-hero" style={{ fontSize: 36, lineHeight: 40, letterSpacing: -1.6 }}>{formatEur(total)}</T>
+              <T v="amount-hero" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={{ fontSize: fitFontSize(formatEur(total), 150, 36), lineHeight: 42, letterSpacing: -1.4 }}>{formatEur(total)}</T>
               {change !== null && change !== 0 ? (
                 <View
                   style={{

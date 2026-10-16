@@ -23,7 +23,7 @@ export function TxRow({
 }) {
   const { colors } = useTheme();
   const title = tx.note ?? category?.name ?? "Trošak";
-  const sub = [hideDate ? null : relativeDay(tx.localDate, today()), category?.name, tx.source === "recurring" ? "pretplata" : null]
+  const sub = [hideDate ? null : relativeDay(tx.localDate, today()), category?.name]
     .filter(Boolean)
     .join(" · ");
   const amount = tx.type === "income" ? `+${formatEur(tx.amountCents)}` : formatEur(-tx.amountCents);

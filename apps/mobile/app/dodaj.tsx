@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { parseAmount } from "@unitcent/core";
 import { CatIcon, Keypad } from "../src/components";
 import { Glow, RoundButton } from "../src/fx";
+import { fitFontSize } from "../src/format";
 import { textStyle, useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
@@ -85,7 +86,14 @@ export default function Dodaj() {
 
           <View style={{ alignItems: "center", paddingTop: space["3"], gap: 6 }}>
             <View style={{ flexDirection: "row", alignItems: "baseline" }}>
-              <T v="amount-hero" color={value ? colors.ink : colors["ink-muted"]} style={{ fontSize: 76, lineHeight: 84, letterSpacing: -4 }}>
+              <T
+                v="amount-hero"
+                color={value ? colors.ink : colors["ink-muted"]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.5}
+                style={{ fontSize: fitFontSize(`${value || "0"} €`, 300, 76), lineHeight: 84, letterSpacing: -3 }}
+              >
                 {value || "0"}
               </T>
               <T v="title-1" muted style={{ fontSize: 34, marginLeft: 6 }}>€</T>

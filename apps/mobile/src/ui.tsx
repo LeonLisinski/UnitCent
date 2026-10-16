@@ -19,6 +19,8 @@ export function T({
   style?: StyleProp<TextStyle>;
   children: ReactNode;
   numberOfLines?: number;
+  adjustsFontSizeToFit?: boolean;
+  minimumFontScale?: number;
 }) {
   const { colors } = useTheme();
   return (

@@ -12,6 +12,7 @@ import {
 import { AmountField, Button, Chip } from "../src/components";
 import { Icon } from "../src/icons";
 import { Glass, Glow } from "../src/fx";
+import { fitFontSize } from "../src/format";
 import { useTheme } from "../src/theme";
 import { T } from "../src/ui";
 import {
@@ -186,7 +187,7 @@ export default function Onboarding() {
 
             <View style={{ backgroundColor: colors.accent, borderRadius: radius.lg + 8, padding: space["5"], gap: space["1"] }}>
               <T v="mono-label" color={colors["on-accent"]}>Preporučeni dnevni trošak</T>
-              <T v="amount-hero" color={colors["on-accent"]}>{formatEur(Math.max(0, preview.dailyCents))}</T>
+              <T v="amount-hero" color={colors["on-accent"]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={{ fontSize: fitFontSize(formatEur(Math.max(0, preview.dailyCents)), 280, 44) }}>{formatEur(Math.max(0, preview.dailyCents))}</T>
               <T v="caption" color={colors["on-accent"]}>
                 Ostalo za trošiti {formatEur(Math.max(0, preview.availableCents))}, još {preview.daysLeft} dana u mjesecu
               </T>

@@ -4,6 +4,7 @@ import Svg, { Circle, Defs, G, LinearGradient, Path, RadialGradient, Rect, Stop 
 import Animated, { Easing, useAnimatedProps, useSharedValue, withTiming } from "react-native-reanimated";
 import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import { formatEur, type Cents } from "@unitcent/core";
+import { fitFontSize } from "./format";
 import { Icon } from "./icons";
 import { useTheme } from "./theme";
 import { T } from "./ui";
@@ -19,8 +20,9 @@ export function Glow() {
       <Svg width={size} height={size}>
         <Defs>
           <RadialGradient id="glow" cx="50%" cy="50%" r="50%">
-            <Stop offset="0" stopColor={fx.glow} stopOpacity="1" />
-            <Stop offset="1" stopColor={fx.glow} stopOpacity="0" />
+            <Stop offset="0" stopColor={fx.glowColor} stopOpacity={fx.glowOpacity} />
+            <Stop offset="0.72" stopColor={fx.glowColor} stopOpacity={0} />
+            <Stop offset="1" stopColor={fx.glowColor} stopOpacity={0} />
           </RadialGradient>
         </Defs>
         <Rect width={size} height={size} fill="url(#glow)" />
@@ -86,7 +88,19 @@ export function Ring({ size = 262, remaining, state, children }: { size?: number
 /* ---------- iznos s odbrojavanjem ---------- */
 
 /** Prikaz iznosa koji se glatko odbroji kad se vrijednost promijeni. */
-export function Amount({ cents, style, color }: { cents: Cents; style?: object; color?: string }) {
+export function Amount({
+  cents,
+  style,
+  color,
+  base = 56,
+  maxWidth = 190,
+}: {
+  cents: Cents;
+  style?: object;
+  color?: string;
+  base?: number;
+  maxWidth?: number;
+}) {
   const [shown, setShown] = useState(cents);
   const from = useRef(cents);
   useEffect(() => {
@@ -106,9 +120,19 @@ export function Amount({ cents, style, color }: { cents: Cents; style?: object; 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [cents]);
+  const text = formatEur(shown);
+  // Veličina se računa prema najduljem obliku (konačni iznos), pa broj ne "skače" tijekom odbrojavanja.
+  const size = fitFontSize(formatEur(cents), maxWidth, base);
   return (
-    <T v="amount-hero" color={color} style={[{ fontSize: 56, lineHeight: 60, letterSpacing: -2.5 }, style]}>
-      {formatEur(shown)}
+    <T
+      v="amount-hero"
+      color={color}
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={0.5}
+      style={[{ fontSize: size, lineHeight: Math.round(size * 1.08), letterSpacing: -size * 0.045 }, style]}
+    >
+      {text}
     </T>
   );
 }
@@ -150,6 +174,10 @@ export function DayBars({
             const x = i * (bw + gap);
             if (i > todayIndex) return <Rect key={i} x={x} y={height - 8 - ((i * 7) % 9)} width={bw} height={8 + ((i * 7) % 9)} rx={2} fill={fx.track} />;
             const isToday = i === todayIndex;
+            if (v <= 0) {
+              // Dan bez potrošnje: diskretna točkica na dnu (danas u boji brenda)
+              return <Rect key={i} x={x} y={height - 4} width={bw} height={4} rx={2} fill={isToday ? colors.brand : fx.track} />;
+            }
             const fill = isToday ? "url(#todayBar)" : v > limitCents ? colors.warning : colors.brand;
             return <Rect key={i} x={x} y={y(v)} width={bw} height={height - y(v)} rx={2.5} fill={fill} opacity={isToday ? 1 : 0.9} />;
           })}
@@ -181,7 +209,10 @@ export function Donut({
       <Svg width={size} height={size} viewBox="0 0 250 250">
         <G rotation={-90} origin="125, 125">
           <Circle cx={125} cy={125} r={R} stroke={fx.track} strokeWidth={22} fill="none" />
-          {total > 0
+          {total > 0 && slices.length === 1 ? (
+            <Circle cx={125} cy={125} r={R} stroke={slices[0]!.color} strokeWidth={22} fill="none" />
+          ) : null}
+          {total > 0 && slices.length > 1
             ? slices.map((s, i) => {
                 const len = (s.value / total) * C;
                 const el = (
