@@ -39,7 +39,7 @@ export default function Podaci() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
-      <Safe>
+      <Safe sheet>
         <ScrollView contentContainerStyle={{ padding: space["4"] + 4, gap: space["5"] }} showsVerticalScrollIndicator={false}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <T v="title-1" style={{ fontSize: 28, lineHeight: 34 }}>Podaci i privatnost</T>

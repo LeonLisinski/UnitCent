@@ -78,7 +78,7 @@ export default function Dodaj() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
-      <Safe style={{ flex: 1 }}>
+      <Safe sheet style={{ flex: 1 }}>
         <View style={{ flex: 1, paddingHorizontal: space["4"] + 4, paddingTop: space["3"], paddingBottom: space["3"] + Math.max(0, kb - insets.bottom), gap: space["3"] }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <View style={{ flexDirection: "row", gap: 4 }}>

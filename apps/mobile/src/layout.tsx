@@ -17,6 +17,12 @@ export const PAD = 20; // vodoravni rub ekrana
 export const SECTION_GAP = 28; // razmak između sekcija
 export const HERO = 262; // veličina glavnog grafa (prsten / krug)
 
+/** Najraniji mjesec koji se može otvoriti (5 godina unatrag): da se mogu unijeti i pregledati stari računi. */
+export function minMonth(): string {
+  const d = new Date();
+  return `${d.getFullYear() - 5}-01`;
+}
+
 /** Okvir tab ekrana: pozadina, sjaj, sigurni rub, skrolanje s donjim razmakom za plutajuću traku. */
 export function TabScreen({ children }: { children: ReactNode }) {
   const { colors } = useTheme();
@@ -59,9 +65,9 @@ export function ModalScreen({
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
-      <Safe>
+      <Safe sheet>
         <View style={{ flex: 1, paddingBottom: Math.max(0, kb - insets.bottom) }}>
-          <View style={{ paddingHorizontal: PAD, paddingTop: 8 }}>
+          <View style={{ paddingHorizontal: PAD, paddingTop: 14 }}>
             <PageHeader right={<RoundButton icon="x" label="Zatvori" onPress={onClose} />}>
               {eyebrow ? <T v="mono-label" muted style={{ fontSize: 11, opacity: 0.8 }}>{eyebrow}</T> : null}
               <T v="title-1" style={{ fontSize: 26, lineHeight: 32 }}>{title}</T>

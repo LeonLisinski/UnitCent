@@ -8,7 +8,7 @@ import { CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
 import { Amount, Ring, RoundButton } from "../../src/fx";
 import { monthTitle, nextMonthOf } from "../../src/format";
-import { HERO, Hero, ListRow, MonthSwitcher, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
+import { HERO, Hero, ListRow, MonthSwitcher, minMonth, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
 import { useTheme } from "../../src/theme";
 import { T } from "../../src/ui";
 import { deleteRecurring, listCategories, listRecurring, today } from "../../src/db/repo";
@@ -48,7 +48,7 @@ export default function Pretplate() {
   const count = `${inMonth.length} ${inMonth.length === 1 ? "stavka" : inMonth.length < 5 ? "stavke" : "stavki"}`;
 
   // Granice kretanja: od mjeseca najranijeg početka do godinu dana unaprijed.
-  const earliest = items.reduce<YearMonth>((min, i) => (i.startDate.slice(0, 7) < min ? i.startDate.slice(0, 7) : min), thisMonth);
+  const earliest = minMonth();
   let latest = thisMonth;
   for (let i = 0; i < 12; i++) latest = nextMonthOf(latest);
 

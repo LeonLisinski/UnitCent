@@ -18,14 +18,18 @@ export function Safe({
   children,
   style,
   edges = ["top", "bottom"],
+  sheet,
 }: {
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
   edges?: ("top" | "bottom")[];
+  /** iOS modal je kartica koja već počinje ispod statusne trake: gornji umetak se ne dodaje (inače je razmak dvostruk). */
+  sheet?: boolean;
 }) {
   const i = useInsets();
+  const top = sheet && Platform.OS === "ios" ? 0 : i.top;
   return (
-    <View style={[{ flex: 1, paddingTop: edges.includes("top") ? i.top : 0, paddingBottom: edges.includes("bottom") ? i.bottom : 0 }, style]}>
+    <View style={[{ flex: 1, paddingTop: edges.includes("top") ? top : 0, paddingBottom: edges.includes("bottom") ? i.bottom : 0 }, style]}>
       {children}
     </View>
   );

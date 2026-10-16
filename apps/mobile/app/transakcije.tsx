@@ -7,13 +7,13 @@ import { useDb } from "../src/data";
 import { Glow, RoundButton, SwipeRow } from "../src/fx";
 import { monthTitle, nextMonthOf, relativeDay } from "../src/format";
 import { Icon } from "../src/icons";
-import { MonthSwitcher, PAD, PageHeader } from "../src/layout";
+import { MonthSwitcher, PAD, PageHeader, minMonth } from "../src/layout";
 import { Safe } from "../src/safe";
 import { textStyle, useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { TxRow } from "../src/TxRow";
 import { T } from "../src/ui";
-import { deleteTransaction, earliestTxMonth, listCategories, restoreTransaction, searchTransactions, today, type Transaction } from "../src/db/repo";
+import { deleteTransaction, listCategories, restoreTransaction, searchTransactions, today, type Transaction } from "../src/db/repo";
 
 type Item = { kind: "head"; date: string; total: number } | { kind: "tx"; tx: Transaction; first: boolean };
 
@@ -31,8 +31,7 @@ export default function Transakcije() {
   const [categoryId, setCategoryId] = useState<string | "none" | null>(params.categoryId ?? null);
   const [query, setQuery] = useState("");
 
-  const first = useDb(() => earliestTxMonth());
-  const earliest = first && first < thisMonth ? first : thisMonth;
+  const earliest = minMonth();
   const cats = useDb(() => listCategories());
   const catById = new Map(cats.map((c) => [c.id, c]));
   const searching = query.trim().length > 0;
@@ -119,7 +118,7 @@ export default function Transakcije() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
-      <Safe>
+      <Safe sheet>
         <View style={{ paddingHorizontal: PAD, paddingTop: 8 }}>
           <PageHeader right={<RoundButton icon="x" label="Zatvori" onPress={() => router.back()} />}>
             <T v="title-1" style={{ fontSize: 26, lineHeight: 32 }}>Troškovi</T>

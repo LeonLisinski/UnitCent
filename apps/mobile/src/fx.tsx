@@ -297,6 +297,14 @@ export function DayBars({
 
 /* ---------- donut pregleda ---------- */
 
+/** Miješa hex boju s bijelom (t 0 do 1): svjetlija nijansa iste boje za kraj gradijenta isječka. */
+function lighten(hex: string, t: number): string {
+  const h = hex.replace("#", "");
+  if (h.length !== 6) return hex;
+  const mix = (i: number) => Math.round(parseInt(h.slice(i, i + 2), 16) * (1 - t) + 255 * t);
+  return `#${[0, 2, 4].map((i) => mix(i).toString(16).padStart(2, "0")).join("")}`;
+}
+
 export function Donut({
   size = 262,
   slices,
@@ -307,7 +315,7 @@ export function Donut({
   children?: ReactNode;
 }) {
   const { fx } = useTheme();
-  // Isti jezik kao prsten na početnoj: ista debljina (≈ 6,7 % veličine), isti trag i isti blagi sjaj.
+  // Isti jezik kao prsten na početnoj: ista debljina (≈ 6,7 % veličine), isti trag, blagi sjaj i gradijent po boji.
   const R = 102;
   const W = 17;
   const C = 2 * Math.PI * R;
@@ -315,16 +323,36 @@ export function Donut({
   let off = 0;
   const arcs =
     total > 0
-      ? slices.map((s) => {
+      ? slices.map((s, i) => {
           const len = (s.value / total) * C;
-          const arc = { color: s.color, len, start: off };
+          const a0 = (off / C) * 2 * Math.PI;
+          const a1 = ((off + len) / C) * 2 * Math.PI;
+          const arc = {
+            id: `dn${i}`,
+            color: s.color,
+            len,
+            start: off,
+            x1: 125 + R * Math.cos(a0),
+            y1: 125 + R * Math.sin(a0),
+            x2: 125 + R * Math.cos(a1),
+            y2: 125 + R * Math.sin(a1),
+          };
           off += len;
-          return arc;
+          // Jedan isječak je cijeli krug (početak = kraj): gradijent ide dijagonalno da ne bude degeneriran.
+          return slices.length === 1 ? { ...arc, x1: 30, y1: 30, x2: 220, y2: 220 } : arc;
         })
       : [];
   return (
     <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
       <Svg width={size} height={size} viewBox="0 0 250 250">
+        <Defs>
+          {arcs.map((a) => (
+            <LinearGradient key={a.id} id={a.id} gradientUnits="userSpaceOnUse" x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}>
+              <Stop offset="0" stopColor={a.color} />
+              <Stop offset="1" stopColor={lighten(a.color, 0.4)} />
+            </LinearGradient>
+          ))}
+        </Defs>
         <G rotation={-90} origin="125, 125">
           <Circle cx={125} cy={125} r={R} stroke={fx.track} strokeWidth={W} fill="none" />
           {/* Sjaj: dva šira prozirna sloja ispod isječaka */}
@@ -332,12 +360,12 @@ export function Donut({
             { w: W + 14, o: 0.05 },
             { w: W + 7, o: 0.09 },
           ].map((g) =>
-            arcs.map((a, i) => (
-              <Circle key={`${g.w}-${i}`} cx={125} cy={125} r={R} stroke={a.color} strokeWidth={g.w} opacity={g.o} fill="none" strokeDasharray={`${a.len} ${C}`} strokeDashoffset={-a.start} />
+            arcs.map((a) => (
+              <Circle key={`${g.w}-${a.id}`} cx={125} cy={125} r={R} stroke={a.color} strokeWidth={g.w} opacity={g.o} fill="none" strokeDasharray={`${a.len} ${C}`} strokeDashoffset={-a.start} />
             )),
           )}
-          {arcs.map((a, i) => (
-            <Circle key={i} cx={125} cy={125} r={R} stroke={a.color} strokeWidth={W} fill="none" strokeDasharray={`${a.len} ${C}`} strokeDashoffset={-a.start} />
+          {arcs.map((a) => (
+            <Circle key={a.id} cx={125} cy={125} r={R} stroke={`url(#${a.id})`} strokeWidth={W} fill="none" strokeDasharray={`${a.len} ${C}`} strokeDashoffset={-a.start} />
           ))}
         </G>
       </Svg>

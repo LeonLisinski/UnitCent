@@ -15,10 +15,10 @@ import { CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
 import { Amount, DayBars, Donut, RoundButton } from "../../src/fx";
 import { monthShort, monthTitle } from "../../src/format";
-import { HERO, Hero, ListRow, MonthSwitcher, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
+import { HERO, Hero, ListRow, MonthSwitcher, minMonth, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
 import { useTheme } from "../../src/theme";
 import { T } from "../../src/ui";
-import { earliestTxMonth, listCategories, listTransactionsInMonth, today } from "../../src/db/repo";
+import { listCategories, listTransactionsInMonth, today } from "../../src/db/repo";
 
 function nextMonth(ym: YearMonth): YearMonth {
   const [y, m] = ym.split("-").map(Number) as [number, number];
@@ -33,8 +33,7 @@ export default function Pregled() {
   const router = useRouter();
   const thisMonth = yearMonthOf(today());
   const [month, setMonth] = useState<YearMonth>(thisMonth);
-  const first = useDb(() => earliestTxMonth());
-  const earliest = first && first < thisMonth ? first : thisMonth;
+  const earliest = minMonth();
 
   const cats = useDb(() => listCategories());
   const txs = useDb(() => listTransactionsInMonth(month), [month]);

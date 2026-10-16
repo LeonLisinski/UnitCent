@@ -82,7 +82,7 @@ export default function Pregledaj() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
-      <Safe style={{ flex: 1 }}>
+      <Safe sheet style={{ flex: 1 }}>
         <View style={{ flex: 1, paddingHorizontal: space["4"] + 4, paddingTop: space["3"], paddingBottom: space["3"], gap: space["3"] }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <T v="title-1" style={{ fontSize: 26, lineHeight: 32 }}>Pregledaj račun</T>
