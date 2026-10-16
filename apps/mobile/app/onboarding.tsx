@@ -194,7 +194,7 @@ export default function Onboarding() {
 
             {step === 1 ? (
               <View style={{ flex: 1, paddingHorizontal: 20, gap: 8 }}>
-                {heading("Koliko mjesečno primaš?", "Plaća i ostali redoviti prihodi.")}
+                {heading("Unesi mjesečna primanja", "Plaća i ostali redoviti prihodi.")}
                 <View style={{ flex: 1, justifyContent: "center" }}>{bigAmount(incomeText)}</View>
                 <Keypad value={incomeText} onChange={setIncomeText} />
               </View>
@@ -248,13 +248,17 @@ export default function Onboarding() {
 
                   {POPULAR_RECURRING.filter((p) => picks[p.key]).length > 0 ? (
                     <View>
-                      <T v="mono-label" muted style={{ fontSize: 11, opacity: 0.8, marginBottom: 6 }}>Iznos i dan naplate</T>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                        <T v="mono-label" muted style={{ flex: 1, fontSize: 11, opacity: 0.8 }}>Naplata</T>
+                        <T v="mono-label" muted style={{ width: 112, fontSize: 11, opacity: 0.8 }}>Iznos</T>
+                        <T v="mono-label" muted style={{ width: 52, fontSize: 11, opacity: 0.8, textAlign: "center" }}>Dan</T>
+                      </View>
                       {POPULAR_RECURRING.filter((p) => picks[p.key]).map((p, i) => {
                         const pick = picks[p.key]!;
                         return (
-                          <View key={p.key} style={{ minHeight: 60, flexDirection: "row", alignItems: "center", gap: 12, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: fx.line }}>
+                          <View key={p.key} style={{ minHeight: 60, flexDirection: "row", alignItems: "center", gap: 10, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: fx.line }}>
                             <T v="headline" style={{ flex: 1, fontWeight: "700" }} numberOfLines={1}>{p.name}</T>
-                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: fx.glass, borderWidth: 1, borderColor: fx.glassBorder, borderRadius: 14, paddingHorizontal: 12, minHeight: 44, width: 120 }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: fx.glass, borderWidth: 1, borderColor: fx.glassBorder, borderRadius: 14, paddingHorizontal: 12, height: 46, width: 112 }}>
                               <TextInput
                                 value={pick.amountText}
                                 placeholder="0,00"
@@ -262,24 +266,21 @@ export default function Onboarding() {
                                 keyboardType="decimal-pad"
                                 accessibilityLabel={`Iznos: ${p.name}`}
                                 onChangeText={(t) => setPicks((c) => ({ ...c, [p.key]: { ...pick, amountText: t, cents: parseAmount(t) } }))}
-                                style={{ flex: 1, color: colors.ink, fontSize: 17, fontWeight: "700", paddingVertical: 8 }}
+                                style={{ flex: 1, color: colors.ink, fontSize: 17, fontWeight: "700", paddingVertical: 0 }}
                               />
                               <T v="caption" muted>€</T>
                             </View>
-                            <View style={{ alignItems: "center" }}>
-                              <TextInput
-                                value={String(pick.day)}
-                                keyboardType="number-pad"
-                                maxLength={2}
-                                accessibilityLabel={`Dan naplate: ${p.name}`}
-                                onChangeText={(t) => {
-                                  const n = Math.min(31, Math.max(1, parseInt(t.replace(/\D/g, ""), 10) || 1));
-                                  setPicks((c) => ({ ...c, [p.key]: { ...pick, day: n } }));
-                                }}
-                                style={{ width: 48, minHeight: 44, borderRadius: 14, borderWidth: 1, borderColor: fx.glassBorder, backgroundColor: fx.glass, color: colors.ink, fontSize: 17, fontWeight: "700", textAlign: "center" }}
-                              />
-                              <T v="caption" muted style={{ fontSize: 10, marginTop: 2 }}>dan</T>
-                            </View>
+                            <TextInput
+                              value={String(pick.day)}
+                              keyboardType="number-pad"
+                              maxLength={2}
+                              accessibilityLabel={`Dan naplate: ${p.name}`}
+                              onChangeText={(t) => {
+                                const n = Math.min(31, Math.max(1, parseInt(t.replace(/\D/g, ""), 10) || 1));
+                                setPicks((c) => ({ ...c, [p.key]: { ...pick, day: n } }));
+                              }}
+                              style={{ width: 52, height: 46, borderRadius: 14, borderWidth: 1, borderColor: fx.glassBorder, backgroundColor: fx.glass, color: colors.ink, fontSize: 17, fontWeight: "700", textAlign: "center", paddingVertical: 0 }}
+                            />
                           </View>
                         );
                       })}
@@ -318,9 +319,9 @@ export default function Onboarding() {
 
                 <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
                   <Ring size={236} remaining={Math.min(1, preview.dailyCents > 0 ? 0.82 : 0)} state="ok">
-                    <T v="mono-label" muted>Preporučeni dnevni trošak</T>
-                    <Amount cents={Math.max(0, preview.dailyCents)} maxWidth={160} />
-                    <T v="caption" muted>još {preview.daysLeft} dana u mjesecu</T>
+                    <T v="mono-label" muted>Dnevni trošak</T>
+                    <Amount cents={Math.max(0, preview.dailyCents)} maxWidth={150} />
+                    <T v="caption" muted>još {preview.daysLeft} dana</T>
                   </Ring>
                 </View>
               </View>
