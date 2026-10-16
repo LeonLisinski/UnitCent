@@ -47,7 +47,8 @@ export default function Pocetna() {
   const spentToday = limit.dailyCents - limit.leftTodayCents;
   const usedRatio = limit.dailyCents > 0 ? spentToday / limit.dailyCents : spentToday > 0 ? 2 : 0;
   const state: RingState = limit.isOver ? "over" : usedRatio >= 0.8 ? "warn" : "ok";
-  const remaining = limit.dailyCents > 0 ? Math.max(0, limit.leftTodayCents) / limit.dailyCents : 0;
+  // Kad je limit probijen, prsten je pun i crven (a ne prazan): jasnije od praznog traga s točkom.
+  const remaining = limit.isOver ? 1 : limit.dailyCents > 0 ? Math.max(0, limit.leftTodayCents) / limit.dailyCents : 0;
 
   // Mjesec: koliko je od raspoloživog potrošeno i gdje bi trebao biti danas.
   const { y, m } = parseYearMonth(month);
@@ -78,7 +79,7 @@ export default function Pocetna() {
         <Hero>
         <Ring size={HERO} remaining={remaining} state={state}>
           <T v="mono-label" muted>{limit.isOver ? "Danas si preko" : "Danas još smiješ"}</T>
-          <Amount cents={limit.isOver ? -limit.overByCents : limit.leftTodayCents} color={limit.isOver ? colors.danger : colors.ink} maxWidth={170} />
+          <Amount cents={limit.isOver ? limit.overByCents : limit.leftTodayCents} color={limit.isOver ? colors.danger : colors.ink} maxWidth={170} />
           <T v="caption" muted>od {formatEur(limit.dailyCents)}</T>
         </Ring>
         </Hero>
