@@ -42,6 +42,7 @@ function Shell() {
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
         <Stack.Screen name="dodaj" options={{ presentation: "modal" }} />
         <Stack.Screen name="pretplata" options={{ presentation: "modal" }} />
+        <Stack.Screen name="kategorija" options={{ presentation: "modal" }} />
       </Stack>
     </>
   );

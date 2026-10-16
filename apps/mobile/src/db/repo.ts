@@ -131,6 +131,61 @@ export function listCategoriesByUsage(): Category[] {
     .map((r) => ({ id: r.id, key: r.key, name: r.name, icon: r.icon, colorToken: r.color_token, sort: r.sort }));
 }
 
+export function getCategory(id: string): Category | null {
+  const r = getDb().getFirstSync<{ id: string; key: string | null; name: string; icon: string; color_token: string; sort: number }>(
+    "select id, key, name, icon, color_token, sort from categories where id = ? and deleted_at is null",
+    [id],
+  );
+  return r ? { id: r.id, key: r.key, name: r.name, icon: r.icon, colorToken: r.color_token, sort: r.sort } : null;
+}
+
+function enqueueCategory(id: string): void {
+  const r = getDb().getFirstSync<Record<string, unknown>>("select * from categories where id = ?", [id]);
+  if (r) enqueue("categories", id, "upsert", r);
+}
+
+/** Korisnička kategorija (ikona i boja iz ponuđenog skupa). */
+export function addCategory(input: { name: string; icon: string; colorToken: string }): Category {
+  const db = getDb();
+  const id = newId();
+  const t = nowIso();
+  const sort = (db.getFirstSync<{ m: number | null }>("select max(sort) as m from categories")?.m ?? 0) + 1;
+  db.withTransactionSync(() => {
+    db.runSync(
+      `insert into categories (id, key, name, icon, color_token, sort, is_system, created_at, client_updated_at)
+       values (?, null, ?, ?, ?, ?, 0, ?, ?)`,
+      [id, input.name.trim(), input.icon, input.colorToken, sort, t, t],
+    );
+    enqueueCategory(id);
+  });
+  notifyDbChanged();
+  return { id, key: null, name: input.name.trim(), icon: input.icon, colorToken: input.colorToken, sort };
+}
+
+export function updateCategory(id: string, input: { name: string; icon: string; colorToken: string }): void {
+  const db = getDb();
+  const t = nowIso();
+  db.withTransactionSync(() => {
+    db.runSync(
+      "update categories set name = ?, icon = ?, color_token = ?, client_updated_at = ?, rev = rev + 1 where id = ?",
+      [input.name.trim(), input.icon, input.colorToken, t, id],
+    );
+    enqueueCategory(id);
+  });
+  notifyDbChanged();
+}
+
+/** Meko brisanje: stari troškovi ostaju (bez kategorije), a kategorija nestaje s popisa. */
+export function deleteCategory(id: string): void {
+  const db = getDb();
+  const t = nowIso();
+  db.withTransactionSync(() => {
+    db.runSync("update categories set deleted_at = ?, client_updated_at = ?, rev = rev + 1 where id = ?", [t, t, id]);
+    enqueueCategory(id);
+  });
+  notifyDbChanged();
+}
+
 /* ---------- transakcije ---------- */
 
 type TxRow = {

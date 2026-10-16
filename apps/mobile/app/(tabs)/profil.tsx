@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
-import { ScrollView, TextInput, View } from "react-native";
+import { Pressable, ScrollView, TextInput, View } from "react-native";
+import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { formatEur, yearMonthOf, type Cents } from "@unitcent/core";
-import { AmountField, Button, Segmented } from "../../src/components";
+import { AmountField, Button, CatIcon, Segmented } from "../../src/components";
 import { useDb } from "../../src/data";
 import { Glass, Glow } from "../../src/fx";
 import { textStyle, useTheme, type ThemePreference } from "../../src/theme";
 import { useToast } from "../../src/toast";
 import { T } from "../../src/ui";
-import { getLatestPlanBefore, getPlan, kvGet, kvSet, today, upsertPlan } from "../../src/db/repo";
+import { getLatestPlanBefore, listCategories, getPlan, kvGet, kvSet, today, upsertPlan } from "../../src/db/repo";
 import { disableReminders, enableReminders, remindersEnabled } from "../../src/notifications";
 
 const THEMES: { key: ThemePreference; label: string }[] = [
@@ -24,6 +25,8 @@ function toText(c: Cents | undefined): string {
 export default function Profil() {
   const { colors, fx, space, preference, setPreference } = useTheme();
   const toast = useToast();
+  const router = useRouter();
+  const cats = useDb(() => listCategories());
   const month = yearMonthOf(today());
   const plan = useDb(() => getPlan(month) ?? getLatestPlanBefore(month));
   const savedName = useDb(() => kvGet("name") ?? "");
@@ -92,6 +95,24 @@ export default function Profil() {
               }}
             />
           </Glass>
+
+          <View style={{ gap: 4 }}>
+            <T v="mono-label" muted>Kategorije</T>
+            {cats.map((c, i) => (
+              <Pressable
+                key={c.id}
+                accessibilityRole="button"
+                accessibilityLabel={`Uredi kategoriju ${c.name}`}
+                onPress={() => router.push({ pathname: "/kategorija", params: { id: c.id } })}
+                style={{ minHeight: 56, flexDirection: "row", alignItems: "center", gap: 14, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: fx.line }}
+              >
+                <CatIcon colorToken={c.colorToken} icon={c.icon} size={36} />
+                <T v="headline" style={{ flex: 1, fontWeight: "700" }} numberOfLines={1}>{c.name}</T>
+                <T v="caption" muted>Uredi</T>
+              </Pressable>
+            ))}
+            <Button variant="soft" label="Nova kategorija" onPress={() => router.push("/kategorija")} style={{ marginTop: space["2"] }} />
+          </View>
 
           <View style={{ gap: space["2"] }}>
             <T v="mono-label" muted>Podsjetnici naplata</T>

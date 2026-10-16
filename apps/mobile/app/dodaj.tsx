@@ -1,10 +1,12 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Pressable, ScrollView, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { parseAmount } from "@unitcent/core";
-import { CatIcon, Keypad } from "../src/components";
+import { Button, CatIcon, Keypad } from "../src/components";
+import { useDb } from "../src/data";
+import { Icon } from "../src/icons";
 import { Glow, RoundButton } from "../src/fx";
 import { fitFontSize } from "../src/format";
 import { textStyle, useTheme } from "../src/theme";
@@ -15,7 +17,7 @@ import { addTransaction, deleteTransaction, listCategoriesByUsage } from "../src
 type Kind = "expense" | "income";
 
 /**
- * Brzi unos: veliki iznos, mreža kategorija i tipkovnica. Dodir na kategoriju odmah sprema (≤ 3 dodira).
+ * Brzi unos: veliki iznos, mreža kategorija i tipkovnica. Kategorija se samo označi, a sprema gumb „Spremi“.
  * Kategorije su poredane po učestalosti; zapis ide u lokalnu bazu, mreža nije potrebna.
  */
 export default function Dodaj() {
@@ -26,11 +28,13 @@ export default function Dodaj() {
   const [note, setNote] = useState("");
   const [showNote, setShowNote] = useState(false);
   const [type, setType] = useState<Kind>("expense");
-  const cats = useMemo(() => listCategoriesByUsage().slice(0, 8), []);
+  const [selected, setSelected] = useState<string | null>(null);
+  const cats = useDb(() => listCategoriesByUsage());
 
   const cents = value ? parseAmount(value) : null;
 
-  const save = (categoryId: string | null) => {
+  const save = () => {
+    const categoryId = selected;
     if (!cents || cents <= 0) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
@@ -99,23 +103,42 @@ export default function Dodaj() {
               <T v="title-1" muted style={{ fontSize: 34, marginLeft: 6 }}>€</T>
             </View>
             <T v="caption" muted>
-              {cents ? (type === "income" ? "Dodirni kategoriju za prihod" : "Dodirni kategoriju i spremljeno je") : "Upiši iznos"}
+              {cents ? "Odaberi kategoriju i spremi" : "Upiši iznos"}
             </T>
           </View>
 
           <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: 18, marginTop: space["2"] }}>
-            {cats.map((c) => (
-              <Pressable
-                key={c.id}
-                accessibilityRole="button"
-                accessibilityLabel={`Spremi u ${c.name}`}
-                onPress={() => save(c.id)}
-                style={({ pressed }) => ({ width: "25%", alignItems: "center", gap: 7, opacity: pressed ? 0.6 : 1 })}
-              >
-                <CatIcon colorToken={c.colorToken} icon={c.icon} size={54} />
-                <T v="caption" style={{ fontWeight: "700", fontSize: 11.5 }} numberOfLines={1}>{c.name}</T>
-              </Pressable>
-            ))}
+            {cats.map((c) => {
+              const on = selected === c.id;
+              return (
+                <Pressable
+                  key={c.id}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: on }}
+                  accessibilityLabel={c.name}
+                  onPress={() => setSelected(on ? null : c.id)}
+                  style={({ pressed }) => ({ width: "25%", alignItems: "center", gap: 7, opacity: pressed ? 0.6 : 1 })}
+                >
+                  <View style={{ padding: 3, borderRadius: 999, borderWidth: 2, borderColor: on ? colors.brand : "transparent" }}>
+                    <CatIcon colorToken={c.colorToken} icon={c.icon} size={50} />
+                  </View>
+                  <T v="caption" color={on ? colors.brand : colors.ink} style={{ fontWeight: "700", fontSize: 11.5 }} numberOfLines={1}>{c.name}</T>
+                </Pressable>
+              );
+            })}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Nova kategorija"
+              onPress={() => router.push("/kategorija")}
+              style={({ pressed }) => ({ width: "25%", alignItems: "center", gap: 7, opacity: pressed ? 0.6 : 1 })}
+            >
+              <View style={{ padding: 3 }}>
+                <View style={{ width: 50, height: 50, borderRadius: 25, borderWidth: 1.5, borderStyle: "dashed", borderColor: fx.glassBorder, alignItems: "center", justifyContent: "center" }}>
+                  <Icon name="plus" size={22} color={colors["ink-muted"]} />
+                </View>
+              </View>
+              <T v="caption" muted style={{ fontWeight: "700", fontSize: 11.5 }}>Nova</T>
+            </Pressable>
           </View>
 
           {showNote ? (
@@ -146,6 +169,7 @@ export default function Dodaj() {
           )}
 
           <Keypad value={value} onChange={setValue} />
+          <Button label="Spremi" disabled={!cents || cents <= 0} onPress={save} />
         </ScrollView>
       </SafeAreaView>
     </View>
