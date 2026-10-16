@@ -27,6 +27,7 @@ export default function Dodaj() {
   const [value, setValue] = useState("");
   const [note, setNote] = useState("");
   const [showNote, setShowNote] = useState(false);
+  const [noteFocus, setNoteFocus] = useState(false); // tipkovnica telefona otvorena: sakrij našu numeričku, da „Spremi“ ostane vidljiv
   const [type, setType] = useState<Kind>("expense");
   const [selected, setSelected] = useState<string | null>(null);
   const cats = useDb(() => listCategoriesByUsage());
@@ -139,9 +140,14 @@ export default function Dodaj() {
             </Pressable>
           </View>
 
-          {showNote ? (
+          </ScrollView>
+
+                    {showNote ? (
             <TextInput
               autoFocus
+              onFocus={() => setNoteFocus(true)}
+              onBlur={() => setNoteFocus(false)}
+              returnKeyType="done"
               value={note}
               onChangeText={setNote}
               placeholder="Bilješka (npr. Konzum)"
@@ -165,9 +171,7 @@ export default function Dodaj() {
               <T v="headline" color={colors.brand}>+ Dodaj bilješku</T>
             </Pressable>
           )}
-          </ScrollView>
-
-          <Keypad value={value} onChange={setValue} />
+          {noteFocus ? null : <Keypad value={value} onChange={setValue} />}
           <Button label="Spremi" disabled={!cents || cents <= 0} onPress={save} />
         </KeyboardAvoidingView>
       </SafeAreaView>

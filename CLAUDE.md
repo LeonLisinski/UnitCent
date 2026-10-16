@@ -40,6 +40,7 @@ Nazivi na webu: veliki broj u heroju je „Preporučeni dnevni trošak“, a u �
 - Font: Manrope (tekst i brojevi, `tabular-nums`); Instrument Serif kurziv samo kao akcent; JetBrains Mono za sitne oznake.
 - Jedna brand boja (zelena), limeta samo za jedan istaknuti trenutak po ekranu. Bez gradijentnih pozadina i sjena na karticama.
 - Broj je junak ekrana. Najveći element je iznos.
+- **Glavni sadržaj i primarni gumb (npr. iznos, „Spremi“) moraju uvijek biti vidljivi** na malim i velikim ekranima, bez skrolanja do potvrde. Skrolati smije samo promjenjiv popis (npr. kategorije), i to tek kad ne stane. **Tipkovnica telefona nikad ne smije prekriti** sadržaj ni gumb: koristi `KeyboardAvoidingView`, a po potrebi sakrij sekundarne elemente (npr. našu numeričku tipkovnicu) dok je tipkovnica otvorena. Provjeri na malom ekranu (iPhone SE) i s otvorenom tipkovnicom.
 - Dodirni ciljevi ≥ 48 px, kontrast ≥ 4.5:1, poštuj Dynamic Type i „smanji pokret“.
 - **Logo se ne crta ponovo.** Koristi datoteke iz `web/public/brand/` (znak je prsten; ikona aplikacije je tamna).
 - Web je trenutno samo tamna tema. Aplikacija ima obje teme (prati sustav, korisnik može prebaciti).
