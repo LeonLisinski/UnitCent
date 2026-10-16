@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
 import Svg, { Circle, Defs, G, LinearGradient, Path, RadialGradient, Rect, Stop } from "react-native-svg";
-import Animated, { Easing, useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from "react-native-reanimated";
-import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
+import Animated, { Easing, runOnJS, useAnimatedProps, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import * as Haptics from "expo-haptics";
 import { LinearGradient as Sheen } from "expo-linear-gradient";
 import { formatEur, type Cents } from "@unitcent/core";
 import { fitFontSize } from "./format";
@@ -350,49 +351,94 @@ export function Donut({
 let lastSwipeAt = 0;
 /** Istinito neposredno nakon povlačenja retka: dodir koji prati otpuštanje prsta se ignorira (nema slučajnog otvaranja). */
 export const recentlySwiped = (): boolean => Date.now() - lastSwipeAt < 450;
-
-function SwipeAction({ progress }: { progress: SharedValue<number> }) {
-  const { colors } = useTheme();
-  const style = useAnimatedStyle(() => ({ opacity: Math.min(1, progress.value * 5) }));
-  return (
-    <Animated.View
-      style={[
-        { width: 88, alignItems: "center", justifyContent: "center", backgroundColor: colors.danger, borderRadius: 18, marginVertical: 6 },
-        style,
-      ]}
-    >
-      <Icon name="trash" size={22} color="#ffffff" />
-    </Animated.View>
-  );
-}
+const markSwipe = (): void => {
+  lastSwipeAt = Date.now();
+};
+const tick = (): void => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
 /**
- * Redak koji se briše povlačenjem ulijevo. Redak nema vlastitu pozadinu (stoji na pozadini ekrana),
- * pa se crvena radnja prikazuje tek kad se redak pomakne.
+ * Brisanje povlačenjem ulijevo, s cijelom animacijom: crvena površina s košem otkriva se ispod retka dok ga
+ * povlačiš; kad pređeš prag (ili brzo zamahneš) redak odlijeće, crvena ostaje, visina se sklapa, a tek tada se
+ * poziva `onDelete` (npr. s „Poništi“). Kraće povlačenje vraća redak natrag. Redak nema vlastitu pozadinu.
  */
 export function SwipeRow({ children, onDelete }: { children: ReactNode; onDelete: () => void }) {
+  const { colors } = useTheme();
+  const tx = useSharedValue(0);
+  const width = useSharedValue(0);
+  const rowH = useSharedValue(0);
+  const collapse = useSharedValue(1); // 1 = pun redak, 0 = sklopljen
+  const collapsing = useSharedValue(false);
+  const armed = useSharedValue(false); // je li prijeđen prag (za haptik)
+
+  const finish = () => onDelete();
+
+  const pan = Gesture.Pan()
+    .activeOffsetX([-14, 14])
+    .failOffsetY([-12, 12])
+    .onStart(() => {
+      runOnJS(markSwipe)();
+    })
+    .onUpdate((e) => {
+      tx.value = Math.min(0, e.translationX);
+      const past = -tx.value > width.value * 0.35;
+      if (past !== armed.value) {
+        armed.value = past;
+        if (past) runOnJS(tick)();
+      }
+    })
+    .onEnd((e) => {
+      runOnJS(markSwipe)();
+      const shouldDelete = -tx.value > width.value * 0.35 || e.velocityX < -900;
+      if (shouldDelete && width.value > 0) {
+        collapsing.value = true;
+        tx.value = withTiming(-width.value, { duration: 160, easing: Easing.out(Easing.cubic) }, (done) => {
+          if (done) {
+            collapse.value = withTiming(0, { duration: 220, easing: Easing.inOut(Easing.cubic) }, (fin) => {
+              if (fin) runOnJS(finish)();
+            });
+          }
+        });
+      } else {
+        tx.value = withSpring(0, { damping: 18, stiffness: 220 });
+        armed.value = false;
+      }
+    });
+
+  const outer = useAnimatedStyle(() => (collapsing.value ? { height: rowH.value * collapse.value, opacity: collapse.value } : {}));
+  const rowStyle = useAnimatedStyle(() => ({ transform: [{ translateX: tx.value }] }));
+  const reveal = useAnimatedStyle(() => ({ opacity: Math.min(1, -tx.value / 24) }));
+  const iconStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 0.7 + Math.min(0.5, (-tx.value / Math.max(1, width.value)) * 1.6) }],
+  }));
+
   return (
-    <ReanimatedSwipeable
-      friction={2}
-      rightThreshold={72}
-      overshootRight={false}
-      onSwipeableOpenStartDrag={() => {
-        lastSwipeAt = Date.now();
+    <Animated.View
+      style={[{ overflow: "hidden" }, outer]}
+      onLayout={(e) => {
+        width.value = e.nativeEvent.layout.width;
+        if (!collapsing.value) rowH.value = e.nativeEvent.layout.height;
       }}
-      onSwipeableCloseStartDrag={() => {
-        lastSwipeAt = Date.now();
+      accessibilityActions={[{ name: "delete", label: "Obriši" }]}
+      onAccessibilityAction={(e) => {
+        if (e.nativeEvent.actionName === "delete") onDelete();
       }}
-      onSwipeableWillOpen={() => {
-        lastSwipeAt = Date.now();
-      }}
-      onSwipeableOpen={(direction) => {
-        lastSwipeAt = Date.now();
-        if (direction === "right" || direction === "left") onDelete();
-      }}
-      renderRightActions={(progress) => <SwipeAction progress={progress} />}
     >
-      {children}
-    </ReanimatedSwipeable>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: colors.danger, borderRadius: 18, marginVertical: 4, alignItems: "flex-end", justifyContent: "center", paddingRight: 26 },
+          reveal,
+        ]}
+      >
+        <Animated.View style={iconStyle}>
+          <Icon name="trash" size={24} color="#ffffff" />
+        </Animated.View>
+      </Animated.View>
+      <GestureDetector gesture={pan}>
+        <Animated.View style={rowStyle}>{children}</Animated.View>
+      </GestureDetector>
+    </Animated.View>
   );
 }
 
