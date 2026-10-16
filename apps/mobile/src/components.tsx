@@ -216,7 +216,7 @@ export function Keypad({ value, onChange }: { value: string; onChange: (v: strin
           onPress={() => press(k)}
           style={({ pressed }) => ({
             width: "33.333%",
-            minHeight: 56,
+            minHeight: 50,
             alignItems: "center",
             justifyContent: "center",
             opacity: pressed ? 0.45 : 1,

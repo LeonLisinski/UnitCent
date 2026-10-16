@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, ScrollView, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -49,11 +49,7 @@ export default function Dodaj() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
       <SafeAreaView style={{ flex: 1 }}>
-        <ScrollView
-          contentContainerStyle={{ padding: space["4"] + 4, gap: space["4"], paddingBottom: space["5"] }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, paddingHorizontal: space["4"] + 4, paddingTop: space["3"], paddingBottom: space["3"], gap: space["3"] }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <View style={{ flexDirection: "row", gap: 4 }}>
               {(
@@ -88,7 +84,7 @@ export default function Dodaj() {
             <RoundButton icon="x" label="Zatvori" onPress={() => router.back()} />
           </View>
 
-          <View style={{ alignItems: "center", paddingTop: space["3"], gap: 6 }}>
+          <View style={{ alignItems: "center", gap: 2 }}>
             <View style={{ flexDirection: "row", alignItems: "baseline" }}>
               <T
                 v="amount-hero"
@@ -96,7 +92,7 @@ export default function Dodaj() {
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.5}
-                style={{ fontSize: fitFontSize(`${value || "0"} €`, 300, 76), lineHeight: 84, letterSpacing: -3 }}
+                style={{ fontSize: fitFontSize(`${value || "0"} €`, 300, 64), lineHeight: 70, letterSpacing: -2.5 }}
               >
                 {value || "0"}
               </T>
@@ -107,7 +103,9 @@ export default function Dodaj() {
             </T>
           </View>
 
-          <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: 18, marginTop: space["2"] }}>
+          {/* Kategorije (i bilješka) skroliraju samo kad ih je previše; iznos, tipkovnica i „Spremi“ su uvijek vidljivi. */}
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: space["2"] }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: 10 }}>
             {cats.map((c) => {
               const on = selected === c.id;
               return (
@@ -120,7 +118,7 @@ export default function Dodaj() {
                   style={({ pressed }) => ({ width: "25%", alignItems: "center", gap: 7, opacity: pressed ? 0.6 : 1 })}
                 >
                   <View style={{ padding: 3, borderRadius: 999, borderWidth: 2, borderColor: on ? colors.brand : "transparent" }}>
-                    <CatIcon colorToken={c.colorToken} icon={c.icon} size={50} />
+                    <CatIcon colorToken={c.colorToken} icon={c.icon} size={44} />
                   </View>
                   <T v="caption" color={on ? colors.brand : colors.ink} style={{ fontWeight: "700", fontSize: 11.5 }} numberOfLines={1}>{c.name}</T>
                 </Pressable>
@@ -133,7 +131,7 @@ export default function Dodaj() {
               style={({ pressed }) => ({ width: "25%", alignItems: "center", gap: 7, opacity: pressed ? 0.6 : 1 })}
             >
               <View style={{ padding: 3 }}>
-                <View style={{ width: 50, height: 50, borderRadius: 25, borderWidth: 1.5, borderStyle: "dashed", borderColor: fx.glassBorder, alignItems: "center", justifyContent: "center" }}>
+                <View style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 1.5, borderStyle: "dashed", borderColor: fx.glassBorder, alignItems: "center", justifyContent: "center" }}>
                   <Icon name="plus" size={22} color={colors["ink-muted"]} />
                 </View>
               </View>
@@ -167,10 +165,11 @@ export default function Dodaj() {
               <T v="headline" color={colors.brand}>+ Dodaj bilješku</T>
             </Pressable>
           )}
+          </ScrollView>
 
           <Keypad value={value} onChange={setValue} />
           <Button label="Spremi" disabled={!cents || cents <= 0} onPress={save} />
-        </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );
