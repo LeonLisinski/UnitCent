@@ -65,15 +65,7 @@ export default function Pretplate() {
         </Hero>
       </Animated.View>
 
-      {items.length > 0 ? (
-        <Animated.View entering={enter(2)}>
-          <Section title="Kalendar">
-            <Calendar month={month} items={items} categories={cats} todayDate={day} />
-          </Section>
-        </Animated.View>
-      ) : null}
-
-      <Animated.View entering={enter(3)}>
+      <Animated.View entering={enter(2)}>
         <Section title="Stavke" right={count}>
           {items.length === 0 ? (
             <T muted>Upišeš jednom, knjiže se same. Dodaj prvu pretplatu ili fiksni trošak s +.</T>
@@ -105,6 +97,14 @@ export default function Pretplate() {
           )}
         </Section>
       </Animated.View>
+      {items.length > 0 ? (
+        <Animated.View entering={enter(3)}>
+          <Section title="Kalendar">
+            <Calendar month={month} items={items} categories={cats} todayDate={day} />
+          </Section>
+        </Animated.View>
+      ) : null}
+
     </TabScreen>
   );
 }

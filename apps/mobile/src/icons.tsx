@@ -73,7 +73,7 @@ export function Icon({
   name,
   size = 22,
   color = "#ffffff",
-  stroke = 1.7,
+  stroke = 1.9,
 }: {
   name: string;
   size?: number;

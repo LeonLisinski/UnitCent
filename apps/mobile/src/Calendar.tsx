@@ -62,7 +62,7 @@ export function Calendar({
             const isToday = c.date === todayDate;
             const past = !!c.date && c.date < todayDate;
             return (
-              <View key={ci} style={{ flex: 1, alignItems: "center", minHeight: 46, paddingTop: 2, gap: 3, paddingBottom: 4 }}>
+              <View key={ci} style={{ flex: 1, alignItems: "center", minHeight: 40, paddingTop: 2, gap: 2, paddingBottom: 2 }}>
                 <View
                   style={{
                     width: 26,

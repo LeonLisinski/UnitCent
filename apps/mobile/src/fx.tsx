@@ -265,11 +265,11 @@ export function DayBars({
           {Array.from({ length: daysInMonth }, (_, i) => {
             const v = values[i] ?? 0;
             const x = i * (bw + gap);
-            if (i > todayIndex) return <Rect key={i} x={x} y={height - 8 - ((i * 7) % 9)} width={bw} height={8 + ((i * 7) % 9)} rx={2} fill={fx.track} />;
+            if (i > todayIndex) return <Rect key={i} x={x} y={height - 8 - ((i * 7) % 9)} width={bw} height={8 + ((i * 7) % 9)} rx={2} fill={colors["ink-muted"]} opacity={0.2} />;
             const isToday = i === todayIndex;
             if (v <= 0) {
               // Dan bez potrošnje: diskretna točkica na dnu (danas u boji brenda)
-              return <Rect key={i} x={x} y={height - 4} width={bw} height={4} rx={2} fill={isToday ? colors.brand : fx.track} />;
+              return <Rect key={i} x={x} y={height - 4} width={bw} height={4} rx={2} fill={isToday ? colors.brand : colors["ink-muted"]} opacity={isToday ? 1 : 0.28} />;
             }
             const fill = isToday ? "url(#todayBar)" : v > limitCents ? colors.warning : colors.brand;
             return <Rect key={i} x={x} y={y(v)} width={bw} height={height - y(v)} rx={2.5} fill={fill} opacity={isToday ? 1 : 0.9} />;
