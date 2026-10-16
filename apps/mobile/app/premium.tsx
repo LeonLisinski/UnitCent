@@ -3,11 +3,12 @@ import { Linking, Pressable, View } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
+import Svg, { Circle, Defs, LinearGradient as SvgGradient, Path, RadialGradient, Rect, Stop } from "react-native-svg";
 import { formatEur } from "@unitcent/core";
 import { Button } from "../src/components";
 import { Icon } from "../src/icons";
 import { ModalScreen } from "../src/layout";
-import { FREE_HISTORY_MONTHS, PLANS, YEARLY_SAVING_PCT, setDevPremium, usePremium, type PlanKey } from "../src/premium";
+import { PLANS, YEARLY_SAVING_PCT, setDevPremium, usePremium, type PlanKey } from "../src/premium";
 import { purchasePlan, type PurchaseResult } from "../src/purchases";
 import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
@@ -19,12 +20,65 @@ import { T } from "../src/ui";
  */
 const SOCIAL_PROOF: string | null = null;
 
-/** Što Premium otključava: ikona + kratak naziv, bez kutija. Zlatna i zelena naizmjence. */
+/** Što Premium otključava: zlatna medaljica s ikonom + kratak naziv. */
 const PERKS: { icon: string; title: string; soon?: boolean }[] = [
   { icon: "calendar", title: "Cijela povijest" },
   { icon: "camera", title: "Neograničeno skeniranje računa" },
   { icon: "chart", title: "Uvidi i savjeti", soon: true },
 ];
+
+/** Petokraka kao poligon (za medaljon): vanjski i unutarnji polumjer, središte (0,0). */
+function starPath(R: number, r: number): string {
+  const pts: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    const rad = i % 2 === 0 ? R : r;
+    pts.push(`${(rad * Math.cos(a)).toFixed(2)},${(rad * Math.sin(a)).toFixed(2)}`);
+  }
+  return `M${pts.join("L")}Z`;
+}
+
+/** Četverokraki odsjaj (sparkle) oko središta (cx, cy) veličine s. */
+function sparkle(cx: number, cy: number, s: number): string {
+  const k = s * 0.22;
+  return `M${cx} ${cy - s}Q${cx + k} ${cy - k} ${cx + s} ${cy}Q${cx + k} ${cy + k} ${cx} ${cy + s}Q${cx - k} ${cy + k} ${cx - s} ${cy}Q${cx - k} ${cy - k} ${cx} ${cy - s}Z`;
+}
+
+/** Glavni znak: metalna zlatna medalja s ispunjenom zvijezdom, koncentričnim prstenovima, sjajem i odsjajima. */
+function Medallion({ hi, base, lo }: { hi: string; base: string; lo: string }) {
+  return (
+    <Svg width={260} height={190} viewBox="0 0 260 190">
+      <Defs>
+        <RadialGradient id="gl" cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor={base} stopOpacity={0.4} />
+          <Stop offset="0.6" stopColor={base} stopOpacity={0.08} />
+          <Stop offset="1" stopColor={base} stopOpacity={0} />
+        </RadialGradient>
+        <SvgGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor={hi} />
+          <Stop offset="0.38" stopColor={base} />
+          <Stop offset="0.62" stopColor={hi} stopOpacity={0.95} />
+          <Stop offset="1" stopColor={lo} />
+        </SvgGradient>
+        <SvgGradient id="star" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor="#3b2a0a" />
+          <Stop offset="1" stopColor="#1f1503" />
+        </SvgGradient>
+      </Defs>
+      <Rect width={260} height={190} fill="url(#gl)" />
+      <Circle cx={130} cy={95} r={74} stroke={base} strokeOpacity={0.22} strokeWidth={1} fill="none" />
+      <Circle cx={130} cy={95} r={62} stroke={base} strokeOpacity={0.4} strokeWidth={1} fill="none" />
+      <Circle cx={130} cy={95} r={50} fill="url(#metal)" />
+      <Circle cx={130} cy={95} r={45} stroke={lo} strokeOpacity={0.55} strokeWidth={1.2} fill="none" />
+      <Circle cx={130} cy={95} r={50} stroke={hi} strokeOpacity={0.7} strokeWidth={1} fill="none" />
+      <Path d={starPath(25, 10.5)} transform="translate(130 96)" fill="url(#star)" stroke="url(#star)" strokeWidth={3} strokeLinejoin="round" />
+      <Path d={sparkle(52, 38, 9)} fill={hi} opacity={0.95} />
+      <Path d={sparkle(214, 58, 6)} fill={hi} opacity={0.8} />
+      <Path d={sparkle(196, 150, 8)} fill={hi} opacity={0.9} />
+      <Path d={sparkle(66, 146, 5)} fill={hi} opacity={0.7} />
+    </Svg>
+  );
+}
 
 /** Prebacivač plana: pilula s dvije opcije; godišnja nosi zlatnu oznaku uštede. */
 function PlanToggle({ value, onChange }: { value: PlanKey; onChange: (p: PlanKey) => void }) {
@@ -55,7 +109,7 @@ function PlanToggle({ value, onChange }: { value: PlanKey; onChange: (p: PlanKey
       >
         <T v="headline" muted={!on} style={{ fontSize: 15 }}>{label}</T>
         {key === "yearly" ? (
-          <LinearGradient colors={[fx.goldHi, fx.goldLo]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 }}>
+          <LinearGradient colors={[fx.goldHi, fx.gold, fx.goldLo]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 }}>
             <T v="caption" color="#2a1d00" style={{ fontSize: 11, fontWeight: "800", lineHeight: 15 }}>−{YEARLY_SAVING_PCT} %</T>
           </LinearGradient>
         ) : null}
@@ -70,7 +124,7 @@ function PlanToggle({ value, onChange }: { value: PlanKey; onChange: (p: PlanKey
   );
 }
 
-/** Premium: kratko i privlačno. Zlatna + zelena, bez kartica; odabir plana, jedna glavna radnja, tihe sitne poveznice. */
+/** Premium: zlatna medalja, tri prednosti, odabir plana, jedna glavna radnja, tihe sitne poveznice. */
 export default function Premium() {
   const { colors, fx } = useTheme();
   const router = useRouter();
@@ -95,14 +149,13 @@ export default function Premium() {
   };
 
   const quiet = (label: string, onPress: () => void) => (
-    <Pressable accessibilityRole="button" hitSlop={8} onPress={onPress} style={{ paddingHorizontal: 8, minHeight: 36, justifyContent: "center" }}>
+    <Pressable accessibilityRole="link" hitSlop={8} onPress={onPress} style={{ paddingHorizontal: 8, minHeight: 36, justifyContent: "center" }}>
       <T v="caption" muted>{label}</T>
     </Pressable>
   );
 
   return (
     <ModalScreen
-      title={premium ? "Premium je aktivan" : "Premium"}
       onClose={() => router.back()}
       footer={
         premium ? (
@@ -119,34 +172,30 @@ export default function Premium() {
         )
       }
     >
-      <View style={{ alignItems: "center" }}>
-        <View style={{ width: 132, height: 132, alignItems: "center", justifyContent: "center" }}>
-          <View style={{ position: "absolute", width: 132, height: 132, borderRadius: 66, backgroundColor: fx.goldSoft }} />
-          <View style={{ position: "absolute", width: 108, height: 108, borderRadius: 54, borderWidth: 1, borderColor: fx.gold, opacity: 0.4 }} />
-          <LinearGradient colors={[fx.goldHi, fx.goldLo]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 80, height: 80, borderRadius: 40, alignItems: "center", justifyContent: "center" }}>
-            <Icon name="star" size={38} color="#2a1d00" stroke={2.1} />
-          </LinearGradient>
+      <View style={{ alignItems: "center", marginTop: -34 }}>
+        <Medallion hi={fx.goldHi} base={fx.gold} lo={fx.goldLo} />
+        <View style={{ alignItems: "center", marginTop: -26, gap: 0 }}>
+          <T v="mono-label" muted style={{ fontSize: 11, letterSpacing: 4 }}>UNITCENT</T>
+          <T v="serif-accent" color={fx.gold} style={{ fontSize: 44, lineHeight: 52 }}>{premium ? "Premium je aktivan" : "Premium"}</T>
         </View>
-      </View>
-
-      <View style={{ alignItems: "center", gap: 6 }}>
-        <T v="title-1" style={{ fontSize: 22, lineHeight: 28, textAlign: "center" }}>
-          {premium ? "Dobrodošao u Premium" : "Pridruži se Premium korisnicima"}
-        </T>
         {SOCIAL_PROOF ? (
-          <T muted style={{ textAlign: "center", maxWidth: 300 }}>
-            {SOCIAL_PROOF}
-          </T>
+          <T muted style={{ textAlign: "center", maxWidth: 300, marginTop: 8 }}>{SOCIAL_PROOF}</T>
         ) : null}
       </View>
 
-      <View style={{ gap: 20 }}>
+      <View style={{ gap: 18 }}>
         {PERKS.map((perk) => (
           <View key={perk.title} style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-            <View style={{ width: 44, alignItems: "center" }}>
-              <Icon name={perk.icon} size={26} color={fx.gold} stroke={1.9} />
-            </View>
-            <T v="headline" style={{ fontWeight: "700", fontSize: 17 }}>{perk.title}</T>
+            <LinearGradient
+              colors={[fx.goldHi, fx.gold, fx.goldLo]}
+              locations={[0, 0.5, 1]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{ width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center" }}
+            >
+              <Icon name={perk.icon} size={21} color="#2a1d00" stroke={2.1} />
+            </LinearGradient>
+            <T v="headline" style={{ fontWeight: "700", fontSize: 17, flexShrink: 1 }}>{perk.title}</T>
             {perk.soon ? <T v="caption" color={fx.gold} style={{ fontSize: 10.5, fontWeight: "800" }}>USKORO</T> : null}
           </View>
         ))}

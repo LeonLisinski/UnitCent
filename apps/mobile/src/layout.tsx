@@ -53,7 +53,7 @@ export function ModalScreen({
   footer,
   children,
 }: {
-  title: string;
+  title?: string;
   eyebrow?: string;
   onClose: () => void;
   footer?: ReactNode;
@@ -70,7 +70,7 @@ export function ModalScreen({
           <View style={{ paddingHorizontal: PAD, paddingTop: 14 }}>
             <PageHeader right={<RoundButton icon="x" label="Zatvori" onPress={onClose} />}>
               {eyebrow ? <T v="mono-label" muted style={{ fontSize: 11, opacity: 0.8 }}>{eyebrow}</T> : null}
-              <T v="title-1" style={{ fontSize: 26, lineHeight: 32 }}>{title}</T>
+              {title ? <T v="title-1" style={{ fontSize: 26, lineHeight: 32 }}>{title}</T> : null}
             </PageHeader>
           </View>
           <ScrollView
