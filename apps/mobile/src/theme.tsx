@@ -30,6 +30,9 @@ export interface Fx {
   /** Zlatna: oznaka Premiuma (lokoti, zvijezda, značke). */
   gold: string;
   goldSoft: string;
+  /** Zlatni gradijent (svijetli i tamni kraj) za značke i zvijezdu. */
+  goldHi: string;
+  goldLo: string;
 }
 
 const FX: Record<Scheme, Fx> = {
@@ -49,8 +52,10 @@ const FX: Record<Scheme, Fx> = {
     sheenBottom: "rgba(255,255,255,0.015)",
     edge: "rgba(255,255,255,0.30)",
     shadowOpacity: 0,
-    gold: "#f2c14e",
-    goldSoft: "rgba(242,193,78,0.16)",
+    gold: "#d6a94a",
+    goldSoft: "rgba(214,169,74,0.16)",
+    goldHi: "#f1d791",
+    goldLo: "#b8862f",
   },
   light: {
     glass: "rgba(255,255,255,0.86)",
@@ -68,8 +73,10 @@ const FX: Record<Scheme, Fx> = {
     sheenBottom: "rgba(255,255,255,0.78)",
     edge: "rgba(255,255,255,1)",
     shadowOpacity: 0.08,
-    gold: "#c98a07",
-    goldSoft: "rgba(201,138,7,0.14)",
+    gold: "#a97b1c",
+    goldSoft: "rgba(169,123,28,0.13)",
+    goldHi: "#dcb765",
+    goldLo: "#98701a",
   },
 };
 

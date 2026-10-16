@@ -4,7 +4,8 @@ import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { Safe, useInsets } from "../src/safe";
 import { parseAmount } from "@unitcent/core";
-import { Button, CatIcon, Keypad } from "../src/components";
+import { Button, CatIcon, GoldBadge, Keypad } from "../src/components";
+import { refreshScanUsage, useScanQuota } from "../src/scanQuota";
 import { DateChip } from "../src/DateField";
 import { useDb } from "../src/data";
 import { Icon } from "../src/icons";
@@ -50,6 +51,8 @@ export default function Dodaj() {
       hide.remove();
     };
   }, []);
+  const quota = useScanQuota();
+  useEffect(() => void refreshScanUsage(), []);
   const [date, setDate] = useState(editing?.localDate ?? today());
   const [selected, setSelected] = useState<string | null>(editing?.categoryId ?? null);
   const cats = useDb(() => listCategoriesByUsage());
@@ -112,7 +115,12 @@ export default function Dodaj() {
               })}
             </View>
             <View style={{ flexDirection: "row", gap: 10 }}>
-              {editing ? null : <RoundButton icon="camera" label="Skeniraj račun" onPress={() => router.replace("/skeniraj" as Href)} />}
+              {editing ? null : (
+                <View>
+                  <RoundButton icon="camera" label={`Skeniraj račun. ${quota.premium ? "" : quota.remaining > 0 ? `Preostalo ${quota.remaining}` : "Zaključano"}`} onPress={() => router.replace("/skeniraj" as Href)} />
+                  {quota.premium ? null : <GoldBadge value={quota.remaining} lock={quota.remaining === 0} />}
+                </View>
+              )}
               <RoundButton icon="x" label="Zatvori" onPress={() => router.back()} />
             </View>
           </View>

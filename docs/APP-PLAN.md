@@ -35,7 +35,7 @@ Namjena dokumenta: da svatko (vlasnik, agent, budući suradnik) u svakom trenutk
 - AI skeniranje računa bez ograničenja (QR + stavke + učenje iz ispravaka), uz pravilo poštenog korištenja (§4.6).
 - AI uvidi i trendovi („Cigarete +30 %“, „Imaš 3 streaming pretplate“).
 - Budžeti po kategoriji s upozorenjem.
-- Uvoz iz Excela, izvoz (Excel/PDF), widgeti.
+- Widgeti. (Uvoz iz Excela nije u planu za v1; izvoz JSON je besplatan.)
 - Kasnije (v1.1+): pametna shopping lista s usporedbom cijena, zajednički budžet za par/kućanstvo.
 
 ### 2.3 Izvan opsega za v1

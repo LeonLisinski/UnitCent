@@ -40,7 +40,7 @@ diferencijator — većina konkurencije to nema ili je skriveno.
 ### Premium
 - **AI skeniranje računa bez ograničenja** (glavni razlog kupnje; jedini dio koji nas stvarno košta)
 - Napredna analiza i AI uvidi („Cigarete +30 % ovaj mjesec", „Imaš 3 streaming pretplate")
-- Budžeti po kategoriji s upozorenjem, izvoz (Excel/PDF), uvoz Excel troškovnika, widgeti, sync na više uređaja
+- Budžeti po kategoriji s upozorenjem, widgeti, sync na više uređaja
 - *Kasnije (v1.1+):* pametna shopping lista, zajednički budžet za par/kućanstvo. Svaka nova premium funkcija = povod za marketing i ponovnu ponudu.
 
 ## 3a. Monetizacija

@@ -219,9 +219,9 @@ export default function Home() {
                     <td className="vs-pro"><span className="vs-yes"><Icon name="check" size={22} stroke={2.6} /><span className="sr-only">Premium: da</span></span></td>
                   </tr>
                   <tr>
-                    <th scope="row">Uvoz iz Excela i izvoz</th>
-                    <td><span className="vs-no"><Icon name="x" size={20} stroke={2.2} /><span className="sr-only">Besplatno: ne</span></span></td>
-                    <td className="vs-pro"><span className="vs-yes"><Icon name="check" size={22} stroke={2.6} /><span className="sr-only">Premium: da</span></span></td>
+                    <th scope="row">Povijest pregleda</th>
+                    <td><span className="vs-txt">6 mjeseci</span></td>
+                    <td className="vs-pro"><span className="vs-txt">Cijela</span></td>
                   </tr>
                 </tbody>
               </table>

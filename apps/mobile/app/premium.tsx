@@ -3,68 +3,68 @@ import { Linking, Pressable, View } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
+import { formatEur } from "@unitcent/core";
 import { Button } from "../src/components";
-import { Glass } from "../src/fx";
 import { Icon } from "../src/icons";
 import { ModalScreen } from "../src/layout";
-import { PLANS, YEARLY_SAVING_PCT, setDevPremium, usePremium, type PlanKey } from "../src/premium";
+import { FREE_HISTORY_MONTHS, PLANS, YEARLY_SAVING_PCT, setDevPremium, usePremium, type PlanKey } from "../src/premium";
 import { purchasePlan, restorePurchases, type PurchaseResult } from "../src/purchases";
 import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
 
-/** Što Premium otključava: kratko, s ikonama (zlatna i zelena naizmjence). */
-const PERKS: { icon: string; title: string; soon?: boolean }[] = [
-  { icon: "calendar", title: "Cijela povijest" },
-  { icon: "camera", title: "Skeniranje bez ograničenja" },
-  { icon: "chart", title: "Uvidi i savjeti", soon: true },
-  { icon: "download", title: "Uvoz podataka", soon: true },
+/** Što Premium otključava: ikona + kratak naziv, bez kutija. Zlatna i zelena naizmjence. */
+const PERKS: { icon: string; title: string; hint: string; soon?: boolean }[] = [
+  { icon: "calendar", title: "Cijela povijest", hint: `Besplatno je zadnjih ${FREE_HISTORY_MONTHS} mjeseci` },
+  { icon: "camera", title: "Skeniranje računa", hint: "Bez ograničenja, razvrstano po kategorijama" },
+  { icon: "chart", title: "Uvidi i savjeti", hint: "Gdje curi novac", soon: true },
 ];
 
-function PlanCard({ plan, selected, onPress }: { plan: PlanKey; selected: boolean; onPress: () => void }) {
+/** Prebacivač plana: pilula s dvije opcije; godišnja nosi zlatnu oznaku uštede. */
+function PlanToggle({ value, onChange }: { value: PlanKey; onChange: (p: PlanKey) => void }) {
   const { colors, fx } = useTheme();
-  const p = PLANS[plan];
+  const opt = (key: PlanKey, label: string) => {
+    const on = value === key;
+    return (
+      <Pressable
+        key={key}
+        accessibilityRole="button"
+        accessibilityState={{ selected: on }}
+        onPress={() => {
+          void Haptics.selectionAsync();
+          onChange(key);
+        }}
+        style={{
+          flex: 1,
+          minHeight: 46,
+          borderRadius: 23,
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "row",
+          gap: 8,
+          backgroundColor: on ? colors.surface : "transparent",
+          borderWidth: on ? 1 : 0,
+          borderColor: on ? fx.gold : "transparent",
+        }}
+      >
+        <T v="headline" muted={!on} style={{ fontSize: 15 }}>{label}</T>
+        {key === "yearly" ? (
+          <LinearGradient colors={[fx.goldHi, fx.goldLo]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 }}>
+            <T v="caption" color="#2a1d00" style={{ fontSize: 11, fontWeight: "800", lineHeight: 15 }}>−{YEARLY_SAVING_PCT} %</T>
+          </LinearGradient>
+        ) : null}
+      </Pressable>
+    );
+  };
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      accessibilityLabel={`${p.per}, ${p.priceLabel}`}
-      onPress={() => {
-        void Haptics.selectionAsync();
-        onPress();
-      }}
-      style={({ pressed }) => ({
-        flex: 1,
-        minHeight: 96,
-        borderRadius: 22,
-        padding: 14,
-        gap: 4,
-        justifyContent: "center",
-        backgroundColor: selected ? fx.goldSoft : fx.glass,
-        borderWidth: 2,
-        borderColor: selected ? fx.gold : fx.glassBorder,
-        opacity: pressed ? 0.8 : 1,
-      })}
-    >
-      {plan === "yearly" ? (
-        <View style={{ alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: fx.gold }}>
-          <T v="caption" color="#2a1d00" style={{ fontWeight: "800", fontSize: 11 }}>−{YEARLY_SAVING_PCT} %</T>
-        </View>
-      ) : (
-        <T v="caption" muted>Fleksibilno</T>
-      )}
-      <T v="amount" style={{ fontSize: 24, lineHeight: 30, fontWeight: "800" }}>{p.priceLabel}</T>
-      <T v="caption" muted>{p.per}</T>
-      {selected ? (
-        <View style={{ position: "absolute", top: 12, right: 12 }}>
-          <Icon name="check" size={18} color={fx.gold} stroke={2.6} />
-        </View>
-      ) : null}
-    </Pressable>
+    <View style={{ flexDirection: "row", backgroundColor: fx.track, borderRadius: 26, padding: 3 }}>
+      {opt("monthly", "Mjesečno")}
+      {opt("yearly", "Godišnje")}
+    </View>
   );
 }
 
-/** Premium: kratko i privlačno. Odabir mjesečno/godišnje, jedna glavna radnja, tihe sitne poveznice. */
+/** Premium: kratko i privlačno. Zlatna + zelena, bez kartica; odabir plana, jedna glavna radnja, tihe sitne poveznice. */
 export default function Premium() {
   const { colors, fx } = useTheme();
   const router = useRouter();
@@ -72,6 +72,8 @@ export default function Premium() {
   const premium = usePremium();
   const [plan, setPlan] = useState<PlanKey>("yearly");
   const [busy, setBusy] = useState(false);
+  const p = PLANS[plan];
+  const perMonth = plan === "yearly" ? formatEur(Math.round(PLANS.yearly.cents / 12)) : null;
 
   const handle = (r: PurchaseResult, restoring = false) => {
     if (r === "ok") {
@@ -80,7 +82,6 @@ export default function Premium() {
     } else if (r === "unavailable") toast.show("Kupnja je dostupna u službenoj verziji aplikacije");
     else if (r === "error") toast.show(restoring ? "Nema kupnje za vratiti" : "Kupnja nije uspjela, pokušaj ponovno");
   };
-
   const buy = async () => {
     setBusy(true);
     handle(await purchasePlan(plan));
@@ -92,6 +93,12 @@ export default function Premium() {
     setBusy(false);
   };
 
+  const quiet = (label: string, onPress: () => void) => (
+    <Pressable accessibilityRole="button" hitSlop={8} onPress={onPress} style={{ paddingHorizontal: 8, minHeight: 36, justifyContent: "center" }}>
+      <T v="caption" muted>{label}</T>
+    </Pressable>
+  );
+
   return (
     <ModalScreen
       title={premium ? "Premium je aktivan" : "Premium"}
@@ -101,68 +108,55 @@ export default function Premium() {
           <Button label="Gotovo" onPress={() => router.back()} />
         ) : (
           <>
-            <Button label={`Nastavi · ${PLANS[plan].priceLabel} ${PLANS[plan].per}`} disabled={busy} onPress={() => void buy()} />
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
-              <Pressable accessibilityRole="button" hitSlop={8} onPress={() => void restore()} style={{ paddingHorizontal: 8, minHeight: 36, justifyContent: "center" }}>
-                <T v="caption" muted>Vrati kupnju</T>
-              </Pressable>
+            <Button label={`Nastavi · ${p.priceLabel} ${p.per}`} disabled={busy} onPress={() => void buy()} />
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {quiet("Vrati kupnju", () => void restore())}
               <T v="caption" muted>·</T>
-              <Pressable accessibilityRole="link" hitSlop={8} onPress={() => void Linking.openURL("https://unitcent.com/uvjeti")} style={{ paddingHorizontal: 8, minHeight: 36, justifyContent: "center" }}>
-                <T v="caption" muted>Uvjeti</T>
-              </Pressable>
+              {quiet("Uvjeti", () => void Linking.openURL("https://unitcent.com/uvjeti"))}
               <T v="caption" muted>·</T>
-              <Pressable accessibilityRole="link" hitSlop={8} onPress={() => void Linking.openURL("https://unitcent.com/privatnost")} style={{ paddingHorizontal: 8, minHeight: 36, justifyContent: "center" }}>
-                <T v="caption" muted>Privatnost</T>
-              </Pressable>
+              {quiet("Privatnost", () => void Linking.openURL("https://unitcent.com/privatnost"))}
             </View>
           </>
         )
       }
     >
-      <View style={{ alignItems: "center", paddingTop: 2 }}>
-        <View style={{ width: 120, height: 120, alignItems: "center", justifyContent: "center" }}>
-          <View style={{ position: "absolute", width: 120, height: 120, borderRadius: 60, backgroundColor: fx.goldSoft }} />
-          <View style={{ position: "absolute", width: 100, height: 100, borderRadius: 50, borderWidth: 1, borderColor: fx.gold, opacity: 0.35 }} />
-          <LinearGradient
-            colors={[fx.gold, colors.brand]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{ width: 76, height: 76, borderRadius: 38, alignItems: "center", justifyContent: "center" }}
-          >
-            <Icon name="star" size={36} color="#10200f" stroke={2.1} />
+      <View style={{ alignItems: "center" }}>
+        <View style={{ width: 132, height: 132, alignItems: "center", justifyContent: "center" }}>
+          <View style={{ position: "absolute", width: 132, height: 132, borderRadius: 66, backgroundColor: fx.goldSoft }} />
+          <View style={{ position: "absolute", width: 108, height: 108, borderRadius: 54, borderWidth: 1, borderColor: fx.gold, opacity: 0.4 }} />
+          <LinearGradient colors={[fx.goldHi, fx.goldLo]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 80, height: 80, borderRadius: 40, alignItems: "center", justifyContent: "center" }}>
+            <Icon name="star" size={38} color="#2a1d00" stroke={2.1} />
           </LinearGradient>
         </View>
       </View>
 
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-        {PERKS.map((p, i) => (
-          <Glass key={p.title} radius={20} style={{ width: "48%", flexGrow: 1, padding: 14, gap: 10, minHeight: 96 }}>
-            <View
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 13,
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: i % 2 === 0 ? fx.goldSoft : "rgba(61,214,163,0.14)",
-              }}
-            >
-              <Icon name={p.icon} size={20} color={i % 2 === 0 ? fx.gold : colors.brand} />
-            </View>
-            <T v="headline" style={{ fontWeight: "700", fontSize: 15, lineHeight: 20 }}>{p.title}</T>
-            {p.soon ? (
-              <View style={{ position: "absolute", top: 12, right: 12 }}>
-                <T v="caption" color={fx.gold} style={{ fontSize: 10.5, fontWeight: "800" }}>USKORO</T>
+      <View style={{ gap: 20 }}>
+        {PERKS.map((perk, i) => {
+          const c = i % 2 === 0 ? fx.gold : colors.brand;
+          return (
+            <View key={perk.title} style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+              <View style={{ width: 44, alignItems: "center" }}>
+                <Icon name={perk.icon} size={26} color={c} stroke={1.9} />
               </View>
-            ) : null}
-          </Glass>
-        ))}
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <T v="headline" style={{ fontWeight: "700", fontSize: 17 }}>{perk.title}</T>
+                  {perk.soon ? <T v="caption" color={fx.gold} style={{ fontSize: 10.5, fontWeight: "800" }}>USKORO</T> : null}
+                </View>
+                <T v="caption" muted>{perk.hint}</T>
+              </View>
+            </View>
+          );
+        })}
       </View>
 
       {premium ? null : (
-        <View style={{ flexDirection: "row", gap: 12 }}>
-          <PlanCard plan="monthly" selected={plan === "monthly"} onPress={() => setPlan("monthly")} />
-          <PlanCard plan="yearly" selected={plan === "yearly"} onPress={() => setPlan("yearly")} />
+        <View style={{ gap: 18 }}>
+          <PlanToggle value={plan} onChange={setPlan} />
+          <View style={{ alignItems: "center", gap: 2 }}>
+            <T v="amount-hero" style={{ fontSize: 44, lineHeight: 50, letterSpacing: -1.5 }}>{p.priceLabel}</T>
+            <T v="caption" muted>{p.per}{perMonth ? ` · ${perMonth} mjesečno` : ""}</T>
+          </View>
         </View>
       )}
 

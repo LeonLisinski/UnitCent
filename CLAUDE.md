@@ -7,7 +7,7 @@ Detalji su u [docs/APP-PLAN.md](docs/APP-PLAN.md) (plan aplikacije) i [docs/PROD
 Hrvatska mobilna aplikacija (iOS + Android) za praćenje troškova. Glavno pitanje koje rješava:
 **„Koliko danas smijem potrošiti?“** (preporučeni dnevni trošak).
 Unos troška za 3 sekunde, pretplate se knjiže same, AI skenira račune i razvrstava stavke po kategorijama.
-Free jezgra + Premium (AI skeniranje, uvidi, uvoz/izvoz) preko in-app pretplate.
+Free jezgra + Premium (cijela povijest, AI skeniranje bez ograničenja, uvidi) preko in-app pretplate. Izvoz podataka (JSON) je besplatan; uvoz nije u planu za v1.
 
 ## Zvijezda vodilja (odluke se mjere ovim redom)
 1. **Brzina.** Brzo se otvara, unos je trenutan (lokalni zapis, bez čekanja mreže), skeniranje i sinkronizacija su brzi.

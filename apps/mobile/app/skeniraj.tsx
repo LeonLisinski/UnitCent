@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Image, Linking, Pressable, StyleSheet, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -12,6 +12,7 @@ import { Icon } from "../src/icons";
 import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
+import { refreshScanUsage, scansWord, setScanUsed, useScanQuota } from "../src/scanQuota";
 import { ScanFailure, parseFiscalQr, prepareImage, scanReceipt, setLastScan, type FiscalQr } from "../src/scan";
 
 /**
@@ -24,10 +25,15 @@ export default function Skeniraj() {
   const toast = useToast();
   const camera = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
+  const quota = useScanQuota();
+  useEffect(() => void refreshScanUsage(), []);
   const [qr, setQr] = useState<FiscalQr | null>(null);
   const [busy, setBusy] = useState(false);
   const [frozen, setFrozen] = useState<string | null>(null); // snimljena slika ostaje na ekranu dok se čita
   const [flash, setFlash] = useState(false);
+
+  const locked = !quota.premium && quota.remaining === 0;
+  const goPremium = () => router.replace("/premium" as Href);
 
   const process = async (uri: string) => {
     setFrozen(uri);
@@ -35,6 +41,7 @@ export default function Skeniraj() {
     try {
       const b64 = await prepareImage(uri);
       const result = await scanReceipt(b64, qr?.totalCents);
+      setScanUsed(result.usage.used); // poslužitelj ne naplaćuje nečitljive račune: broj je uvijek točan
       if (result.status === "unreadable") {
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         toast.show("Račun nije čitljiv. Probaj bliže i uz više svjetla.");
@@ -65,6 +72,7 @@ export default function Skeniraj() {
 
   const shoot = async () => {
     if (busy || !camera.current) return;
+    if (locked) return goPremium();
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setFlash(true);
     setTimeout(() => setFlash(false), 140);
@@ -74,6 +82,7 @@ export default function Skeniraj() {
 
   const pick = async () => {
     if (busy) return;
+    if (locked) return goPremium();
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.9 });
     if (!res.canceled && res.assets[0]) await process(res.assets[0].uri);
   };
@@ -150,6 +159,21 @@ export default function Skeniraj() {
         </View>
 
         <View style={{ alignItems: "center", gap: 18, paddingBottom: 28 }}>
+          <Pressable
+            accessibilityRole="button"
+            disabled={quota.premium || !locked}
+            onPress={goPremium}
+            style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: "rgba(7,11,11,0.78)", borderWidth: 1, borderColor: "rgba(214,169,74,0.55)" }}
+          >
+            <Icon name={locked ? "lock" : "star"} size={14} color="#e2b955" stroke={2.2} />
+            <T v="caption" color="#f1d791" style={{ fontWeight: "800" }}>
+              {quota.premium
+                ? `Premium · preostalo ${quota.remaining} od ${quota.limit}`
+                : locked
+                  ? "Besplatna skeniranja su potrošena · Premium"
+                  : `Još ${quota.remaining} ${quota.remaining === 1 ? "besplatno skeniranje" : "besplatna skeniranja"}`}
+            </T>
+          </Pressable>
           <View style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: "rgba(7,11,11,0.7)" }}>
             <T v="caption" color="#ffffff">Uperi cijeli račun, uz QR kod ako ga ima</T>
           </View>

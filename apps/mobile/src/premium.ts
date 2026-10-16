@@ -19,8 +19,10 @@ export const PLANS: Record<PlanKey, { cents: number; priceLabel: string; per: st
 export const YEARLY_SAVING_PCT = Math.round((1 - PLANS.yearly.cents / (PLANS.monthly.cents * 12)) * 100);
 export const FREE_HISTORY_MONTHS = 6;
 
+let devPremium = false; // samo za razvoj i samo do ponovnog pokretanja (ne ostaje spremljeno)
+
 export function isPremiumNow(): boolean {
-  if (kvGet("premium.dev") === "1") return true;
+  if (devPremium) return true;
   const until = kvGet("premium.until");
   return !!until && Date.parse(until) > Date.now();
 }
@@ -58,6 +60,10 @@ export async function refreshEntitlement(): Promise<void> {
 
 /** Samo za razvoj: ručno uključi/isključi Premium dok kupnja nije povezana. */
 export function setDevPremium(on: boolean): void {
-  setKv("premium.dev", on ? "1" : "0");
+  devPremium = on;
   notifyDbChanged();
 }
+
+/** Broj skeniranja mjesečno: besplatno 3, Premium 100 (pošteno korištenje). Mora odgovarati poslužitelju (scan-receipt). */
+export const FREE_SCANS = 3;
+export const PREMIUM_SCANS = 100;

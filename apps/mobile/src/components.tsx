@@ -325,3 +325,18 @@ export function TextField({
     </View>
   );
 }
+
+/** Zlatna značka (broj ili lokot) koja se postavlja na kut gumba: pokazuje preostala skeniranja ili da je zaključano. */
+export function GoldBadge({ value, lock }: { value?: number; lock?: boolean }) {
+  const { fx } = useTheme();
+  return (
+    <LinearGradient
+      colors={[fx.goldHi, fx.goldLo]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{ position: "absolute", top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, alignItems: "center", justifyContent: "center", paddingHorizontal: 5 }}
+    >
+      {lock ? <Icon name="lock" size={11} color="#2a1d00" stroke={2.4} /> : <T v="caption" color="#2a1d00" style={{ fontSize: 11, fontWeight: "800", lineHeight: 14 }}>{value}</T>}
+    </LinearGradient>
+  );
+}
