@@ -41,7 +41,7 @@
         "@sentry/react-native/expo",
         {
           "organization": "unitlift",
-          "project": "react-native"
+          "project": "unitcent"
         }
       ]
     ],

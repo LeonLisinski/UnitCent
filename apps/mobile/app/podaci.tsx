@@ -9,6 +9,7 @@ import { useToast } from "../src/toast";
 import { T } from "../src/ui";
 import { deleteAccountAndData, exportData } from "../src/dataTools";
 import { analyticsEnabled, setAnalyticsEnabled } from "../src/analytics";
+import { reportError } from "../src/monitoring";
 import { restorePurchases } from "../src/purchases";
 import { signOutAndClear, useAccount } from "../src/account";
 
@@ -132,6 +133,20 @@ export default function Podaci() {
               }
             />
           </Group>
+
+          {__DEV__ ? (
+            <Group title="Razvoj">
+              <Row
+                icon="info"
+                title="Pošalji testnu grešku u Sentry"
+                subtitle="Vidi se u Issues nakon nekoliko sekundi"
+                onPress={() => {
+                  reportError(new Error("Testna greška iz razvoja (UnitCent)"), "dev-test");
+                  toast.show("Testna greška poslana");
+                }}
+              />
+            </Group>
+          ) : null}
 
           <Group title="Pravno">
             <Row icon="shield" title="Privatnost" external onPress={() => void Linking.openURL(`${SITE}/privatnost`)} />
