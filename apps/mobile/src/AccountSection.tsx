@@ -3,7 +3,6 @@ import { Platform, Pressable, View } from "react-native";
 import { signInWith, type Provider } from "./account";
 import { agoText } from "./format";
 import { AppleLogo, GoogleLogo, Icon } from "./icons";
-import { Group } from "./settings";
 import { syncNow, useSyncStatus } from "./sync";
 import { useTheme } from "./theme";
 import { useToast } from "./toast";
@@ -14,31 +13,29 @@ const APPLE_ENABLED = Platform.OS === "ios" && process.env.EXPO_PUBLIC_APPLE_SIG
 
 function SocialButton({ provider, busy, onPress }: { provider: Provider; busy: boolean; onPress: () => void }) {
   const { colors, fx } = useTheme();
-  const label = provider === "google" ? "Nastavi s Googleom" : "Nastavi s Appleom";
+  const name = provider === "google" ? "Google" : "Apple";
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={`Nastavi s ${provider === "google" ? "Googleom" : "Appleom"}`}
       disabled={busy}
       onPress={onPress}
       style={({ pressed }) => ({
-        alignSelf: "center",
-        minWidth: 264,
-        paddingHorizontal: 24,
-        minHeight: 52,
+        paddingHorizontal: 22,
+        minHeight: 48,
         borderRadius: 999,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        gap: 12,
-        backgroundColor: fx.track,
+        gap: 10,
+        backgroundColor: fx.glass,
         borderWidth: 1.5,
         borderColor: fx.glassBorder,
         opacity: busy ? 0.45 : pressed ? 0.7 : 1,
       })}
     >
-      {provider === "google" ? <GoogleLogo size={20} /> : <AppleLogo size={20} color={colors.ink} />}
-      <T v="headline">{label}</T>
+      {provider === "google" ? <GoogleLogo size={19} /> : <AppleLogo size={19} color={colors.ink} />}
+      <T v="headline" style={{ fontSize: 15 }}>{name}</T>
     </Pressable>
   );
 }
@@ -61,21 +58,19 @@ export function AccountCta() {
   };
 
   return (
-    <Group>
-      <View style={{ padding: 16, gap: 14 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-          <View style={{ width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: fx.track }}>
-            <Icon name="shield" size={19} color={colors.warning} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <T v="headline" style={{ fontWeight: "700" }}>Zaštiti svoje podatke</T>
-            <T v="caption" muted>Prijavi se da prežive novi mobitel.</T>
-          </View>
+    <View style={{ alignItems: "center", gap: 14, paddingVertical: 4 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <Icon name="shield" size={22} color={colors.warning} />
+        <View style={{ flexShrink: 1 }}>
+          <T v="headline" style={{ fontWeight: "700" }}>Zaštiti svoje podatke</T>
+          <T v="caption" muted>Prijavi se da prežive novi mobitel.</T>
         </View>
+      </View>
+      <View style={{ flexDirection: "row", gap: 10, justifyContent: "center" }}>
         <SocialButton provider="google" busy={busy} onPress={() => void signIn("google")} />
         {APPLE_ENABLED ? <SocialButton provider="apple" busy={busy} onPress={() => void signIn("apple")} /> : null}
       </View>
-    </Group>
+    </View>
   );
 }
 

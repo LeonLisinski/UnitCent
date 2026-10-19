@@ -103,9 +103,9 @@ export default function Stednja() {
             </View>
             <T style={{ textAlign: "center" }}>Jesi li ovaj mjesec ušteđio?</T>
             <View style={{ flexDirection: "row", gap: 10, justifyContent: "center", alignItems: "center" }}>
-              <Button size="sm" label="Da, sve" onPress={() => quick(plannedNow)} />
-              <Button variant="secondary" size="sm" label="Djelomično" onPress={() => edit(month)} />
-              <Button variant="secondary" size="sm" label="Nisam" onPress={() => quick(0)} />
+              <Button size="sm" label="Da, sve" style={{ minWidth: 0, paddingHorizontal: 20 }} onPress={() => quick(plannedNow)} />
+              <Button variant="secondary" size="sm" label="Djelomično" style={{ minWidth: 0, paddingHorizontal: 18 }} onPress={() => edit(month)} />
+              <Button variant="secondary" size="sm" label="Nisam" style={{ minWidth: 0, paddingHorizontal: 18 }} onPress={() => quick(0)} />
             </View>
           </View>
         ) : (

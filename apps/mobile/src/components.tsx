@@ -331,7 +331,7 @@ export function GoldBadge({ value, lock }: { value?: number; lock?: boolean }) {
   const { fx } = useTheme();
   return (
     <LinearGradient
-      colors={[fx.goldHi, fx.goldLo]}
+      colors={[fx.goldFillHi, fx.goldFillLo]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{ position: "absolute", top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, alignItems: "center", justifyContent: "center", paddingHorizontal: 5 }}
@@ -355,7 +355,7 @@ export function GoldButton({ label, onPress }: { label: string; onPress: () => v
       style={({ pressed }) => ({ alignSelf: "center", transform: [{ scale: pressed ? 0.97 : 1 }], shadowColor: fx.gold, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 })}
     >
       <LinearGradient
-        colors={[fx.goldHi, fx.gold, fx.goldLo]}
+        colors={[fx.goldFillHi, fx.goldFillMid, fx.goldFillLo]}
         locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -368,18 +368,18 @@ export function GoldButton({ label, onPress }: { label: string; onPress: () => v
   );
 }
 
-/** Oznaka AI funkcije: zeleno-limeta pilula sa iskrom. Zlatna ostaje isključivo za Premium. */
+/** Oznaka AI funkcije: ljubičasta pilula s iskrom. Zlatna je isključivo Premium, zelena je novac. */
 export function AiTag() {
-  const { colors, fx } = useTheme();
+  const { fx } = useTheme();
   return (
     <LinearGradient
-      colors={[colors.brand, fx.accent2]}
-      start={{ x: 0, y: 1 }}
-      end={{ x: 1, y: 0 }}
+      colors={[fx.aiHi, fx.aiLo]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
       style={{ flexDirection: "row", alignItems: "center", gap: 3, height: 20, paddingHorizontal: 7, borderRadius: 10 }}
     >
-      <Icon name="sparkle" size={11} color={colors["on-brand"]} stroke={2.2} />
-      <T v="caption" color={colors["on-brand"]} style={{ fontSize: 10.5, fontWeight: "800", lineHeight: 14 }}>AI</T>
+      <Icon name="sparkle" size={11} color={fx.onAi} stroke={2.2} />
+      <T v="caption" color={fx.onAi} style={{ fontSize: 10.5, fontWeight: "800", lineHeight: 14 }}>AI</T>
     </LinearGradient>
   );
 }

@@ -110,7 +110,7 @@ function PlanToggle({ value, onChange }: { value: PlanKey; onChange: (p: PlanKey
       >
         <T v="headline" muted={!on} style={{ fontSize: 15 }}>{label}</T>
         {key === "yearly" ? (
-          <LinearGradient colors={[fx.goldHi, fx.gold, fx.goldLo]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 }}>
+          <LinearGradient colors={[fx.goldFillHi, fx.goldFillMid, fx.goldFillLo]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 }}>
             <T v="caption" color="#2a1d00" style={{ fontSize: 11, fontWeight: "800", lineHeight: 15 }}>−{YEARLY_SAVING_PCT} %</T>
           </LinearGradient>
         ) : null}
@@ -197,7 +197,7 @@ export default function Premium() {
       }
     >
       <View style={{ alignItems: "center" }}>
-        <Medallion hi={fx.goldHi} base={fx.gold} lo={fx.goldLo} scale={compact ? 0.78 : 1} />
+        <Medallion hi={fx.goldFillHi} base={fx.goldFillMid} lo={fx.goldFillLo} scale={compact ? 0.78 : 1} />
         <View style={{ alignItems: "center", marginTop: -26, gap: 0 }}>
           <T v="mono-label" muted style={{ fontSize: 11, letterSpacing: 4 }}>UNITCENT</T>
           <T v="serif-accent" color={fx.gold} style={{ fontSize: 44, lineHeight: 52 }}>{premium ? "Premium je aktivan" : "Premium"}</T>
@@ -211,7 +211,7 @@ export default function Premium() {
         {PERKS.map((perk) => (
           <View key={perk.title} style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
             <LinearGradient
-              colors={[fx.goldHi, fx.gold, fx.goldLo]}
+              colors={[fx.goldFillHi, fx.goldFillMid, fx.goldFillLo]}
               locations={[0, 0.5, 1]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}

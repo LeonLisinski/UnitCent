@@ -33,6 +33,17 @@ export interface Fx {
   /** Zlatni gradijent (svijetli i tamni kraj) za značke i zvijezdu. */
   goldHi: string;
   goldLo: string;
+  /** Zlatna ISPUNA (gumb, značka, medaljon): ista metalna zlatna u obje teme, s tamnim tekstom. */
+  goldFillHi: string;
+  goldFillMid: string;
+  goldFillLo: string;
+  /** AI: ljubičasta. Tri znaka: zelena = tvoj novac, zlatna = Premium, ljubičasta = AI. */
+  ai: string;
+  aiSoft: string;
+  aiHi: string;
+  aiLo: string;
+  /** Tekst/ikona na AI gradijentu. */
+  onAi: string;
 }
 
 const FX: Record<Scheme, Fx> = {
@@ -56,6 +67,14 @@ const FX: Record<Scheme, Fx> = {
     goldSoft: "rgba(201,163,92,0.16)",
     goldHi: "#efdca6",
     goldLo: "#9a7332",
+    goldFillHi: "#efdca6",
+    goldFillMid: "#c9a35c",
+    goldFillLo: "#9a7332",
+    ai: "#a78bfa",
+    aiSoft: "rgba(167,139,250,0.16)",
+    aiHi: "#cdbcff",
+    aiLo: "#9b82f8",
+    onAi: "#150c33",
   },
   light: {
     glass: "rgba(255,255,255,0.86)",
@@ -77,6 +96,14 @@ const FX: Record<Scheme, Fx> = {
     goldSoft: "rgba(154,116,48,0.13)",
     goldHi: "#cfae6a",
     goldLo: "#775717",
+    goldFillHi: "#ecd392",
+    goldFillMid: "#d2ae62",
+    goldFillLo: "#b98d3e",
+    ai: "#6d46d9",
+    aiSoft: "rgba(109,70,217,0.12)",
+    aiHi: "#9b82f8",
+    aiLo: "#6d46d9",
+    onAi: "#ffffff",
   },
 };
 

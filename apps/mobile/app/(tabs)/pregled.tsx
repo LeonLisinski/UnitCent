@@ -106,13 +106,13 @@ export default function Pregled() {
           <Section title="Uvidi" right={<AiTag />}>
             <View>
               {insights.items.map((it, i) => {
-                const tint = it.locked ? fx.gold : it.tone === "warn" ? colors.warning : it.tone === "good" ? colors.brand : colors["ink-muted"];
+                const tint = it.locked ? fx.gold : fx.ai;
                 return (
                   <ListRow
                     key={it.id}
                     first={i === 0}
                     left={
-                      <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: it.locked ? fx.goldSoft : fx.track }}>
+                      <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: it.locked ? fx.goldSoft : fx.aiSoft }}>
                         <Icon name={it.locked ? "lock" : it.icon} size={20} color={tint} />
                       </View>
                     }

@@ -502,7 +502,7 @@ export function RoundButton({
   onPress: () => void;
   label: string;
   disabled?: boolean;
-  /** "gold" = Premium (zaključano): zlatna ikona i rub. "ai" = AI funkcija: zeleno-limeta gradijent. */
+  /** "gold" = Premium (zaključano): zlatna ikona i rub. "ai" = AI funkcija: ljubičasti gradijent. */
   tone?: "gold" | "ai";
 }) {
   const { colors, fx } = useTheme();
@@ -526,9 +526,9 @@ export function RoundButton({
       }}
     >
       {tone === "ai" ? (
-        <Sheen colors={[colors.brand, fx.accent2]} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+        <Sheen colors={[fx.aiHi, fx.aiLo]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
       ) : null}
-      <Icon name={icon} size={20} color={tone === "gold" ? fx.gold : tone === "ai" ? colors["on-brand"] : colors.ink} />
+      <Icon name={icon} size={20} color={tone === "gold" ? fx.gold : tone === "ai" ? fx.onAi : colors.ink} />
     </Pressable>
   );
 }
