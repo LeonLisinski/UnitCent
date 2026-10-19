@@ -3,6 +3,7 @@ import { Platform, Pressable, View } from "react-native";
 import { signInWith, type Provider } from "./account";
 import { agoText } from "./format";
 import { AppleLogo, GoogleLogo, Icon } from "./icons";
+import { Group, Row } from "./settings";
 import { syncNow, useSyncStatus } from "./sync";
 import { useTheme } from "./theme";
 import { useToast } from "./toast";
@@ -11,44 +12,27 @@ import { T } from "./ui";
 /** Apple prijava se nudi samo na iOS-u i kad je Apple provider podešen (EXPO_PUBLIC_APPLE_SIGNIN=1). */
 const APPLE_ENABLED = Platform.OS === "ios" && process.env.EXPO_PUBLIC_APPLE_SIGNIN === "1";
 
-function SocialButton({ provider, busy, onPress }: { provider: Provider; busy: boolean; onPress: () => void }) {
+/** Logotip prijave u istom kvadratu kao ikone redaka postavki. */
+function ProviderIcon({ provider }: { provider: Provider }) {
   const { colors, fx } = useTheme();
-  const name = provider === "google" ? "Google" : "Apple";
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Nastavi s ${provider === "google" ? "Googleom" : "Appleom"}`}
-      disabled={busy}
-      onPress={onPress}
-      style={({ pressed }) => ({
-        paddingHorizontal: 22,
-        minHeight: 48,
-        borderRadius: 999,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 10,
-        backgroundColor: fx.glass,
-        borderWidth: 1.5,
-        borderColor: fx.glassBorder,
-        opacity: busy ? 0.45 : pressed ? 0.7 : 1,
-      })}
-    >
-      {provider === "google" ? <GoogleLogo size={19} /> : <AppleLogo size={19} color={colors.ink} />}
-      <T v="headline" style={{ fontSize: 15 }}>{name}</T>
-    </Pressable>
+    <View style={{ width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: fx.track }}>
+      {provider === "google" ? <GoogleLogo size={20} /> : <AppleLogo size={20} color={colors.ink} />}
+    </View>
   );
 }
 
 /**
- * Jedina „glavna“ stvar u Profilu kad račun nije zaštićen: poziv na prijavu. Za prijavljene se ne prikazuje.
+ * Jedina „glavna“ stvar u Profilu kad račun nije zaštićen: poziv na prijavu. Isti raspored kao ostale skupine
+ * (ikona, naslov, podnaslov, strelica), za prijavljene se ne prikazuje.
  */
 export function AccountCta() {
-  const { colors, fx } = useTheme();
+  const { colors } = useTheme();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
 
   const signIn = async (provider: Provider) => {
+    if (busy) return;
     setBusy(true);
     const r = await signInWith(provider);
     setBusy(false);
@@ -58,19 +42,11 @@ export function AccountCta() {
   };
 
   return (
-    <View style={{ alignItems: "center", gap: 14, paddingVertical: 4 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-        <Icon name="shield" size={22} color={colors.warning} />
-        <View style={{ flexShrink: 1 }}>
-          <T v="headline" style={{ fontWeight: "700" }}>Zaštiti svoje podatke</T>
-          <T v="caption" muted>Prijavi se da prežive novi mobitel.</T>
-        </View>
-      </View>
-      <View style={{ flexDirection: "row", gap: 10, justifyContent: "center" }}>
-        <SocialButton provider="google" busy={busy} onPress={() => void signIn("google")} />
-        {APPLE_ENABLED ? <SocialButton provider="apple" busy={busy} onPress={() => void signIn("apple")} /> : null}
-      </View>
-    </View>
+    <Group>
+      <Row icon="shield" title="Zaštiti svoje podatke" subtitle="Prijavi se da prežive novi mobitel." />
+      <Row left={<ProviderIcon provider="google" />} title="Nastavi s Googleom" onPress={() => void signIn("google")} />
+      {APPLE_ENABLED ? <Row left={<ProviderIcon provider="apple" />} title="Nastavi s Appleom" onPress={() => void signIn("apple")} /> : null}
+    </Group>
   );
 }
 
