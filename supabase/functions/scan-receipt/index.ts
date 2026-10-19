@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
     .eq("user_id", uid)
     .is("deleted_at", null)
     .eq("archived", false)
+    .eq("kind", "expense")
     .order("sort");
 
   const started = Date.now();
