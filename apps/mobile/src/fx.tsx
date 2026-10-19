@@ -520,8 +520,8 @@ export function RoundButton({
         justifyContent: "center",
         overflow: "hidden",
         backgroundColor: tone === "gold" ? fx.goldSoft : tone === "ai" ? "transparent" : fx.glass,
-        borderWidth: tone === "ai" ? 0 : 1,
-        borderColor: tone === "gold" ? fx.gold : fx.glassBorder,
+        borderWidth: tone === "ai" ? 1.5 : 1,
+        borderColor: tone === "gold" ? fx.gold : tone === "ai" ? fx.goldFillMid : fx.glassBorder,
         opacity: disabled ? 0.35 : 1,
       }}
     >

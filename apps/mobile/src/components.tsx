@@ -376,10 +376,36 @@ export function AiTag() {
       colors={[fx.aiHi, fx.aiLo]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={{ flexDirection: "row", alignItems: "center", gap: 3, height: 20, paddingHorizontal: 7, borderRadius: 10 }}
+      style={{ flexDirection: "row", alignItems: "center", gap: 3, height: 20, paddingHorizontal: 7, borderRadius: 10, borderWidth: 1, borderColor: fx.goldFillMid }}
     >
-      <Icon name="sparkle" size={11} color={fx.onAi} stroke={2.2} />
+      <Icon name="sparkle" size={11} color={fx.goldFillHi} stroke={2.2} />
       <T v="caption" color={fx.onAi} style={{ fontSize: 10.5, fontWeight: "800", lineHeight: 14 }}>AI</T>
     </LinearGradient>
+  );
+}
+
+/** Glavni gumb AI radnje (npr. „Pročitaj“): ljubičasti gradijent, zlatni rub i iskra. Širina prema sadržaju. */
+export function AiButton({ label, onPress }: { label: string; onPress: () => void }) {
+  const { fx } = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={() => {
+        void Haptics.selectionAsync();
+        onPress();
+      }}
+      style={({ pressed }) => ({ alignSelf: "center", transform: [{ scale: pressed ? 0.97 : 1 }], shadowColor: fx.ai, shadowOpacity: 0.4, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 })}
+    >
+      <LinearGradient
+        colors={[fx.aiHi, fx.aiLo]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ minHeight: 52, minWidth: 200, borderRadius: 999, paddingHorizontal: 32, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1.5, borderColor: fx.goldFillMid }}
+      >
+        <Icon name="sparkle" size={18} color={fx.goldFillHi} stroke={2.1} />
+        <T v="headline" color={fx.onAi}>{label}</T>
+      </LinearGradient>
+    </Pressable>
   );
 }

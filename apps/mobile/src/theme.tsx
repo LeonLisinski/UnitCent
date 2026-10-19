@@ -72,9 +72,9 @@ const FX: Record<Scheme, Fx> = {
     goldFillLo: "#9a7332",
     ai: "#a78bfa",
     aiSoft: "rgba(167,139,250,0.16)",
-    aiHi: "#cdbcff",
-    aiLo: "#9b82f8",
-    onAi: "#150c33",
+    aiHi: "#8f6df5",
+    aiLo: "#5a33c8",
+    onAi: "#ffffff",
   },
   light: {
     glass: "rgba(255,255,255,0.86)",
@@ -101,8 +101,8 @@ const FX: Record<Scheme, Fx> = {
     goldFillLo: "#b98d3e",
     ai: "#6d46d9",
     aiSoft: "rgba(109,70,217,0.12)",
-    aiHi: "#9b82f8",
-    aiLo: "#6d46d9",
+    aiHi: "#8561f0",
+    aiLo: "#5a33c8",
     onAi: "#ffffff",
   },
 };

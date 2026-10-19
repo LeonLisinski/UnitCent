@@ -6,7 +6,8 @@ import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { Safe } from "../src/safe";
 import { formatEur } from "@unitcent/core";
-import { Button } from "../src/components";
+import { AiButton, Button } from "../src/components";
+import { LinearGradient } from "expo-linear-gradient";
 import { Glow, RoundButton } from "../src/fx";
 import { Icon } from "../src/icons";
 import { useTheme } from "../src/theme";
@@ -127,7 +128,7 @@ export default function Skeniraj() {
                 marginBottom: 10,
               }}
             >
-              <Icon name="camera" size={40} color={colors.brand} stroke={1.6} />
+              <Icon name="camera" size={40} color={fx.ai} stroke={1.6} />
             </View>
             <T v="title-1" style={{ fontSize: 28, lineHeight: 34, textAlign: "center" }}>Skeniraj račun</T>
             <T muted style={{ textAlign: "center", maxWidth: 320 }}>
@@ -219,7 +220,7 @@ export default function Skeniraj() {
                 {parts.length < MAX_PARTS ? (
                   <Button variant="secondary" size="sm" icon="plus" label="Dodaj dio" onPress={() => setReview(false)} />
                 ) : null}
-                <Button label={parts.length > 1 ? `Pročitaj (${parts.length})` : "Pročitaj"} onPress={() => void process(parts)} />
+                <AiButton label={parts.length > 1 ? `Pročitaj (${parts.length})` : "Pročitaj"} onPress={() => void process(parts)} />
               </View>
               <T v="caption" color="#9aa7a2">{parts.length > 1 ? "Dijelovi se čitaju kao jedan račun" : "Dug račun? Dodaj sljedeći dio"}</T>
             </View>
@@ -235,13 +236,15 @@ export default function Skeniraj() {
                 height: 76,
                 borderRadius: 38,
                 borderWidth: 4,
-                borderColor: "#ffffff",
+                borderColor: fx.goldFillMid,
                 alignItems: "center",
                 justifyContent: "center",
                 opacity: pressed ? 0.7 : 1,
               })}
             >
-              <View style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: colors.brand }} />
+              <LinearGradient colors={[fx.aiHi, fx.aiLo]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 58, height: 58, borderRadius: 29, alignItems: "center", justifyContent: "center" }}>
+                <Icon name="sparkle" size={24} color={fx.goldFillHi} stroke={2} />
+              </LinearGradient>
             </Pressable>
             <View style={{ width: 44 }} />
           </View>
@@ -253,7 +256,7 @@ export default function Skeniraj() {
 
       {busy ? (
         <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(7,11,11,0.82)", alignItems: "center", justifyContent: "center", gap: 14 }]}>
-          <ActivityIndicator size="large" color={colors.brand} />
+          <ActivityIndicator size="large" color={fx.ai} />
           <T v="headline" color="#ffffff">Čitam račun…</T>
           <T v="caption" color="#9aa7a2">Obično traje nekoliko sekundi</T>
         </View>
