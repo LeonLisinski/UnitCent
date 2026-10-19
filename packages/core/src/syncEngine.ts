@@ -25,7 +25,7 @@ const TIMES = ["created_at", "client_updated_at", "deleted_at"];
 
 /** Redoslijed poštuje strane ključeve: roditelji prije djece. */
 export const SYNC_TABLES: TableCfg[] = [
-  { name: "categories", cols: ["id", "name", "icon", "color_token", "sort", "is_system", "archived", ...COMMON], bools: ["is_system", "archived"], times: TIMES },
+  { name: "categories", cols: ["id", "name", "icon", "color_token", "sort", "is_system", "archived", "kind", ...COMMON], bools: ["is_system", "archived"], times: TIMES },
   {
     name: "recurring_items",
     cols: ["id", "name", "amount_cents", "day_of_month", "category_id", "active", "start_date", "end_date", "icon_key", ...COMMON],

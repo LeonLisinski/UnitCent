@@ -24,9 +24,10 @@ export default function Kategorija() {
   const { colors, fx } = useTheme();
   const router = useRouter();
   const toast = useToast();
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, kind: kindParam } = useLocalSearchParams<{ id?: string; kind?: string }>();
   const existing = id ? getCategory(id) : null;
 
+  const kind: "expense" | "income" = existing?.kind ?? (kindParam === "income" ? "income" : "expense");
   const [name, setName] = useState(existing?.name ?? "");
   const [color, setColor] = useState(existing?.colorToken ?? COLORS[0]!);
   const [icon, setIcon] = useState(existing?.icon ?? ICONS[0]!);
@@ -40,10 +41,10 @@ export default function Kategorija() {
     if (!valid) return;
     if (existing) {
       updateCategory(existing.id, { name, icon, colorToken: color });
-      if (premium) setBudget(existing.id, limitCents);
+      if (kind === "expense" && premium) setBudget(existing.id, limitCents);
     } else {
-      const created = addCategory({ name, icon, colorToken: color });
-      if (premium && limitCents) setBudget(created.id, limitCents);
+      const created = addCategory({ name, icon, colorToken: color, kind });
+      if (kind === "expense" && premium && limitCents) setBudget(created.id, limitCents);
     }
     router.back();
     toast.show(existing ? "Kategorija spremljena" : "Kategorija dodana");
@@ -66,8 +67,8 @@ export default function Kategorija() {
 
   return (
     <ModalScreen
-      eyebrow={existing ? "Kategorija" : "Nova"}
-      title={existing ? existing.name : "Nova kategorija"}
+      eyebrow={kind === "income" ? "Prihod" : existing ? "Kategorija" : "Nova"}
+      title={existing ? existing.name : kind === "income" ? "Nova kategorija prihoda" : "Nova kategorija"}
       onClose={() => router.back()}
       footer={
         <>
@@ -81,9 +82,9 @@ export default function Kategorija() {
         <T v="headline" numberOfLines={1}>{name.trim() || "Naziv"}</T>
       </View>
 
-      <TextField label="Naziv" value={name} onChangeText={setName} maxLength={24} autoFocus={!existing} placeholder="npr. Ljubimci" />
+      <TextField label="Naziv" value={name} onChangeText={setName} maxLength={24} autoFocus={!existing} placeholder={kind === "income" ? "npr. Coaching" : "npr. Ljubimci"} />
 
-      {premium ? (
+      {kind === "income" ? null : premium ? (
         <AmountField label="Mjesečni limit (neobavezno)" value={limitText} onChange={(t) => setLimitText(t)} placeholder="npr. 200" />
       ) : (
         <Pressable

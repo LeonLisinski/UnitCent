@@ -3,23 +3,23 @@ import type { LocalDate } from "./dates";
 import { yearMonthOf, type YearMonth } from "./dates";
 
 /** Zadane kategorije (korisnik ih može mijenjati). `colorToken` je ključ iz @unitcent/tokens. */
+export type CategoryKind = "expense" | "income";
+
 export interface DefaultCategory {
   key: string;
+  kind: CategoryKind;
   name: string;
   icon: string;
   colorToken: string;
 }
 
 export const DEFAULT_CATEGORIES: readonly DefaultCategory[] = [
-  { key: "hrana", name: "Hrana", icon: "cart", colorToken: "cat-hrana" },
-  { key: "auto", name: "Auto", icon: "car", colorToken: "cat-auto" },
-  { key: "stan", name: "Stan i režije", icon: "house", colorToken: "cat-stan" },
-  { key: "zabava", name: "Zabava", icon: "glass", colorToken: "cat-zabava" },
-  { key: "zdravlje", name: "Zdravlje", icon: "heart", colorToken: "cat-zdravlje" },
-  { key: "pretplate", name: "Pretplate", icon: "repeat", colorToken: "cat-pretplate" },
-  { key: "cigarete", name: "Cigarete", icon: "smoke", colorToken: "cat-cigarete" },
-  { key: "obitelj", name: "Obitelj i pokloni", icon: "gift", colorToken: "cat-obitelj" },
-  { key: "ostalo", name: "Ostalo", icon: "dots", colorToken: "cat-ostalo" },
+  { key: "hrana", kind: "expense", name: "Hrana", icon: "cart", colorToken: "cat-hrana" },
+  { key: "auto", kind: "expense", name: "Auto", icon: "car", colorToken: "cat-auto" },
+  { key: "stan", kind: "expense", name: "Stan i režije", icon: "house", colorToken: "cat-stan" },
+  { key: "zdravlje", kind: "expense", name: "Zdravlje", icon: "heart", colorToken: "cat-zdravlje" },
+  { key: "ostalo", kind: "expense", name: "Ostalo", icon: "dots", colorToken: "cat-ostalo" },
+  { key: "posao", kind: "income", name: "Posao", icon: "card", colorToken: "cat-obitelj" },
 ] as const;
 
 /** Popularne pretplate i fiksni troškovi za onboarding (iznosi su prijedlog, korisnik ih mijenja). */
@@ -36,10 +36,10 @@ export const POPULAR_RECURRING: readonly PopularRecurring[] = [
   { key: "najam", name: "Najam", suggestedCents: 0, dayOfMonth: 1, categoryKey: "stan", icon: "house" },
   { key: "kredit", name: "Kredit", suggestedCents: 0, dayOfMonth: 5, categoryKey: "stan", icon: "card" },
   { key: "rezije", name: "Režije", suggestedCents: 0, dayOfMonth: 15, categoryKey: "stan", icon: "drop" },
-  { key: "mobitel", name: "Mobitel", suggestedCents: 0, dayOfMonth: 10, categoryKey: "pretplate", icon: "phone" },
-  { key: "internet", name: "Internet", suggestedCents: 0, dayOfMonth: 10, categoryKey: "pretplate", icon: "wifi" },
-  { key: "netflix", name: "Netflix", suggestedCents: 1399, dayOfMonth: 12, categoryKey: "pretplate", icon: "play" },
-  { key: "spotify", name: "Spotify", suggestedCents: 1249, dayOfMonth: 5, categoryKey: "pretplate", icon: "music" },
+  { key: "mobitel", name: "Mobitel", suggestedCents: 0, dayOfMonth: 10, categoryKey: "stan", icon: "phone" },
+  { key: "internet", name: "Internet", suggestedCents: 0, dayOfMonth: 10, categoryKey: "stan", icon: "wifi" },
+  { key: "netflix", name: "Netflix", suggestedCents: 1399, dayOfMonth: 12, categoryKey: "ostalo", icon: "play" },
+  { key: "spotify", name: "Spotify", suggestedCents: 1249, dayOfMonth: 5, categoryKey: "ostalo", icon: "music" },
   { key: "teretana", name: "Teretana", suggestedCents: 0, dayOfMonth: 1, categoryKey: "zdravlje", icon: "dumbbell" },
   { key: "osiguranje", name: "Osiguranje", suggestedCents: 0, dayOfMonth: 20, categoryKey: "auto", icon: "shield" },
 ] as const;

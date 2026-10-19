@@ -113,4 +113,11 @@ create table budgets (
 create unique index budgets_category_idx on budgets (category_id) where deleted_at is null and month is null;
 `,
   },
+  {
+    version: 4,
+    sql: `
+-- Vrsta kategorije: trošak ili prihod.
+alter table categories add column kind text not null default 'expense' check (kind in ('expense','income'));
+`,
+  },
 ];

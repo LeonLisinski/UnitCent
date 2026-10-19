@@ -1,6 +1,7 @@
 import * as Crypto from "expo-crypto";
 import {
   DEFAULT_CATEGORIES,
+  type CategoryKind,
   bookingId,
   occurrenceDate,
   parseAmount,
@@ -43,6 +44,7 @@ function enqueue(table: string, rowId: string, op: "upsert" | "delete", payload:
 export interface Category {
   id: string;
   key: string | null;
+  kind: CategoryKind;
   name: string;
   icon: string;
   colorToken: string;
@@ -84,60 +86,68 @@ export function kvSet(key: string, value: string): void {
 
 /* ---------- kategorije ---------- */
 
-/** Stvara zadane kategorije pri prvom pokretanju (idempotentno). */
+const CAT_COLS = "id, key, kind, name, icon, color_token, sort";
+type CatRow = { id: string; key: string | null; kind: CategoryKind; name: string; icon: string; color_token: string; sort: number };
+const mapCat = (r: CatRow): Category => ({ id: r.id, key: r.key, kind: r.kind, name: r.name, icon: r.icon, colorToken: r.color_token, sort: r.sort });
+
+/** Stvara zadane kategorije pri prvom pokretanju (idempotentno); postojećim korisnicima dodaje prihodnu „Posao“. */
 export function ensureCategories(): void {
   const db = getDb();
   const have = db.getFirstSync<{ n: number }>("select count(*) as n from categories")?.n ?? 0;
-  if (have > 0) return;
   const t = nowIso();
   // Zadane kategorije imaju "najstariju" izmjenu: ako ih je korisnik već preimenovao na drugom
   // uređaju, ta izmjena pobjeđuje pri sinkronizaciji, a ne svježe zadane vrijednosti.
   const EPOCH = "1970-01-01T00:00:00.000Z";
+  const seed = DEFAULT_CATEGORIES.map((c, i) => ({ c, i })).filter(
+    ({ c }) => have === 0 || (c.key === "posao" && !db.getFirstSync("select 1 from categories where key = 'posao'")),
+  );
+  if (seed.length === 0) return;
   db.withTransactionSync(() => {
-    DEFAULT_CATEGORIES.forEach((c, i) => {
+    for (const { c, i } of seed) {
       // Deterministički ID po ključu: isti na svim uređajima, pa se sync ne udvostruči.
       const id = uuidV5(`category:${c.key}`, PLAN_NAMESPACE);
+      const sort = have === 0 ? i : (db.getFirstSync<{ m: number | null }>("select max(sort) as m from categories")?.m ?? 0) + 1;
       db.runSync(
-        `insert or ignore into categories (id, key, name, icon, color_token, sort, is_system, created_at, client_updated_at)
-         values (?, ?, ?, ?, ?, ?, 1, ?, ?)`,
-        [id, c.key, c.name, c.icon, c.colorToken, i, t, EPOCH],
+        `insert or ignore into categories (id, key, kind, name, icon, color_token, sort, is_system, created_at, client_updated_at)
+         values (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+        [id, c.key, c.kind, c.name, c.icon, c.colorToken, sort, t, EPOCH],
       );
       enqueue("categories", id, "upsert", {
-        id, key: c.key, name: c.name, icon: c.icon, color_token: c.colorToken, sort: i, is_system: true, client_updated_at: EPOCH,
+        id, key: c.key, kind: c.kind, name: c.name, icon: c.icon, color_token: c.colorToken, sort, is_system: true, client_updated_at: EPOCH,
       });
-    });
+    }
   });
   notifyDbChanged();
 }
 
-export function listCategories(): Category[] {
+/** Aktivne kategorije; bez argumenta sve vrste (za traženje po ID-u), s argumentom samo troškovne ili prihodne. */
+export function listCategories(kind?: CategoryKind): Category[] {
   return getDb()
-    .getAllSync<{ id: string; key: string | null; name: string; icon: string; color_token: string; sort: number }>(
-      "select id, key, name, icon, color_token, sort from categories where deleted_at is null and archived = 0 order by sort, name",
+    .getAllSync<CatRow>(
+      `select ${CAT_COLS} from categories where deleted_at is null and archived = 0 ${kind ? "and kind = ?" : ""} order by sort, name`,
+      kind ? [kind] : [],
     )
-    .map((r) => ({ id: r.id, key: r.key, name: r.name, icon: r.icon, colorToken: r.color_token, sort: r.sort }));
+    .map(mapCat);
 }
 
-/** Kategorije poredane po učestalosti korištenja (najčešće prve), za brzi unos. */
-export function listCategoriesByUsage(): Category[] {
+/** Kategorije jedne vrste poredane po učestalosti korištenja (najčešće prve), za brzi unos. */
+export function listCategoriesByUsage(kind: CategoryKind = "expense"): Category[] {
   return getDb()
-    .getAllSync<{ id: string; key: string | null; name: string; icon: string; color_token: string; sort: number }>(
-      `select c.id, c.key, c.name, c.icon, c.color_token, c.sort
+    .getAllSync<CatRow>(
+      `select c.id, c.key, c.kind, c.name, c.icon, c.color_token, c.sort
          from categories c
-         left join (select category_id, count(*) n from transactions where deleted_at is null and type = 'expense' group by category_id) u
+         left join (select category_id, count(*) n from transactions where deleted_at is null and type = ? group by category_id) u
            on u.category_id = c.id
-        where c.deleted_at is null and c.archived = 0
+        where c.deleted_at is null and c.archived = 0 and c.kind = ?
         order by coalesce(u.n, 0) desc, c.sort`,
+      [kind, kind],
     )
-    .map((r) => ({ id: r.id, key: r.key, name: r.name, icon: r.icon, colorToken: r.color_token, sort: r.sort }));
+    .map(mapCat);
 }
 
 export function getCategory(id: string): Category | null {
-  const r = getDb().getFirstSync<{ id: string; key: string | null; name: string; icon: string; color_token: string; sort: number }>(
-    "select id, key, name, icon, color_token, sort from categories where id = ? and deleted_at is null",
-    [id],
-  );
-  return r ? { id: r.id, key: r.key, name: r.name, icon: r.icon, colorToken: r.color_token, sort: r.sort } : null;
+  const r = getDb().getFirstSync<CatRow>(`select ${CAT_COLS} from categories where id = ? and deleted_at is null`, [id]);
+  return r ? mapCat(r) : null;
 }
 
 function enqueueCategory(id: string): void {
@@ -146,21 +156,21 @@ function enqueueCategory(id: string): void {
 }
 
 /** Korisnička kategorija (ikona i boja iz ponuđenog skupa). */
-export function addCategory(input: { name: string; icon: string; colorToken: string }): Category {
+export function addCategory(input: { name: string; icon: string; colorToken: string; kind?: CategoryKind }): Category {
   const db = getDb();
   const id = newId();
   const t = nowIso();
   const sort = (db.getFirstSync<{ m: number | null }>("select max(sort) as m from categories")?.m ?? 0) + 1;
   db.withTransactionSync(() => {
     db.runSync(
-      `insert into categories (id, key, name, icon, color_token, sort, is_system, created_at, client_updated_at)
-       values (?, null, ?, ?, ?, ?, 0, ?, ?)`,
-      [id, input.name.trim(), input.icon, input.colorToken, sort, t, t],
+      `insert into categories (id, key, kind, name, icon, color_token, sort, is_system, created_at, client_updated_at)
+       values (?, null, ?, ?, ?, ?, ?, 0, ?, ?)`,
+      [id, input.kind ?? "expense", input.name.trim(), input.icon, input.colorToken, sort, t, t],
     );
     enqueueCategory(id);
   });
   notifyDbChanged();
-  return { id, key: null, name: input.name.trim(), icon: input.icon, colorToken: input.colorToken, sort };
+  return { id, key: null, kind: input.kind ?? "expense", name: input.name.trim(), icon: input.icon, colorToken: input.colorToken, sort };
 }
 
 export function updateCategory(id: string, input: { name: string; icon: string; colorToken: string }): void {

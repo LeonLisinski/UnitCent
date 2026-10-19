@@ -22,6 +22,10 @@ export default function Kategorije() {
   const router = useRouter();
   const toast = useToast();
   const cats = useDb(() => listCategories());
+  const groups = [
+    { kind: "expense" as const, label: "Troškovi", items: cats.filter((c) => c.kind === "expense") },
+    { kind: "income" as const, label: "Prihodi", items: cats.filter((c) => c.kind === "income") },
+  ];
   const [selecting, setSelecting] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
 
@@ -82,7 +86,6 @@ export default function Kategorije() {
               ) : (
                 <>
                   <RoundButton icon="check" label="Odaberi više" onPress={() => setSelecting(true)} />
-                  <RoundButton icon="plus" label="Nova kategorija" onPress={() => router.push("/kategorija")} />
                   <RoundButton icon="x" label="Zatvori" onPress={() => router.back()} />
                 </>
               )}
@@ -93,7 +96,23 @@ export default function Kategorije() {
           </T>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: space["5"] }}>
-            {cats.map((c, i) => {
+            {groups.map((g) => (
+              <View key={g.kind} style={{ marginBottom: space["4"] }}>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 40 }}>
+                  <T v="mono-label" muted style={{ fontSize: 11, opacity: 0.8 }}>{g.label}</T>
+                  {selecting ? null : (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={g.kind === "income" ? "Nova kategorija prihoda" : "Nova kategorija troška"}
+                      hitSlop={8}
+                      onPress={() => router.push({ pathname: "/kategorija", params: { kind: g.kind } })}
+                      style={{ minHeight: 40, justifyContent: "center" }}
+                    >
+                      <T v="caption" color={colors.brand} style={{ fontWeight: "700" }}>+ Nova</T>
+                    </Pressable>
+                  )}
+                </View>
+              {g.items.map((c, i) => {
               const on = picked.has(c.id);
               return (
                 <ListRow
@@ -145,6 +164,8 @@ export default function Kategorije() {
                 />
               );
             })}
+              </View>
+            ))}
           </ScrollView>
         </View>
       </Safe>

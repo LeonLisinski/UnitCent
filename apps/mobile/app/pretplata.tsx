@@ -17,7 +17,7 @@ export default function Pretplata() {
   const { colors } = useTheme();
   const router = useRouter();
   const toast = useToast();
-  const cats = useMemo(() => listCategories(), []);
+  const cats = useMemo(() => listCategories("expense"), []);
 
   const { id } = useLocalSearchParams<{ id?: string }>();
   const editing = id ? getRecurring(id) : null;

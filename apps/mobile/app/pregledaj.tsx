@@ -24,7 +24,7 @@ export default function Pregledaj() {
   const router = useRouter();
   const toast = useToast();
   const scan = getLastScan();
-  const cats = useDb(() => listCategories());
+  const cats = useDb(() => listCategories("expense"));
   const catById = useMemo(() => new Map(cats.map((c) => [c.id, c])), [cats]);
 
   const [items, setItems] = useState<ScanItem[]>(scan?.result.items ?? []);

@@ -42,6 +42,9 @@ describe("kategorije i agregacije", () => {
     const keys = DEFAULT_CATEGORIES.map((c) => c.key);
     expect(new Set(keys).size).toBe(keys.length);
     expect(keys).toContain("hrana");
+    // zadano: 5 troškovnih i jedna prihodna kategorija
+    expect(DEFAULT_CATEGORIES.filter((c) => c.kind === "expense")).toHaveLength(5);
+    expect(DEFAULT_CATEGORIES.filter((c) => c.kind === "income").map((c) => c.key)).toEqual(["posao"]);
   });
 
   const tx = [

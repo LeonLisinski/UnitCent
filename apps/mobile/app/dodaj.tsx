@@ -56,7 +56,7 @@ export default function Dodaj() {
   useEffect(() => void refreshScanUsage(), []);
   const [date, setDate] = useState(editing?.localDate ?? today());
   const [selected, setSelected] = useState<string | null>(editing?.categoryId ?? null);
-  const cats = useDb(() => listCategoriesByUsage());
+  const cats = useDb(() => listCategoriesByUsage(type), [type]);
 
   const cents = value ? parseAmount(value) : null;
 
@@ -110,7 +110,10 @@ export default function Dodaj() {
                     key={k}
                     accessibilityRole="button"
                     accessibilityState={{ selected: on }}
-                    onPress={() => setType(k)}
+                    onPress={() => {
+                      if (k !== type) setSelected(null);
+                      setType(k);
+                    }}
                     style={{
                       paddingHorizontal: 18,
                       minHeight: 40,
@@ -181,7 +184,7 @@ export default function Dodaj() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Nova kategorija"
-              onPress={() => router.push("/kategorija")}
+              onPress={() => router.push({ pathname: "/kategorija", params: { kind: type } } as Href)}
               style={({ pressed }) => ({ width: "25%", alignItems: "center", gap: 7, opacity: pressed ? 0.6 : 1 })}
             >
               <View style={{ padding: 3 }}>
