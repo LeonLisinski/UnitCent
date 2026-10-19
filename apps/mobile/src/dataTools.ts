@@ -18,6 +18,7 @@ export async function exportData(): Promise<boolean> {
     transactions: all("transactions"),
     recurring_items: all("recurring_items"),
     month_plans: all("month_plans"),
+    savings_entries: all("savings_entries"),
   };
   const file = new File(Paths.cache, `unitcent-podaci-${today()}.json`);
   if (file.exists) file.delete();
@@ -32,7 +33,7 @@ export async function exportData(): Promise<boolean> {
 export function wipeLocalData(): void {
   const db = getDb();
   db.withTransactionSync(() => {
-    for (const t of ["transactions", "recurring_items", "month_plans", "categories", "outbox", "kv"]) {
+    for (const t of ["transactions", "recurring_items", "month_plans", "savings_entries", "categories", "outbox", "kv"]) {
       db.runSync(`delete from ${t}`);
     }
   });

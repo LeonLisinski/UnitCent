@@ -86,4 +86,17 @@ create table outbox (
 );
 `,
   },
+  {
+    version: 2,
+    sql: `
+-- Praćenje štednje: jedan redak po mjesecu (planirano iz plana, ostvareno potvrđuje korisnik).
+create table savings_entries (
+  id text primary key,
+  month text not null unique,
+  planned_cents integer not null default 0,
+  actual_cents integer,
+  ${SYNC_COLS}
+);
+`,
+  },
 ];

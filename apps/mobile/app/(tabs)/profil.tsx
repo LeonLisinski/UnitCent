@@ -121,6 +121,7 @@ export default function Profil() {
               subtitle={plan ? `${formatEur(plan.incomeCents)} primanja · ${formatEur(plan.savingsCents)} štednja` : "Postavi primanja i štednju"}
               onPress={() => router.push("/plan" as Href)}
             />
+            <Row icon="card" title="Štednja" subtitle="Potvrdi što si ušteđio i prati ukupno" onPress={() => router.push("/stednja" as Href)} />
             <Row icon="tag" title="Kategorije" value={String(cats.length)} onPress={() => router.push("/kategorije" as Href)} />
           </Group>
 

@@ -48,7 +48,7 @@ Nije potrebno kriptirati sadržaj u bazi da bi se bilo u skladu s GDPR-om. Već 
 - Šalju se samo zbrojevi po kategorijama (bez bilješki i naziva trgovina) i keširaju se po mjesecu, pa je trošak zanemariv.
 - Free korisnik vidi jedan uvid, ostali su zaključani zlatnim lokotom (CTA na Premium).
 
-## 4. Praćenje štednje (novi ekran, nije glavni)
+## 4. Praćenje štednje (NAPRAVLJENO 19. 10., čeka test na uređaju)
 Pristup iz Profila („Štednja"). Sadržaj:
 - Mjesečni cilj štednje (iz plana) i **mjesečna potvrda** „Jesi li uštedio?" (da / djelomično s iznosom / ne), uz podsjetnik na kraju mjeseca.
 - Ukupno ušteđeno, broj mjeseci korištenja i niz mjeseci (streak), jednostavan stupčasti graf po mjesecima.

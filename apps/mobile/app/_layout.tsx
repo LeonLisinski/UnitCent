@@ -57,6 +57,8 @@ function Shell() {
         <Stack.Screen name="podaci" options={{ presentation: "modal" }} />
         <Stack.Screen name="transakcije" options={{ presentation: "modal" }} />
         <Stack.Screen name="premium" options={{ presentation: "modal" }} />
+        <Stack.Screen name="stednja" options={{ presentation: "modal" }} />
+        <Stack.Screen name="stednja-unos" options={{ presentation: "modal" }} />
       </Stack>
     </>
   );

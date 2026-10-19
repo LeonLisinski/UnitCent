@@ -623,3 +623,85 @@ export function earliestTxMonth(): YearMonth | null {
   const r = getDb().getFirstSync<{ d: string | null }>("select min(local_date) as d from transactions where deleted_at is null");
   return r?.d ? r.d.slice(0, 7) : null;
 }
+
+/* ---------- štednja ---------- */
+
+export interface SavingsEntry {
+  month: YearMonth;
+  plannedCents: Cents;
+  /** null = još nepotvrđeno. */
+  actualCents: Cents | null;
+}
+
+type SavingsRow = { month: string; planned_cents: number; actual_cents: number | null };
+const mapSavings = (r: SavingsRow): SavingsEntry => ({ month: r.month, plannedCents: r.planned_cents, actualCents: r.actual_cents });
+
+export function getSavings(month: YearMonth): SavingsEntry | null {
+  const r = getDb().getFirstSync<SavingsRow>("select month, planned_cents, actual_cents from savings_entries where month = ? and deleted_at is null", [month]);
+  return r ? mapSavings(r) : null;
+}
+
+export function listSavings(): SavingsEntry[] {
+  return getDb()
+    .getAllSync<SavingsRow>("select month, planned_cents, actual_cents from savings_entries where deleted_at is null order by month desc")
+    .map(mapSavings);
+}
+
+/** Mjeseci u kojima je štednja bila planirana (iz plana), da se prošli nepotvrđeni mjeseci mogu naknadno potvrditi. */
+export function listPlannedSavings(): { month: YearMonth; plannedCents: Cents }[] {
+  return getDb()
+    .getAllSync<{ month: string; savings_cents: number }>("select month, savings_cents from month_plans where deleted_at is null and savings_cents > 0 order by month desc")
+    .map((r) => ({ month: r.month, plannedCents: r.savings_cents }));
+}
+
+/** Potvrda štednje za mjesec (stvara ili mijenja). `plannedCents` se pri prvom upisu uzima iz plana tog mjeseca. */
+export function setSavings(month: YearMonth, actualCents: Cents | null, plannedCents?: Cents): void {
+  const db = getDb();
+  const id = uuidV5(`saving:${month}`, PLAN_NAMESPACE);
+  const t = nowIso();
+  const planned = plannedCents ?? getPlan(month)?.savingsCents ?? getSavings(month)?.plannedCents ?? 0;
+  db.withTransactionSync(() => {
+    db.runSync(
+      `insert into savings_entries (id, month, planned_cents, actual_cents, created_at, client_updated_at)
+       values (?, ?, ?, ?, ?, ?)
+       on conflict(month) do update set planned_cents = excluded.planned_cents, actual_cents = excluded.actual_cents,
+         client_updated_at = excluded.client_updated_at, rev = rev + 1, deleted_at = null`,
+      [id, month, planned, actualCents, t, t],
+    );
+    const r = db.getFirstSync<Record<string, unknown>>("select * from savings_entries where month = ?", [month]);
+    if (r) enqueue("savings_entries", id, "upsert", r);
+  });
+  notifyDbChanged();
+}
+
+export interface SavingsStats {
+  totalCents: Cents;
+  /** Broj mjeseci u kojima je štednja potvrđena. */
+  confirmedMonths: number;
+  /** Uzastopni mjeseci (do zadnjeg potvrđenog) u kojima je ušteđeno barem planirano. */
+  streak: number;
+  /** Koliko mjeseci koristiš aplikaciju (od prvog plana ili troška). */
+  monthsUsing: number;
+}
+
+export function savingsStats(todayDate: LocalDate = today()): SavingsStats {
+  const entries = listSavings().filter((e) => e.actualCents !== null);
+  const totalCents = entries.reduce((s, e) => s + (e.actualCents ?? 0), 0);
+  const thisMonth = yearMonthOf(todayDate);
+  // Niz: od tekućeg (ako je potvrđen) ili prošlog mjeseca unatrag dok je ostvareno ≥ planirano.
+  const byMonth = new Map(entries.map((e) => [e.month, e]));
+  let streak = 0;
+  let m: YearMonth = byMonth.has(thisMonth) ? thisMonth : previousMonth(thisMonth);
+  for (;;) {
+    const e = byMonth.get(m);
+    if (!e || e.plannedCents <= 0 || (e.actualCents ?? 0) < e.plannedCents) break;
+    streak += 1;
+    m = previousMonth(m);
+  }
+  const first = getDb().getFirstSync<{ m: string | null }>(
+    "select min(m) as m from (select min(month) as m from month_plans where deleted_at is null union all select min(substr(local_date,1,7)) from transactions where deleted_at is null)",
+  )?.m;
+  const [fy, fm] = (first ?? thisMonth).split("-").map(Number) as [number, number];
+  const [ty, tm] = thisMonth.split("-").map(Number) as [number, number];
+  return { totalCents, confirmedMonths: entries.length, streak, monthsUsing: Math.max(1, (ty - fy) * 12 + (tm - fm) + 1) };
+}
