@@ -11,7 +11,7 @@ import {
   yearMonthOf,
   type YearMonth,
 } from "@unitcent/core";
-import { CatIcon } from "../../src/components";
+import { AiTag, CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
 import { Amount, DayBars, Donut, RoundButton } from "../../src/fx";
 import { monthShort, monthTitle } from "../../src/format";
@@ -103,7 +103,7 @@ export default function Pregled() {
 
       {insights.status === "ok" ? (
         <Animated.View entering={enter(3)}>
-          <Section title="Uvidi">
+          <Section title="Uvidi" right={<AiTag />}>
             <View>
               {insights.items.map((it, i) => {
                 const tint = it.locked ? fx.gold : it.tone === "warn" ? colors.warning : it.tone === "good" ? colors.brand : colors["ink-muted"];

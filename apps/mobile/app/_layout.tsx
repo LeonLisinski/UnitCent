@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Platform } from "react-native";
+import { openDatabaseAsync } from "expo-sqlite";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
@@ -65,7 +67,16 @@ function Shell() {
 }
 
 function RootLayout() {
-  const [ready] = useState(initLocalData);
+  // Web (samo razvoj): sinkroni SQLite traži da je worker već podignut, pa ga prvo "zagrijemo" asinkronim otvaranjem.
+  const [ready, setReady] = useState(() => (Platform.OS === "web" ? false : initLocalData()));
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    void (async () => {
+      const warm = await openDatabaseAsync("unitcent.db");
+      await warm.execAsync("select 1");
+      setReady(initLocalData());
+    })();
+  }, []);
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_500Medium,
@@ -82,6 +93,7 @@ function RootLayout() {
 
   // Pozadinski poslovi: ne blokiraju prikaz.
   useEffect(() => {
+    if (!ready) return;
     const stopSync = startSync(); // sesija + sinkronizacija; bez Supabase okruženja radi lokalno
     void applyProfileName();
     const auth = supabase?.auth.onAuthStateChange(() => void applyProfileName());
@@ -90,7 +102,7 @@ function RootLayout() {
       stopSync();
       auth?.data.subscription.unsubscribe();
     };
-  }, []);
+  }, [ready]);
 
   if (!fontsLoaded || !ready) return null;
 

@@ -133,7 +133,7 @@ export default function Dodaj() {
             <View style={{ flexDirection: "row", gap: 10 }}>
               {editing ? null : (
                 <View>
-                  <RoundButton icon="camera" label={`Skeniraj račun. ${quota.premium ? "" : quota.remaining > 0 ? `Preostalo ${quota.remaining}` : "Zaključano"}`} onPress={() => router.replace("/skeniraj" as Href)} />
+                  <RoundButton tone="ai" icon="camera" label={`Skeniraj račun. ${quota.premium ? "" : quota.remaining > 0 ? `Preostalo ${quota.remaining}` : "Zaključano"}`} onPress={() => router.replace("/skeniraj" as Href)} />
                   {quota.premium ? null : <GoldBadge value={quota.remaining} lock={quota.remaining === 0} />}
                 </View>
               )}

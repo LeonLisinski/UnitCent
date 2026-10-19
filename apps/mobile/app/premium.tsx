@@ -6,7 +6,7 @@ import * as Haptics from "expo-haptics";
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Path, RadialGradient, Rect, Stop } from "react-native-svg";
 import { formatEur } from "@unitcent/core";
 import { track } from "../src/analytics";
-import { Button } from "../src/components";
+import { AiTag, Button } from "../src/components";
 import { Icon } from "../src/icons";
 import { ModalScreen } from "../src/layout";
 import { PLANS, TRIAL_DAYS, TRIAL_ENABLED, YEARLY_SAVING_PCT, setDevPremium, usePremium, type PlanKey } from "../src/premium";
@@ -22,10 +22,10 @@ import { T } from "../src/ui";
 const SOCIAL_PROOF: string | null = null;
 
 /** Što Premium otključava: zlatna medaljica s ikonom + kratak naziv. */
-const PERKS: { icon: string; title: string; hint: string; soon?: boolean }[] = [
+const PERKS: { icon: string; title: string; hint: string; soon?: boolean; ai?: boolean }[] = [
   { icon: "calendar", title: "Cijela povijest", hint: "Svi mjeseci, ne samo zadnjih šest" },
-  { icon: "camera", title: "Neograničeno skeniranje računa", hint: "Slikaš račun, stavke se razvrstaju same" },
-  { icon: "chart", title: "Uvidi i savjeti", hint: "Gdje ti curi novac i što možeš uštedjeti", soon: true },
+  { icon: "camera", title: "Neograničeno skeniranje računa", hint: "Slikaš račun, stavke se razvrstaju same", ai: true },
+  { icon: "chart", title: "Uvidi i savjeti", hint: "Gdje ti curi novac i što možeš uštedjeti", ai: true },
 ];
 
 /** Petokraka kao poligon (za medaljon): vanjski i unutarnji polumjer, središte (0,0). */
@@ -222,6 +222,7 @@ export default function Premium() {
             <View style={{ flex: 1, gap: 1 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                 <T v="headline" style={{ fontWeight: "700", fontSize: 17, flexShrink: 1 }}>{perk.title}</T>
+                {perk.ai ? <AiTag /> : null}
                 {perk.soon ? <T v="caption" color={fx.gold} style={{ fontSize: 10.5, fontWeight: "800" }}>USKORO</T> : null}
               </View>
               <T v="caption" muted style={{ fontSize: 12.5 }}>{perk.hint}</T>

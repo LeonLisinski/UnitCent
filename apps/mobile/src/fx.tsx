@@ -502,8 +502,8 @@ export function RoundButton({
   onPress: () => void;
   label: string;
   disabled?: boolean;
-  /** "gold" = Premium (zaključano): zlatna ikona i rub. */
-  tone?: "gold";
+  /** "gold" = Premium (zaključano): zlatna ikona i rub. "ai" = AI funkcija: zeleno-limeta gradijent. */
+  tone?: "gold" | "ai";
 }) {
   const { colors, fx } = useTheme();
   return (
@@ -518,13 +518,17 @@ export function RoundButton({
         borderRadius: 22,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: tone === "gold" ? fx.goldSoft : fx.glass,
-        borderWidth: 1,
+        overflow: "hidden",
+        backgroundColor: tone === "gold" ? fx.goldSoft : tone === "ai" ? "transparent" : fx.glass,
+        borderWidth: tone === "ai" ? 0 : 1,
         borderColor: tone === "gold" ? fx.gold : fx.glassBorder,
         opacity: disabled ? 0.35 : 1,
       }}
     >
-      <Icon name={icon} size={20} color={tone === "gold" ? fx.gold : colors.ink} />
+      {tone === "ai" ? (
+        <Sheen colors={[colors.brand, fx.accent2]} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+      ) : null}
+      <Icon name={icon} size={20} color={tone === "gold" ? fx.gold : tone === "ai" ? colors["on-brand"] : colors.ink} />
     </Pressable>
   );
 }

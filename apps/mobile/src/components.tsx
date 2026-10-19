@@ -367,3 +367,19 @@ export function GoldButton({ label, onPress }: { label: string; onPress: () => v
     </Pressable>
   );
 }
+
+/** Oznaka AI funkcije: zeleno-limeta pilula sa iskrom. Zlatna ostaje isključivo za Premium. */
+export function AiTag() {
+  const { colors, fx } = useTheme();
+  return (
+    <LinearGradient
+      colors={[colors.brand, fx.accent2]}
+      start={{ x: 0, y: 1 }}
+      end={{ x: 1, y: 0 }}
+      style={{ flexDirection: "row", alignItems: "center", gap: 3, height: 20, paddingHorizontal: 7, borderRadius: 10 }}
+    >
+      <Icon name="sparkle" size={11} color={colors["on-brand"]} stroke={2.2} />
+      <T v="caption" color={colors["on-brand"]} style={{ fontSize: 10.5, fontWeight: "800", lineHeight: 14 }}>AI</T>
+    </LinearGradient>
+  );
+}
