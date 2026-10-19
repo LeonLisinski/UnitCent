@@ -165,6 +165,7 @@ export default function Premium() {
   return (
     <ModalScreen
       scroll={false}
+      floatingClose
       onClose={() => router.back()}
       footer={
         premium ? (

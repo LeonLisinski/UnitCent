@@ -53,6 +53,7 @@ export function ModalScreen({
   footer,
   children,
   scroll = true,
+  floatingClose = false,
 }: {
   title?: string;
   eyebrow?: string;
@@ -61,6 +62,8 @@ export function ModalScreen({
   children: ReactNode;
   /** false = sadržaj se ne skrola nego se raspoređuje po visini (npr. Premium). */
   scroll?: boolean;
+  /** true = bez retka zaglavlja: gumb za zatvaranje lebdi u kutu, a sadržaj počinje pri vrhu (npr. Premium). */
+  floatingClose?: boolean;
 }) {
   const { colors } = useTheme();
   const kb = useKeyboardHeight();
@@ -70,12 +73,18 @@ export function ModalScreen({
       <Glow />
       <Safe sheet>
         <View style={{ flex: 1, paddingBottom: Math.max(0, kb - insets.bottom) }}>
-          <View style={{ paddingHorizontal: PAD, paddingTop: 14 }}>
-            <PageHeader right={<RoundButton icon="x" label="Zatvori" onPress={onClose} />}>
-              {eyebrow ? <T v="mono-label" muted style={{ fontSize: 11, opacity: 0.8 }}>{eyebrow}</T> : null}
-              {title ? <T v="title-1" style={{ fontSize: 26, lineHeight: 32 }}>{title}</T> : null}
-            </PageHeader>
-          </View>
+          {floatingClose ? (
+            <View style={{ position: "absolute", top: 14, right: PAD, zIndex: 10 }}>
+              <RoundButton icon="x" label="Zatvori" onPress={onClose} />
+            </View>
+          ) : (
+            <View style={{ paddingHorizontal: PAD, paddingTop: 14 }}>
+              <PageHeader right={<RoundButton icon="x" label="Zatvori" onPress={onClose} />}>
+                {eyebrow ? <T v="mono-label" muted style={{ fontSize: 11, opacity: 0.8 }}>{eyebrow}</T> : null}
+                {title ? <T v="title-1" style={{ fontSize: 26, lineHeight: 32 }}>{title}</T> : null}
+              </PageHeader>
+            </View>
+          )}
           {scroll ? (
             <ScrollView
               style={{ flex: 1 }}
@@ -86,7 +95,7 @@ export function ModalScreen({
               {children}
             </ScrollView>
           ) : (
-            <View style={{ flex: 1, paddingHorizontal: PAD, paddingTop: 4, paddingBottom: 12, justifyContent: "space-evenly" }}>{children}</View>
+            <View style={{ flex: 1, paddingHorizontal: PAD, paddingTop: floatingClose ? 14 : 4, paddingBottom: 12, justifyContent: "space-evenly" }}>{children}</View>
           )}
           {footer ? <View style={{ paddingHorizontal: PAD, paddingTop: 8, paddingBottom: 12, alignItems: "center", gap: 2 }}>{footer}</View> : null}
         </View>
