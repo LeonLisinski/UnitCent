@@ -48,7 +48,7 @@ function sparkle(cx: number, cy: number, s: number): string {
 /** Glavni znak: metalna zlatna medalja s ispunjenom zvijezdom, koncentričnim prstenovima, sjajem i odsjajima. */
 function Medallion({ hi, base, lo, scale = 1 }: { hi: string; base: string; lo: string; scale?: number }) {
   return (
-    <Svg width={260 * scale} height={190 * scale} viewBox="0 0 260 190">
+    <Svg width={260 * scale} height={160 * scale} viewBox="0 22 260 160">
       <Defs>
         <RadialGradient id="gl" gradientUnits="userSpaceOnUse" cx={130} cy={95} r={92}>
           <Stop offset="0" stopColor={base} stopOpacity={0.4} />
@@ -197,7 +197,7 @@ export default function Premium() {
           accessibilityRole="header"
           disabled={!__DEV__}
           onLongPress={() => setDevPremium(!premium)}
-          style={{ alignItems: "center", marginTop: compact ? -18 : -24 }}
+          style={{ alignItems: "center", marginTop: compact ? -8 : -12 }}
         >
           <T v="mono-label" muted style={{ fontSize: 11, letterSpacing: 4 }}>UNITCENT</T>
           <T v="serif-accent" color={fx.gold} style={{ fontSize: compact ? 38 : 44, lineHeight: compact ? 46 : 52 }}>{premium ? "Premium je aktivan" : "Premium"}</T>
