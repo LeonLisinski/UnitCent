@@ -24,7 +24,7 @@ const SOCIAL_PROOF: string | null = null;
 /** Što Premium otključava: zlatna medaljica s ikonom + kratak naziv. */
 const PERKS: { icon: string; title: string; hint: string; soon?: boolean; ai?: boolean }[] = [
   { icon: "calendar", title: "Cijela povijest", hint: "Svi mjeseci, ne samo zadnjih šest" },
-  { icon: "camera", title: "Neograničeno skeniranje računa", hint: "Slikaš račun, stavke se razvrstaju same", ai: true },
+  { icon: "camera", title: "Neograničeno skeniranje", hint: "Slikaš račun, stavke se razvrstaju same", ai: true },
   { icon: "chart", title: "Uvidi i savjeti", hint: "Gdje ti curi novac i što možeš uštedjeti", ai: true },
 ];
 
@@ -136,7 +136,7 @@ export default function Premium() {
   const [busy, setBusy] = useState(false);
   useEffect(() => track("paywall_viewed"), []);
   const { height } = useWindowDimensions();
-  const compact = height < 780; // manji ekrani: manji znak da sve stane bez skrolanja
+  const compact = height < 780; // manji ekrani: manji znak i razmaci da sve stane bez skrolanja
   const p = PLANS[plan];
   const perMonth = plan === "yearly" ? formatEur(Math.round(PLANS.yearly.cents / 12)) : null;
 
@@ -182,11 +182,6 @@ export default function Premium() {
               </T>
             ) : null}
             {first ? <Button variant="text" size="sm" label="Nastavi s besplatnom verzijom" onPress={() => router.replace("/" as Href)} /> : null}
-            {__DEV__ ? (
-              <Pressable accessibilityRole="button" hitSlop={8} onLongPress={() => setDevPremium(!premium)} style={{ minHeight: 24, justifyContent: "center" }}>
-                <T v="caption" muted style={{ fontSize: 10, opacity: 0.5 }}>razvoj: drži dugo za test Premium</T>
-              </Pressable>
-            ) : null}
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               {quiet("Uvjeti", () => void Linking.openURL("https://unitcent.com/uvjeti"))}
               <T v="caption" muted>·</T>
@@ -197,17 +192,22 @@ export default function Premium() {
       }
     >
       <View style={{ alignItems: "center" }}>
-        <Medallion hi={fx.goldFillHi} base={fx.goldFillMid} lo={fx.goldFillLo} scale={compact ? 0.78 : 1} />
-        <View style={{ alignItems: "center", marginTop: -26, gap: 0 }}>
+        <Medallion hi={fx.goldFillHi} base={fx.goldFillMid} lo={fx.goldFillLo} scale={compact ? 0.7 : 0.88} />
+        <Pressable
+          accessibilityRole="header"
+          disabled={!__DEV__}
+          onLongPress={() => setDevPremium(!premium)}
+          style={{ alignItems: "center", marginTop: compact ? -18 : -24 }}
+        >
           <T v="mono-label" muted style={{ fontSize: 11, letterSpacing: 4 }}>UNITCENT</T>
-          <T v="serif-accent" color={fx.gold} style={{ fontSize: 44, lineHeight: 52 }}>{premium ? "Premium je aktivan" : "Premium"}</T>
-        </View>
+          <T v="serif-accent" color={fx.gold} style={{ fontSize: compact ? 38 : 44, lineHeight: compact ? 46 : 52 }}>{premium ? "Premium je aktivan" : "Premium"}</T>
+        </Pressable>
         {SOCIAL_PROOF ? (
           <T muted style={{ textAlign: "center", maxWidth: 300, marginTop: 8 }}>{SOCIAL_PROOF}</T>
         ) : null}
       </View>
 
-      <View style={{ gap: 18 }}>
+      <View style={{ gap: compact ? 16 : 22 }}>
         {PERKS.map((perk) => (
           <View key={perk.title} style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
             <LinearGradient
@@ -215,29 +215,27 @@ export default function Premium() {
               locations={[0, 0.5, 1]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={{ width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center" }}
+              style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" }}
             >
-              <Icon name={perk.icon} size={21} color="#2a1d00" stroke={2.1} />
+              <Icon name={perk.icon} size={22} color="#2a1d00" stroke={2.1} />
             </LinearGradient>
-            <View style={{ flex: 1, gap: 1 }}>
+            <View style={{ flex: 1, gap: 2 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                 <T v="headline" style={{ fontWeight: "700", fontSize: 17, flexShrink: 1 }}>{perk.title}</T>
                 {perk.ai ? <AiTag /> : null}
-                {perk.soon ? <T v="caption" color={fx.gold} style={{ fontSize: 10.5, fontWeight: "800" }}>USKORO</T> : null}
               </View>
-              <T v="caption" muted style={{ fontSize: 12.5 }}>{perk.hint}</T>
+              <T v="caption" muted style={{ fontSize: 13 }}>{perk.hint}</T>
             </View>
           </View>
         ))}
       </View>
 
       {premium ? null : (
-        <View style={{ gap: 18 }}>
+        <View style={{ gap: 10 }}>
           <PlanToggle value={plan} onChange={setPlan} />
-          <View style={{ alignItems: "center", gap: 2 }}>
-            <T v="amount-hero" style={{ fontSize: 44, lineHeight: 50, letterSpacing: -1.5 }}>{p.priceLabel}</T>
-            <T v="caption" muted>{p.per}{perMonth ? ` · ${perMonth} mjesečno` : ""}</T>
-          </View>
+          <T v="caption" muted style={{ textAlign: "center" }}>
+            {perMonth ? `To je samo ${perMonth} mjesečno` : "Otkaži kad god želiš"}
+          </T>
         </View>
       )}
 
