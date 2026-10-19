@@ -99,4 +99,18 @@ create table savings_entries (
 );
 `,
   },
+  {
+    version: 3,
+    sql: `
+-- Budžeti po kategoriji (Premium): mjesečni limit; month = null znači „svaki mjesec“.
+create table budgets (
+  id text primary key,
+  category_id text not null references categories(id),
+  month text,
+  limit_cents integer not null check (limit_cents >= 0),
+  ${SYNC_COLS}
+);
+create unique index budgets_category_idx on budgets (category_id) where deleted_at is null and month is null;
+`,
+  },
 ];

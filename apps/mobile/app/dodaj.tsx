@@ -15,7 +15,7 @@ import { fitFontSize } from "../src/format";
 import { textStyle, useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
-import { addTransaction, deleteTransaction, getTransaction, listCategoriesByUsage, today, updateTransaction } from "../src/db/repo";
+import { addTransaction, categorySpent, deleteTransaction, getBudget, getTransaction, listCategoriesByUsage, today, updateTransaction } from "../src/db/repo";
 
 type Kind = "expense" | "income";
 
@@ -77,7 +77,18 @@ export default function Dodaj() {
     track("tx_added", { type, source: "manual", hasNote: note.trim().length > 0 });
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.back();
-    toast.show("Spremljeno", { label: "Poništi", run: () => deleteTransaction(tx.id) });
+    // Budžet kategorije (Premium): obavijest kad trošak prijeđe 80 % ili 100 % mjesečnog limita.
+    let msg = "Spremljeno";
+    const bud = type === "expense" && categoryId ? getBudget(categoryId) : null;
+    if (bud) {
+      const mo = date.slice(0, 7);
+      const after = categorySpent(categoryId!, mo);
+      const before = after - cents;
+      const catName = cats.find((c) => c.id === categoryId)?.name ?? "Kategorija";
+      if (before < bud.limitCents && after >= bud.limitCents) msg = `${catName}: limit probijen`;
+      else if (before < bud.limitCents * 0.8 && after >= bud.limitCents * 0.8) msg = `${catName}: 80 % limita`;
+    }
+    toast.show(msg, { label: "Poništi", run: () => deleteTransaction(tx.id) });
   };
 
   return (

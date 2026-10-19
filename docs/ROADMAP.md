@@ -39,7 +39,7 @@ Nije potrebno kriptirati sadržaj u bazi da bi se bilo u skladu s GDPR-om. Već 
 3. Cijene i opis trgovina; „Small Business Program" kod Applea.
 
 ## 3. Funkcionalnost Premiuma
-1. **Budžeti po kategoriji** (limit po mjesecu, upozorenje na 80 % i 100 %).
+1. **Budžeti po kategoriji** (NAPRAVLJENO 19. 10.: mjesečni limit u uređivanju kategorije, traka u Pregledu, obavijest pri unosu na 80 % i 100 %; Premium, free vidi zlatni lokot).
 2. **AI uvidi i savjeti** (dizajn dolje).
 3. **Obavijesti:** večernji podsjetnik za unos, upozorenje kad se približiš dnevnom limitu (opt-in).
 

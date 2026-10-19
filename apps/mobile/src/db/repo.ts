@@ -705,3 +705,51 @@ export function savingsStats(todayDate: LocalDate = today()): SavingsStats {
   const [ty, tm] = thisMonth.split("-").map(Number) as [number, number];
   return { totalCents, confirmedMonths: entries.length, streak, monthsUsing: Math.max(1, (ty - fy) * 12 + (tm - fm) + 1) };
 }
+
+/* ---------- budžeti po kategoriji (Premium) ---------- */
+
+export interface Budget {
+  categoryId: string;
+  limitCents: Cents;
+}
+
+export function listBudgets(): Budget[] {
+  return getDb()
+    .getAllSync<{ category_id: string; limit_cents: number }>("select category_id, limit_cents from budgets where deleted_at is null and month is null")
+    .map((r) => ({ categoryId: r.category_id, limitCents: r.limit_cents }));
+}
+
+export function getBudget(categoryId: string): Budget | null {
+  return listBudgets().find((b) => b.categoryId === categoryId) ?? null;
+}
+
+/** Postavlja mjesečni limit kategorije; `null` (ili 0) briše ga (meko brisanje). */
+export function setBudget(categoryId: string, limitCents: Cents | null): void {
+  const db = getDb();
+  const id = uuidV5(`budget:${categoryId}`, PLAN_NAMESPACE);
+  const t = nowIso();
+  db.withTransactionSync(() => {
+    if (!limitCents || limitCents <= 0) {
+      db.runSync("update budgets set deleted_at = ?, client_updated_at = ?, rev = rev + 1 where id = ? and deleted_at is null", [t, t, id]);
+    } else {
+      db.runSync(
+        `insert into budgets (id, category_id, month, limit_cents, created_at, client_updated_at) values (?, ?, null, ?, ?, ?)
+         on conflict(id) do update set limit_cents = excluded.limit_cents, client_updated_at = excluded.client_updated_at, rev = rev + 1, deleted_at = null`,
+        [id, categoryId, Math.round(limitCents), t, t],
+      );
+    }
+    const r = db.getFirstSync<Record<string, unknown>>("select * from budgets where id = ?", [id]);
+    if (r) enqueue("budgets", id, "upsert", r);
+  });
+  notifyDbChanged();
+}
+
+/** Potrošeno u kategoriji u mjesecu (samo troškovi; uključuje i knjižene pretplate te kategorije). */
+export function categorySpent(categoryId: string, month: YearMonth): Cents {
+  return (
+    getDb().getFirstSync<{ s: number | null }>(
+      "select sum(amount_cents) as s from transactions where deleted_at is null and type = 'expense' and category_id = ? and local_date >= ? and local_date <= ?",
+      [categoryId, `${month}-01`, `${month}-31`],
+    )?.s ?? 0
+  );
+}

@@ -19,7 +19,7 @@ import { HERO, Hero, ListRow, MonthSwitcher, minMonth, PageHeader, RowAmount, Se
 import { useTheme } from "../../src/theme";
 import { freeMinMonth, usePremium } from "../../src/premium";
 import { T } from "../../src/ui";
-import { listCategories, listTransactionsInMonth, today } from "../../src/db/repo";
+import { listBudgets, listCategories, listTransactionsInMonth, today } from "../../src/db/repo";
 
 function nextMonth(ym: YearMonth): YearMonth {
   const [y, m] = ym.split("-").map(Number) as [number, number];
@@ -45,6 +45,8 @@ export default function Pregled() {
   const prevTotal = monthExpenseTotal(prevTxs, previousMonth(month));
   const change = percentChange(total, prevTotal);
   const byCat = totalsByCategory(txs, month);
+  const budgets = useDb(() => listBudgets());
+  const budgetOf = new Map(budgets.map((b) => [b.categoryId, b.limitCents]));
   const catById = new Map(cats.map((c) => [c.id, c]));
   const colorOf = (token: string) => (colors[token as keyof typeof colors] as string | undefined) ?? colors["ink-muted"];
 
@@ -116,6 +118,10 @@ export default function Pregled() {
                 const col = colorOf(c?.colorToken ?? "cat-ostalo");
                 const pct = total > 0 ? Math.round((row.totalCents / total) * 100) : 0;
                 const share = total > 0 ? row.totalCents / total : 0;
+                // Budžet kategorije (Premium): traka pokazuje udio limita, a boja stanje (žuto od 80 %, crveno preko 100 %).
+                const limit = row.categoryId ? budgetOf.get(row.categoryId) : undefined;
+                const used = limit ? row.totalCents / limit : 0;
+                const barColor = limit ? (used >= 1 ? colors.danger : used >= 0.8 ? colors.warning : col) : col;
                 return (
                   <ListRow
                     key={row.categoryId ?? "none"}
@@ -124,7 +130,7 @@ export default function Pregled() {
                     title={c?.name ?? "Bez kategorije"}
                     subtitle={
                       <View style={{ height: 5, borderRadius: 3, backgroundColor: fx.track, overflow: "hidden", marginTop: 4 }}>
-                        <View style={{ width: `${Math.max(2, share * 100)}%`, height: "100%", borderRadius: 3, backgroundColor: col }} />
+                        <View style={{ width: `${Math.min(100, Math.max(2, (limit ? used : share) * 100))}%`, height: "100%", borderRadius: 3, backgroundColor: barColor }} />
                       </View>
                     }
                     onPress={() =>
@@ -133,7 +139,9 @@ export default function Pregled() {
                     right={
                       <View style={{ alignItems: "flex-end", gap: 2 }}>
                         <RowAmount>{formatEur(row.totalCents)}</RowAmount>
-                        <T v="caption" muted>{pct} %</T>
+                        <T v="caption" color={limit && used >= 1 ? colors.danger : undefined} muted={!(limit && used >= 1)}>
+                          {limit ? `od ${formatEur(limit)}` : `${pct} %`}
+                        </T>
                       </View>
                     }
                   />

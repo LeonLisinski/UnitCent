@@ -7,7 +7,11 @@ import { Icon } from "../src/icons";
 import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
-import { addCategory, deleteCategory, getCategory, updateCategory } from "../src/db/repo";
+import { addCategory, deleteCategory, getBudget, getCategory, setBudget, updateCategory } from "../src/db/repo";
+import { usePremium } from "../src/premium";
+import { AmountField } from "../src/components";
+import { parseAmount, type Cents } from "@unitcent/core";
+import type { Href } from "expo-router";
 
 const COLORS = ["cat-hrana", "cat-auto", "cat-stan", "cat-zabava", "cat-zdravlje", "cat-pretplate", "cat-cigarete", "cat-obitelj", "cat-ostalo"];
 const ICONS = [
@@ -26,12 +30,21 @@ export default function Kategorija() {
   const [name, setName] = useState(existing?.name ?? "");
   const [color, setColor] = useState(existing?.colorToken ?? COLORS[0]!);
   const [icon, setIcon] = useState(existing?.icon ?? ICONS[0]!);
+  const premium = usePremium();
+  const existingBudget = existing ? getBudget(existing.id)?.limitCents ?? null : null;
+  const [limitText, setLimitText] = useState(existingBudget ? (existingBudget % 100 === 0 ? String(existingBudget / 100) : (existingBudget / 100).toFixed(2).replace(".", ",")) : "");
+  const limitCents: Cents | null = limitText ? parseAmount(limitText) : null;
   const valid = name.trim().length > 0;
 
   const save = () => {
     if (!valid) return;
-    if (existing) updateCategory(existing.id, { name, icon, colorToken: color });
-    else addCategory({ name, icon, colorToken: color });
+    if (existing) {
+      updateCategory(existing.id, { name, icon, colorToken: color });
+      if (premium) setBudget(existing.id, limitCents);
+    } else {
+      const created = addCategory({ name, icon, colorToken: color });
+      if (premium && limitCents) setBudget(created.id, limitCents);
+    }
     router.back();
     toast.show(existing ? "Kategorija spremljena" : "Kategorija dodana");
   };
@@ -69,6 +82,23 @@ export default function Kategorija() {
       </View>
 
       <TextField label="Naziv" value={name} onChangeText={setName} maxLength={24} autoFocus={!existing} placeholder="npr. Ljubimci" />
+
+      {premium ? (
+        <AmountField label="Mjesečni limit (neobavezno)" value={limitText} onChange={(t) => setLimitText(t)} placeholder="npr. 200" />
+      ) : (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push("/premium" as Href)}
+          style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 56, paddingHorizontal: 16, borderRadius: 16, borderWidth: 1, borderColor: fx.gold, backgroundColor: fx.goldSoft, opacity: pressed ? 0.7 : 1 })}
+        >
+          <Icon name="lock" size={20} color={fx.gold} />
+          <View style={{ flex: 1 }}>
+            <T v="headline" style={{ fontWeight: "700" }}>Mjesečni limit kategorije</T>
+            <T v="caption" muted>Upozorenje na 80 % i 100 %. Premium.</T>
+          </View>
+          <Icon name="chev" size={18} color={fx.gold} />
+        </Pressable>
+      )}
 
       <View style={{ gap: 10 }}>
         <T v="mono-label" muted style={{ fontSize: 11, opacity: 0.8 }}>Boja</T>
