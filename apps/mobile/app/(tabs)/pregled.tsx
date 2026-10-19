@@ -19,6 +19,8 @@ import { HERO, Hero, ListRow, MonthSwitcher, minMonth, PageHeader, RowAmount, Se
 import { useTheme } from "../../src/theme";
 import { freeMinMonth, usePremium } from "../../src/premium";
 import { T } from "../../src/ui";
+import { Icon } from "../../src/icons";
+import { useInsights } from "../../src/insights";
 import { listBudgets, listCategories, listTransactionsInMonth, today } from "../../src/db/repo";
 
 function nextMonth(ym: YearMonth): YearMonth {
@@ -65,6 +67,7 @@ export default function Pregled() {
   for (const t of txs) if (t.type === "expense" && t.source !== "recurring") perDay[Number(t.localDate.slice(8)) - 1]! += t.amountCents;
   const variable = perDay.reduce((s, v) => s + v, 0);
   const avgPerDay = dayNo > 0 ? Math.round(variable / dayNo) : 0;
+  const insights = useInsights(month, variable > 0);
 
   return (
     <TabScreen>
@@ -98,7 +101,33 @@ export default function Pregled() {
         </Animated.View>
       ) : null}
 
-      <Animated.View entering={enter(3)}>
+      {insights.status === "ok" ? (
+        <Animated.View entering={enter(3)}>
+          <Section title="Uvidi">
+            <View>
+              {insights.items.map((it, i) => {
+                const tint = it.locked ? fx.gold : it.tone === "warn" ? colors.warning : it.tone === "good" ? colors.brand : colors["ink-muted"];
+                return (
+                  <ListRow
+                    key={it.id}
+                    first={i === 0}
+                    left={
+                      <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: it.locked ? fx.goldSoft : fx.track }}>
+                        <Icon name={it.locked ? "lock" : it.icon} size={20} color={tint} />
+                      </View>
+                    }
+                    title={it.locked ? "Uvid za Premium" : it.title ?? ""}
+                    subtitle={it.locked ? undefined : <T v="caption" muted>{it.body}</T>}
+                    onPress={it.locked ? () => router.push("/premium" as Href) : undefined}
+                  />
+                );
+              })}
+            </View>
+          </Section>
+        </Animated.View>
+      ) : null}
+
+      <Animated.View entering={enter(4)}>
         <Section
           title="Kategorije"
           right={

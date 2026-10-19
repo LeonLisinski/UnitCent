@@ -40,7 +40,7 @@ Nije potrebno kriptirati sadržaj u bazi da bi se bilo u skladu s GDPR-om. Već 
 
 ## 3. Funkcionalnost Premiuma
 1. **Budžeti po kategoriji** (NAPRAVLJENO 19. 10.: mjesečni limit u uređivanju kategorije, traka u Pregledu, obavijest pri unosu na 80 % i 100 %; Premium, free vidi zlatni lokot).
-2. **AI uvidi i savjeti** (dizajn dolje).
+2. **AI uvidi i savjeti** (NAPRAVLJENO 20. 10.: Edge Function `insights` računa brojke, Gemini samo preformulira uz provjeru brojki, keš po mjesecu; sekcija „Uvidi“ u Pregledu; free vidi 1 uvid, ostali zaključani; čeka test na uređaju).
 3. **Obavijesti:** večernji podsjetnik za unos, upozorenje kad se približiš dnevnom limitu (opt-in).
 
 ### AI uvidi: kako bih ih napravio
