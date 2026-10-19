@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Linking, Pressable, View, useWindowDimensions } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Path, RadialGradient, Rect, Stop } from "react-native-svg";
@@ -9,7 +9,7 @@ import { track } from "../src/analytics";
 import { Button } from "../src/components";
 import { Icon } from "../src/icons";
 import { ModalScreen } from "../src/layout";
-import { PLANS, YEARLY_SAVING_PCT, setDevPremium, usePremium, type PlanKey } from "../src/premium";
+import { PLANS, TRIAL_DAYS, TRIAL_ENABLED, YEARLY_SAVING_PCT, setDevPremium, usePremium, type PlanKey } from "../src/premium";
 import { purchasePlan, type PurchaseResult } from "../src/purchases";
 import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
@@ -131,6 +131,7 @@ export default function Premium() {
   const router = useRouter();
   const toast = useToast();
   const premium = usePremium();
+  const { first } = useLocalSearchParams<{ first?: string }>(); // prikaz odmah nakon početka: uz „Nastavi besplatno“
   const [plan, setPlan] = useState<PlanKey>("yearly");
   const [busy, setBusy] = useState(false);
   useEffect(() => track("paywall_viewed"), []);
@@ -170,7 +171,17 @@ export default function Premium() {
           <Button label="Gotovo" onPress={() => router.back()} />
         ) : (
           <>
-            <Button label={`Nastavi · ${p.priceLabel} ${p.per}`} disabled={busy} onPress={() => void buy()} />
+            <Button
+              label={TRIAL_ENABLED ? `Isprobaj ${TRIAL_DAYS} dana besplatno` : `Nastavi · ${p.priceLabel} ${p.per}`}
+              disabled={busy}
+              onPress={() => void buy()}
+            />
+            {TRIAL_ENABLED ? (
+              <T v="caption" muted style={{ textAlign: "center" }}>
+                Zatim {p.priceLabel} {p.per}. Otkaži kad god, prije kraja probnog razdoblja.
+              </T>
+            ) : null}
+            {first ? <Button variant="text" size="sm" label="Nastavi s besplatnom verzijom" onPress={() => router.replace("/" as Href)} /> : null}
             {__DEV__ ? (
               <Pressable accessibilityRole="button" hitSlop={8} onLongPress={() => setDevPremium(!premium)} style={{ minHeight: 24, justifyContent: "center" }}>
                 <T v="caption" muted style={{ fontSize: 10, opacity: 0.5 }}>razvoj: drži dugo za test Premium</T>

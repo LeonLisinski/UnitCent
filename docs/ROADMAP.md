@@ -32,6 +32,8 @@ Nije potrebno kriptirati sadržaj u bazi da bi se bilo u skladu s GDPR-om. Već 
 7. **Sigurnosne kopije baze** (Supabase PITR traži plaćeni plan) i staging projekt.
 
 ## 2. Zarada (kad su računi trgovina spremni)
+**Probno razdoblje (odluka 19. 10.):** svaki novi korisnik nakon početka vidi Premium s opcijom „Isprobaj 7 dana besplatno" (pretplata u trgovini s introductory offer: kartica, Apple Pay ili Google Pay se odobri unaprijed, naplata tek nakon 7 dana) i jasnom, jednako vidljivom opcijom „Nastavi s besplatnom verzijom". Prikaz uvjeta mora biti jasan (cijena nakon probnog, otkazivanje). Kod je pripremljen i **ugašen** zastavicom `EXPO_PUBLIC_TRIAL` dok proizvodi u trgovinama nisu postavljeni. Plaćanje u aplikaciji ide isključivo preko trgovina (kartica, Apple Pay, Google Pay; PayPal postoji u Google Playu). Izravna naplata karticom ili PayPalom (Stripe/Paddle) moguća je samo kao zasebna kupnja na webu uz prijavu, a trgovine ograničavaju njezino reklamiranje unutar aplikacije; odluka kasnije.
+
 1. RevenueCat + proizvodi (`unitcent_premium_monthly`, `unitcent_premium_yearly`) u App Store Connectu i Google Playu; test u sandboxu.
 2. Povezati paywall i vratiti kupnju (kod je gotov, treba ključeve); provjera webhooka s pravim događajima.
 3. Cijene i opis trgovina; „Small Business Program" kod Applea.

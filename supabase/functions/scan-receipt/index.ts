@@ -7,7 +7,9 @@ import { validate, type RawScan } from "./validate.ts";
 
 const FREE_LIMIT = 3;
 const PREMIUM_LIMIT = 100;
-const MAX_BASE64 = 4_000_000; // ~3 MB slike; klijent komprimira na ~1600 px
+const MAX_BASE64 = 4_000_000; // ~3 MB po slici; klijent komprimira na ~1600 px
+const MAX_PARTS = 4; // dugi računi: do 4 dijela, a broji se kao JEDNO skeniranje
+const MAX_TOTAL = 12_000_000;
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -36,17 +38,21 @@ Deno.serve(async (req) => {
   if (authErr || !u.user) return json({ error: "unauthorized" }, 401);
   const uid = u.user.id;
 
-  let body: { image_base64?: string; mime?: string; qr_total_cents?: number; model?: string };
+  let body: { image_base64?: string; mime?: string; images?: { data?: string; mime?: string }[]; qr_total_cents?: number; model?: string };
   try {
     body = await req.json();
   } catch {
     return json({ error: "bad_request" }, 400);
   }
-  const image = body.image_base64;
-  const mime = body.mime ?? "image/jpeg";
-  if (!image || typeof image !== "string" || image.length > MAX_BASE64 || !/^image\/(jpeg|png|webp|heic|heif)$/.test(mime)) {
-    return json({ error: "bad_image" }, 400);
-  }
+  // Jedna slika (staro: image_base64) ili više dijelova (images[]).
+  const rawImages = Array.isArray(body.images) && body.images.length > 0 ? body.images : [{ data: body.image_base64, mime: body.mime }];
+  const images = rawImages.map((i) => ({ data: i.data, mime: i.mime ?? "image/jpeg" }));
+  const okImages =
+    images.length >= 1 &&
+    images.length <= MAX_PARTS &&
+    images.every((i) => typeof i.data === "string" && i.data.length > 0 && i.data.length <= MAX_BASE64 && /^image\/(jpeg|png|webp|heic|heif)$/.test(i.mime)) &&
+    images.reduce((s, i) => s + (i.data?.length ?? 0), 0) <= MAX_TOTAL;
+  if (!okImages) return json({ error: "bad_image" }, 400);
 
   const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
@@ -76,8 +82,7 @@ Deno.serve(async (req) => {
     raw = await scanWithGemini({
       apiKey: Deno.env.get("GEMINI_API_KEY") ?? "",
       model,
-      imageBase64: image,
-      mime,
+      images: images as { data: string; mime: string }[],
       categories: cats ?? [],
     });
   } catch (e) {

@@ -14,7 +14,7 @@ import { useToast } from "../src/toast";
 import { T } from "../src/ui";
 import { track } from "../src/analytics";
 import { refreshScanUsage, scansWord, setScanUsed, useScanQuota } from "../src/scanQuota";
-import { ScanFailure, parseFiscalQr, prepareImage, scanReceipt, setLastScan, type FiscalQr } from "../src/scan";
+import { MAX_PARTS, ScanFailure, parseFiscalQr, prepareImage, scanReceipt, setLastScan, type FiscalQr } from "../src/scan";
 
 /**
  * Skeniranje računa: kamera + QR kod fiskalnog računa (izvor istine za ukupni iznos) + odabir iz galerije.
@@ -32,21 +32,26 @@ export default function Skeniraj() {
   const [busy, setBusy] = useState(false);
   const [frozen, setFrozen] = useState<string | null>(null); // snimljena slika ostaje na ekranu dok se čita
   const [flash, setFlash] = useState(false);
+  // Dugi računi: snimi se više dijelova (do 4), pa se čitaju zajedno i broje kao jedno skeniranje.
+  const [parts, setParts] = useState<string[]>([]);
+  const [review, setReview] = useState(false);
 
   const locked = !quota.premium && quota.remaining === 0;
   const goPremium = () => router.replace("/premium" as Href);
 
-  const process = async (uri: string) => {
-    setFrozen(uri);
+  const process = async (uris: string[]) => {
+    setFrozen(uris[uris.length - 1] ?? null);
     setBusy(true);
     try {
-      const b64 = await prepareImage(uri);
-      const result = await scanReceipt(b64, qr?.totalCents);
+      const images = await Promise.all(uris.map((u) => prepareImage(u)));
+      const result = await scanReceipt(images, qr?.totalCents);
       setScanUsed(result.usage.used);
       track("scan_result", { status: result.status, items: result.items.length, ms: Math.round(((result as unknown as { ms?: number }).ms ?? 0)), qr: !!qr?.totalCents }); // poslužitelj ne naplaćuje nečitljive račune: broj je uvijek točan
       if (result.status === "unreadable") {
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         toast.show("Račun nije čitljiv. Probaj bliže i uz više svjetla.");
+        setParts([]);
+        setReview(false);
         return;
       }
       setLastScan(result, qr);
@@ -80,14 +85,22 @@ export default function Skeniraj() {
     setFlash(true);
     setTimeout(() => setFlash(false), 140);
     const pic = await camera.current.takePictureAsync({ quality: 0.9, skipProcessing: false });
-    if (pic?.uri) await process(pic.uri);
+    if (pic?.uri) {
+      setParts((p) => [...p, pic.uri].slice(0, MAX_PARTS));
+      setReview(true); // pregled snimke: „Pročitaj“ ili „Dodaj dio“
+    }
   };
 
   const pick = async () => {
     if (busy) return;
     if (locked) return goPremium();
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.9 });
-    if (!res.canceled && res.assets[0]) await process(res.assets[0].uri);
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.9,
+      allowsMultipleSelection: true,
+      selectionLimit: MAX_PARTS,
+    });
+    if (!res.canceled && res.assets.length > 0) await process(res.assets.map((a) => a.uri));
   };
 
   if (!permission) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
@@ -180,7 +193,38 @@ export default function Skeniraj() {
           <View style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: "rgba(7,11,11,0.7)" }}>
             <T v="caption" color="#ffffff">Uperi cijeli račun, uz QR kod ako ga ima</T>
           </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 36 }}>
+          {review ? (
+            <View style={{ alignItems: "center", gap: 14 }}>
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                {parts.map((u, i) => (
+                  <Pressable
+                    key={u + i}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Ukloni dio ${i + 1}`}
+                    onPress={() => {
+                      const next = parts.filter((_, k) => k !== i);
+                      setParts(next);
+                      if (next.length === 0) setReview(false);
+                    }}
+                    style={{ width: 46, height: 62, borderRadius: 8, overflow: "hidden", borderWidth: 1.5, borderColor: colors.brand }}
+                  >
+                    <Image source={{ uri: u }} style={{ width: "100%", height: "100%" }} />
+                    <View style={{ position: "absolute", right: 2, top: 2, width: 16, height: 16, borderRadius: 8, backgroundColor: "rgba(7,11,11,0.75)", alignItems: "center", justifyContent: "center" }}>
+                      <Icon name="x" size={10} color="#ffffff" stroke={2.6} />
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                {parts.length < MAX_PARTS ? (
+                  <Button variant="secondary" size="sm" icon="plus" label="Dodaj dio" onPress={() => setReview(false)} />
+                ) : null}
+                <Button label={parts.length > 1 ? `Pročitaj (${parts.length})` : "Pročitaj"} onPress={() => void process(parts)} />
+              </View>
+              <T v="caption" color="#9aa7a2">{parts.length > 1 ? "Dijelovi se čitaju kao jedan račun" : "Dug račun? Dodaj sljedeći dio"}</T>
+            </View>
+          ) : null}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 36, opacity: review ? 0 : 1 }} pointerEvents={review ? "none" : "auto"}>
             <RoundButton icon="image" label="Odaberi iz galerije" onPress={() => void pick()} />
             <Pressable
               accessibilityRole="button"
@@ -204,7 +248,7 @@ export default function Skeniraj() {
         </View>
       </Safe>
 
-      {frozen ? <Image source={{ uri: frozen }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
+      {frozen || (review && parts.length > 0) ? <Image source={{ uri: frozen ?? parts[parts.length - 1]! }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
       {flash ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: "#ffffff", opacity: 0.55 }]} /> : null}
 
       {busy ? (

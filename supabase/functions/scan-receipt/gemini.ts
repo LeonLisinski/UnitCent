@@ -30,9 +30,15 @@ function zagrebToday(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Zagreb" }).format(new Date());
 }
 
-function prompt(categories: { id: string; name: string }[]): string {
+function prompt(categories: { id: string; name: string }[], parts: number): string {
   const list = categories.map((c) => `- ${c.id}: ${c.name}`).join("\n");
-  return `Ti čitaš hrvatski fiskalni račun sa slike i vraćaš JSON prema zadanoj shemi.
+  const multi =
+    parts > 1
+      ? `
+Dobivaš ${parts} slike koje su DIJELOVI ISTOG računa, redom od vrha prema dnu. Dijelovi se mogu preklapati: svaki redak računa vrati samo JEDNOM. Ukupni iznos, datum i trgovina obično su na prvom ili zadnjem dijelu.
+`
+      : "";
+  return `Ti čitaš hrvatski fiskalni račun sa slike i vraćaš JSON prema zadanoj shemi.${multi}
 
 Pravila:
 - Sve iznose vrati kao cijele brojeve u CENTIMA (12,99 € = 1299). Nikad decimale.
@@ -53,8 +59,7 @@ ${list}`;
 export async function scanWithGemini(args: {
   apiKey: string;
   model: string;
-  imageBase64: string;
-  mime: string;
+  images: { data: string; mime: string }[];
   categories: { id: string; name: string }[];
 }): Promise<RawScan> {
   if (!args.apiKey) throw new Error("GEMINI_API_KEY nije postavljen");
@@ -62,7 +67,7 @@ export async function scanWithGemini(args: {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": args.apiKey },
     body: JSON.stringify({
-      contents: [{ role: "user", parts: [{ text: prompt(args.categories) }, { inline_data: { mime_type: args.mime, data: args.imageBase64 } }] }],
+      contents: [{ role: "user", parts: [{ text: prompt(args.categories, args.images.length) }, ...args.images.map((im) => ({ inline_data: { mime_type: im.mime, data: im.data } }))] }],
       generationConfig: { temperature: 0, responseMimeType: "application/json", responseSchema: SCHEMA },
     }),
     signal: AbortSignal.timeout(45_000),

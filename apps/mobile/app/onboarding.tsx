@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, TextInput, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
+import { TRIAL_ENABLED } from "../src/premium";
 import Animated, { FadeInRight, FadeOutLeft } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import {
@@ -84,7 +85,10 @@ export default function Onboarding() {
     kvSet("onboarded", "1");
     void rescheduleReminders();
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    router.replace("/");
+    if (TRIAL_ENABLED) {
+      router.replace("/");
+      setTimeout(() => router.push({ pathname: "/premium", params: { first: "1" } } as Href), 350);
+    } else router.replace("/");
   };
 
   const togglePick = (key: string, suggested: Cents, day: number) => {

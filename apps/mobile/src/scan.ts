@@ -76,13 +76,14 @@ export async function prepareImage(uri: string): Promise<string> {
   return out.base64;
 }
 
-export async function scanReceipt(imageBase64: string, qrTotalCents?: Cents | null): Promise<ScanResult> {
+/** `images`: jedan ili više dijelova istog računa (do 4), od vrha prema dnu; broji se kao JEDNO skeniranje. */
+export async function scanReceipt(images: string[], qrTotalCents?: Cents | null): Promise<ScanResult> {
   if (!supabase) throw new ScanFailure("no-session");
   const { data: s } = await supabase.auth.getSession();
   if (!s.session) throw new ScanFailure("no-session");
 
   const { data, error } = await supabase.functions.invoke("scan-receipt", {
-    body: { image_base64: imageBase64, mime: "image/jpeg", ...(qrTotalCents ? { qr_total_cents: qrTotalCents } : {}) },
+    body: { images: images.map((data) => ({ data, mime: "image/jpeg" })), ...(qrTotalCents ? { qr_total_cents: qrTotalCents } : {}) },
   });
   if (error) {
     const res = (error as { context?: Response }).context;
@@ -106,3 +107,5 @@ export const getLastScan = () => last;
 export const clearLastScan = (): void => {
   last = null;
 };
+
+export const MAX_PARTS = 4;

@@ -67,3 +67,11 @@ export function setDevPremium(on: boolean): void {
 /** Broj skeniranja mjesečno: besplatno 3, Premium 100 (pošteno korištenje). Mora odgovarati poslužitelju (scan-receipt). */
 export const FREE_SCANS = 3;
 export const PREMIUM_SCANS = 100;
+
+/**
+ * Probno razdoblje: svaki novi korisnik može isprobati Premium 7 dana besplatno (pretplata u trgovini s „introductory offer“,
+ * kartica/Apple Pay/Google Pay se odobri unaprijed, naplata tek nakon 7 dana). Uključuje se kad su proizvodi u trgovinama
+ * postavljeni s probnim razdobljem (EXPO_PUBLIC_TRIAL=1), da aplikacija ne obećava nešto što još ne postoji.
+ */
+export const TRIAL_DAYS = 7;
+export const TRIAL_ENABLED = process.env.EXPO_PUBLIC_TRIAL === "1";
