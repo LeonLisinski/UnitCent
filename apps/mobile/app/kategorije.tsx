@@ -26,6 +26,7 @@ export default function Kategorije() {
     { kind: "expense" as const, label: "Troškovi", items: cats.filter((c) => c.kind === "expense") },
     { kind: "income" as const, label: "Prihodi", items: cats.filter((c) => c.kind === "income") },
   ];
+  const [tab, setTab] = useState<"expense" | "income">("expense");
   const [selecting, setSelecting] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
 
@@ -91,15 +92,35 @@ export default function Kategorije() {
               )}
             </View>
           </View>
-          <T v="caption" muted>
-            {selecting ? "Dodirni kategorije koje želiš obrisati." : "Dodirni za uređivanje."}
-          </T>
+          <View style={{ flexDirection: "row", alignSelf: "center", padding: 4, borderRadius: 999, backgroundColor: fx.track, gap: 4 }}>
+            {groups.map((g) => {
+              const on = tab === g.kind;
+              return (
+                <Pressable
+                  key={g.kind}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: on }}
+                  onPress={() => {
+                    if (on) return;
+                    void Haptics.selectionAsync();
+                    setPicked(new Set());
+                    setTab(g.kind);
+                  }}
+                  style={{ minHeight: 44, minWidth: 120, paddingHorizontal: 18, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: on ? fx.glass : "transparent", borderWidth: 1, borderColor: on ? fx.glassBorder : "transparent" }}
+                >
+                  <T v="body" color={on ? colors.ink : colors["ink-muted"]} style={{ fontWeight: "800" }}>
+                    {g.label} <T v="caption" muted>{g.items.length}</T>
+                  </T>
+                </Pressable>
+              );
+            })}
+          </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: space["5"] }}>
-            {groups.map((g) => (
+            {groups.filter((g) => g.kind === tab).map((g) => (
               <View key={g.kind} style={{ marginBottom: space["4"] }}>
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 40 }}>
-                  <T v="mono-label" muted style={{ fontSize: 11, opacity: 0.8 }}>{g.label}</T>
+                  <T v="caption" muted>{selecting ? "Dodirni kategorije koje želiš obrisati." : "Dodirni za uređivanje."}</T>
                   {selecting ? null : (
                     <Pressable
                       accessibilityRole="button"
