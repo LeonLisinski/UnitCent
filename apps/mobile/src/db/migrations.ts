@@ -120,4 +120,31 @@ create unique index budgets_category_idx on budgets (category_id) where deleted_
 alter table categories add column kind text not null default 'expense' check (kind in ('expense','income'));
 `,
   },
+  {
+    version: 5,
+    sql: `
+-- Pročitani računi i njihove stavke (slika se ne sprema; stavke ostaju za uvid i ispravke).
+create table receipts (
+  id text primary key,
+  merchant text,
+  total_cents integer not null check (total_cents >= 0),
+  issued_at text,
+  fiscal_ref text,
+  status text not null default 'ok' check (status in ('pending','ok','review','failed')),
+  ${SYNC_COLS}
+);
+create table receipt_items (
+  id text primary key,
+  receipt_id text not null references receipts(id),
+  raw_name text not null,
+  name text not null,
+  amount_cents integer not null,
+  category_id text references categories(id),
+  confidence real,
+  line_type text not null default 'item' check (line_type in ('item','discount','deposit')),
+  ${SYNC_COLS}
+);
+create index receipt_items_receipt_idx on receipt_items (receipt_id) where deleted_at is null;
+`,
+  },
 ];

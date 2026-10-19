@@ -1,4 +1,4 @@
-# UnitCent: plan do lansiranja (ažurirano 19. 10. 2026.)
+﻿# UnitCent: plan do lansiranja (ažurirano 19. 10. 2026.)
 
 Prioritizirani popis svega što je ostalo. Redoslijed ide od onoga što otključava ostalo (odluke i mjerenje) prema onome što dolazi nakon prve beta.
 
@@ -24,7 +24,7 @@ Nije potrebno kriptirati sadržaj u bazi da bi se bilo u skladu s GDPR-om. Već 
 
 ## 1. Prije prve zatvorene bete (najvažnije)
 1. **Račun za mjerenje skeniranja:** 20 do 50 pravih računa (različite trgovine, dugi, s popustima, izblijedjeli); usporedba Gemini / Claude (D-11); potvrda formata QR koda; odluka o modelu.
-2. **Spremanje stavki računa** (lokalno i sync), ispravak naziva i iznosa stavke, učenje iz ispravaka.
+2. **Spremanje stavki računa** (NAPRAVLJENO 20. 10.: lokalno i sync, pregled stavki iz uređivanja troška; ispravak naziva/iznosa i učenje iz ispravaka tek slijede).
 3. **EAS build** (iOS i Android), TestFlight i Google Play interno testiranje; test Apple i Google prijave na buildu; test na malom ekranu (iPhone SE) i Androidu s trakom od 3 gumba.
 4. **Pravno:** podaci o pružatelju (obrt?) u Uvjetima i Privatnosti, e-adresa podrške (D-08), pravni pregled.
 5. **Pristupačnost:** veličina fonta (Dynamic Type), kontrast, čitač zaslona.

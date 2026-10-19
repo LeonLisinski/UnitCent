@@ -62,6 +62,7 @@ export interface Transaction {
   occurredAt: string;
   source: "manual" | "scan" | "recurring";
   recurringId: string | null;
+  receiptId: string | null;
 }
 
 export interface MonthPlan {
@@ -211,11 +212,11 @@ export function restoreCategory(id: string): void {
 
 type TxRow = {
   id: string; amount_cents: number; type: "expense" | "income"; category_id: string | null; note: string | null;
-  merchant: string | null; local_date: string; occurred_at: string; source: Transaction["source"]; recurring_id: string | null;
+  merchant: string | null; local_date: string; occurred_at: string; source: Transaction["source"]; recurring_id: string | null; receipt_id?: string | null;
 };
 const mapTx = (r: TxRow): Transaction => ({
   id: r.id, amountCents: r.amount_cents, type: r.type, categoryId: r.category_id, note: r.note, merchant: r.merchant,
-  localDate: r.local_date, occurredAt: r.occurred_at, source: r.source, recurringId: r.recurring_id,
+  localDate: r.local_date, occurredAt: r.occurred_at, source: r.source, recurringId: r.recurring_id, receiptId: r.receipt_id ?? null,
 });
 
 export function addTransaction(input: {
@@ -226,6 +227,7 @@ export function addTransaction(input: {
   localDate?: LocalDate;
   source?: "manual" | "scan";
   merchant?: string | null;
+  receiptId?: string | null;
 }): Transaction {
   const db = getDb();
   const id = newId();
@@ -241,12 +243,13 @@ export function addTransaction(input: {
     occurred_at: t,
     source: input.source ?? ("manual" as const),
     recurring_id: null as string | null,
+    receipt_id: input.receiptId ?? null,
   };
   db.withTransactionSync(() => {
     db.runSync(
-      `insert into transactions (id, amount_cents, type, category_id, note, merchant, local_date, occurred_at, source, recurring_id, created_at, client_updated_at)
-       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [row.id, row.amount_cents, row.type, row.category_id, row.note, row.merchant, row.local_date, row.occurred_at, row.source, row.recurring_id, t, t],
+      `insert into transactions (id, amount_cents, type, category_id, note, merchant, local_date, occurred_at, source, recurring_id, receipt_id, created_at, client_updated_at)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [row.id, row.amount_cents, row.type, row.category_id, row.note, row.merchant, row.local_date, row.occurred_at, row.source, row.recurring_id, row.receipt_id, t, t],
     );
     enqueue("transactions", id, "upsert", { ...row, client_updated_at: t });
   });
@@ -762,4 +765,69 @@ export function categorySpent(categoryId: string, month: YearMonth): Cents {
       [categoryId, `${month}-01`, `${month}-31`],
     )?.s ?? 0
   );
+}
+
+/* ---------- računi (pročitani skenom) ---------- */
+
+export interface ReceiptItem {
+  id: string;
+  name: string;
+  rawName: string;
+  amountCents: Cents;
+  categoryId: string | null;
+  lineType: "item" | "discount" | "deposit";
+}
+
+export interface Receipt {
+  id: string;
+  merchant: string | null;
+  totalCents: Cents;
+  date: LocalDate | null;
+  items: ReceiptItem[];
+}
+
+/** Sprema račun i sve njegove stavke u jednoj transakciji (slika se ne sprema). Vraća ID računa. */
+export function saveReceipt(input: {
+  merchant: string | null;
+  totalCents: Cents;
+  date: LocalDate;
+  items: { raw_name: string; name: string; amount_cents: number; category_id: string | null; line_type: "item" | "discount" | "deposit"; confidence: number }[];
+}): string {
+  const db = getDb();
+  const id = newId();
+  const t = nowIso();
+  db.withTransactionSync(() => {
+    db.runSync(
+      "insert into receipts (id, merchant, total_cents, issued_at, status, created_at, client_updated_at) values (?, ?, ?, ?, 'ok', ?, ?)",
+      [id, input.merchant, Math.max(0, Math.round(input.totalCents)), `${input.date}T12:00:00.000Z`, t, t],
+    );
+    enqueue("receipts", id, "upsert", { id });
+    for (const it of input.items) {
+      const iid = newId();
+      db.runSync(
+        `insert into receipt_items (id, receipt_id, raw_name, name, amount_cents, category_id, confidence, line_type, created_at, client_updated_at)
+         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [iid, id, it.raw_name, it.name, Math.round(it.amount_cents), it.category_id, it.confidence, it.line_type, t, t],
+      );
+      enqueue("receipt_items", iid, "upsert", { id: iid });
+    }
+  });
+  notifyDbChanged();
+  return id;
+}
+
+export function getReceipt(id: string): Receipt | null {
+  const db = getDb();
+  const r = db.getFirstSync<{ id: string; merchant: string | null; total_cents: number; issued_at: string | null }>(
+    "select id, merchant, total_cents, issued_at from receipts where id = ? and deleted_at is null",
+    [id],
+  );
+  if (!r) return null;
+  const items = db
+    .getAllSync<{ id: string; name: string; raw_name: string; amount_cents: number; category_id: string | null; line_type: ReceiptItem["lineType"] }>(
+      "select id, name, raw_name, amount_cents, category_id, line_type from receipt_items where receipt_id = ? and deleted_at is null order by created_at, rowid",
+      [id],
+    )
+    .map((i) => ({ id: i.id, name: i.name, rawName: i.raw_name, amountCents: i.amount_cents, categoryId: i.category_id, lineType: i.line_type }));
+  return { id: r.id, merchant: r.merchant, totalCents: r.total_cents, date: r.issued_at ? r.issued_at.slice(0, 10) : null, items };
 }

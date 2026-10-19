@@ -225,9 +225,20 @@ export default function Dodaj() {
           ) : (
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
               <DateChip value={date} onChange={setDate} />
-              <Pressable onPress={() => setShowNote(true)} accessibilityRole="button" hitSlop={8} style={{ minHeight: 44, justifyContent: "center" }}>
-                <T v="headline" color={colors.brand}>+ Bilješka</T>
-              </Pressable>
+              {editing?.receiptId ? (
+                <Pressable
+                  onPress={() => router.push({ pathname: "/racun", params: { id: editing.receiptId! } } as Href)}
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  style={{ minHeight: 44, justifyContent: "center" }}
+                >
+                  <T v="headline" color={colors.brand}>Stavke računa</T>
+                </Pressable>
+              ) : (
+                <Pressable onPress={() => setShowNote(true)} accessibilityRole="button" hitSlop={8} style={{ minHeight: 44, justifyContent: "center" }}>
+                  <T v="headline" color={colors.brand}>+ Bilješka</T>
+                </Pressable>
+              )}
             </View>
           )}
           {noteFocus ? null : <Keypad value={value} onChange={setValue} />}

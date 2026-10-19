@@ -12,7 +12,7 @@ import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
 import { clearLastScan, getLastScan, type ScanItem } from "../src/scan";
-import { addTransaction, listCategories, today } from "../src/db/repo";
+import { addTransaction, listCategories, saveReceipt, today } from "../src/db/repo";
 
 /**
  * Pregled pročitanog računa prije spremanja: stavke po kategorijama, ispravak kategorije dodirom na stavku,
@@ -67,8 +67,9 @@ export default function Pregledaj() {
   };
 
   const save = () => {
+    const receiptId = saveReceipt({ merchant: result.merchant, totalCents: result.total_cents ?? total, date, items });
     for (const [categoryId, cents] of groups) {
-      addTransaction({ amountCents: cents, categoryId, note: result.merchant ?? undefined, merchant: result.merchant, localDate: date, source: "scan" });
+      addTransaction({ amountCents: cents, categoryId, note: result.merchant ?? undefined, merchant: result.merchant, localDate: date, source: "scan", receiptId });
     }
     clearLastScan();
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

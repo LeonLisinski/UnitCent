@@ -36,6 +36,18 @@ export const SYNC_TABLES: TableCfg[] = [
   { name: "budgets", cols: ["id", "category_id", "month", "limit_cents", ...COMMON], bools: [], times: TIMES },
   { name: "savings_entries", cols: ["id", "month", "planned_cents", "actual_cents", ...COMMON], bools: [], times: TIMES },
   {
+    name: "receipts",
+    cols: ["id", "merchant", "total_cents", "issued_at", "fiscal_ref", "status", ...COMMON],
+    bools: [],
+    times: [...TIMES, "issued_at"],
+  },
+  {
+    name: "receipt_items",
+    cols: ["id", "receipt_id", "raw_name", "name", "amount_cents", "category_id", "confidence", "line_type", ...COMMON],
+    bools: [],
+    times: TIMES,
+  },
+  {
     name: "transactions",
     cols: ["id", "amount_cents", "type", "category_id", "note", "merchant", "local_date", "occurred_at", "source", "receipt_id", "recurring_id", ...COMMON],
     bools: [],
