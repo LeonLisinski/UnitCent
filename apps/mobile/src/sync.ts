@@ -2,12 +2,16 @@ import { useSyncExternalStore } from "react";
 import { AppState } from "react-native";
 import {
   DEFAULT_CATEGORIES,
+  SYNC_TABLES,
   backoffSeconds,
   keysetFilter,
-  overlapCursor,
-  remoteWins,
+  pullAll as enginePull,
+  pushAll as enginePush,
   uuidV5,
   type Cursor,
+  type LocalStore,
+  type RemoteStore,
+  type Row,
 } from "@unitcent/core";
 import { getDb } from "./db/client";
 import { notifyDbChanged } from "./db/events";
@@ -28,156 +32,91 @@ const PAGE = 500;
 const BATCH = 100;
 const PLAN_NAMESPACE = "9b0c1e52-7d1a-4f6b-8a3c-5e2d4f7a9c10";
 
-interface TableCfg {
-  name: string;
-  cols: string[];
-  bools: string[];
-  times: string[];
-}
-
-const COMMON = ["created_at", "client_updated_at", "deleted_at", "rev"];
-const TIMES = ["created_at", "client_updated_at", "deleted_at"];
-
-/** Redoslijed poštuje strane ključeve: roditelji prije djece. */
-const TABLES: TableCfg[] = [
-  { name: "categories", cols: ["id", "name", "icon", "color_token", "sort", "is_system", "archived", ...COMMON], bools: ["is_system", "archived"], times: TIMES },
-  {
-    name: "recurring_items",
-    cols: ["id", "name", "amount_cents", "day_of_month", "category_id", "active", "start_date", "end_date", "icon_key", ...COMMON],
-    bools: ["active"],
-    times: TIMES,
-  },
-  { name: "month_plans", cols: ["id", "month", "income_cents", "savings_cents", ...COMMON], bools: [], times: TIMES },
-  {
-    name: "transactions",
-    cols: ["id", "amount_cents", "type", "category_id", "note", "merchant", "local_date", "occurred_at", "source", "receipt_id", "recurring_id", ...COMMON],
-    bools: [],
-    times: [...TIMES, "occurred_at"],
-  },
-];
-
-type Row = Record<string, unknown>;
-
 const defaultKeyById = new Map(DEFAULT_CATEGORIES.map((c) => [uuidV5(`category:${c.key}`, PLAN_NAMESPACE), c.key]));
 
-const normTime = (v: unknown): string | null => (v == null ? null : new Date(v as string).toISOString());
-
-/* ---------- push ---------- */
-
-async function pushAll(): Promise<void> {
-  const db = getDb();
-  for (const cfg of TABLES) {
-    for (;;) {
-      const pending = db.getAllSync<{ row_id: string; seq: number }>(
+/** Lokalna pohrana motora: expo-sqlite (outbox, retci, kursori u kv). */
+const localStore: LocalStore = {
+  pending: (table, limit) =>
+    getDb()
+      .getAllSync<{ row_id: string; seq: number }>(
         "select row_id, max(seq) as seq from outbox where table_name = ? group by row_id order by min(seq) limit ?",
-        [cfg.name, BATCH],
-      );
-      if (pending.length === 0) break;
-
-      const ids = pending.map((p) => p.row_id);
-      const local = db.getAllSync<Row>(
-        `select ${cfg.cols.join(", ")} from ${cfg.name} where id in (${ids.map(() => "?").join(",")})`,
-        ids,
-      );
-      const rows = local.map((r) => {
-        const out: Row = { ...r };
-        for (const b of cfg.bools) out[b] = r[b] === 1;
-        return out;
-      });
-
-      if (rows.length > 0) {
-        const { error } = await supabase!.rpc("sync_push", { p_table: cfg.name, p_op: "upsert", p_rows: rows });
-        if (error) throw new Error(`sync_push ${cfg.name}: ${error.message}`);
-      }
-      // Briše se samo ono što je poslano; izmjene nastale tijekom slanja ostaju za sljedeći krug.
-      db.withTransactionSync(() => {
-        for (const p of pending) {
-          db.runSync("delete from outbox where table_name = ? and row_id = ? and seq <= ?", [cfg.name, p.row_id, p.seq]);
-        }
-      });
-      if (pending.length < BATCH) break;
+        [table, limit],
+      )
+      .map((r) => ({ rowId: r.row_id, seq: r.seq })),
+  read: (table, cols, ids) =>
+    getDb().getAllSync<Row>(`select ${cols.join(", ")} from ${table} where id in (${ids.map(() => "?").join(",")})`, ids),
+  ack: (table, rowId, upToSeq) => {
+    getDb().runSync("delete from outbox where table_name = ? and row_id = ? and seq <= ?", [table, rowId, upToSeq]);
+  },
+  stamp: (table, id) => {
+    const r = getDb().getFirstSync<{ client_updated_at: string; rev: number }>(
+      `select client_updated_at, rev from ${table} where id = ?`,
+      [id],
+    );
+    return r ? { clientUpdatedAt: r.client_updated_at, rev: r.rev } : null;
+  },
+  apply: (cfg, row) => {
+    const cols = [...cfg.cols, "updated_at"];
+    const set = cols.filter((c) => c !== "id").map((c) => `${c} = excluded.${c}`).join(", ");
+    const db = getDb();
+    db.runSync(
+      `insert into ${cfg.name} (${cols.join(", ")}) values (${cols.map(() => "?").join(", ")})
+       on conflict(id) do update set ${set}`,
+      cols.map((c) => row[c] as string | number | null),
+    );
+    if (cfg.name === "categories") {
+      const key = defaultKeyById.get(row.id as string);
+      if (key) db.runSync("update categories set key = ? where id = ? and key is null", [key, row.id as string]);
     }
-  }
-}
-
-/* ---------- pull ---------- */
-
-function loadCursor(table: string): Cursor | null {
-  const raw = kvGet(`sync.cursor.${table}`);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as Cursor;
-  } catch {
-    return null;
-  }
-}
-
-function saveCursor(table: string, c: Cursor): void {
-  // Izravno u bazu: kvSet bi bez potrebe osvježavao zaslone.
-  getDb().runSync(
-    "insert into kv (key, value) values (?, ?) on conflict(key) do update set value = excluded.value",
-    [`sync.cursor.${table}`, JSON.stringify(c)],
-  );
-}
-
-function applyRemote(cfg: TableCfg, r: Row): boolean {
-  const db = getDb();
-  const local = db.getFirstSync<{ client_updated_at: string; rev: number }>(
-    `select client_updated_at, rev from ${cfg.name} where id = ?`,
-    [r.id as string],
-  );
-  const remote = { clientUpdatedAt: normTime(r.client_updated_at)!, rev: Number(r.rev ?? 0) };
-  if (!remoteWins(local ? { clientUpdatedAt: local.client_updated_at, rev: local.rev } : null, remote)) return false;
-
-  const cols = [...cfg.cols, "updated_at"];
-  const values = cols.map((c) => {
-    const v = r[c];
-    if (cfg.bools.includes(c)) return v ? 1 : 0;
-    if (c === "updated_at" || cfg.times.includes(c)) return normTime(v);
-    return (v ?? null) as string | number | null;
-  });
-  const set = cols.filter((c) => c !== "id").map((c) => `${c} = excluded.${c}`).join(", ");
-  db.runSync(
-    `insert into ${cfg.name} (${cols.join(", ")}) values (${cols.map(() => "?").join(", ")})
-     on conflict(id) do update set ${set}`,
-    values,
-  );
-  if (cfg.name === "categories") {
-    const key = defaultKeyById.get(r.id as string);
-    if (key) db.runSync("update categories set key = ? where id = ? and key is null", [key, r.id as string]);
-  }
-  return true;
-}
-
-async function pullAll(): Promise<boolean> {
-  const db = getDb();
-  let changed = false;
-  for (const cfg of TABLES) {
-    let cur: Cursor | null = overlapCursor(loadCursor(cfg.name));
-    for (;;) {
-      let q = supabase!
-        .from(cfg.name)
-        .select([...cfg.cols, "updated_at"].join(","))
-        .order("updated_at", { ascending: true })
-        .order("id", { ascending: true })
-        .limit(PAGE);
-      if (cur) q = q.or(keysetFilter(cur));
-      const { data, error } = await q;
-      if (error) throw new Error(`pull ${cfg.name}: ${error.message}`);
-      const page = (data ?? []) as unknown as Row[];
-      if (page.length === 0) break;
-
-      db.withTransactionSync(() => {
-        for (const r of page) if (applyRemote(cfg, r)) changed = true;
-      });
-      const last = page[page.length - 1]!;
-      cur = { updatedAt: last.updated_at as string, id: last.id as string };
-      saveCursor(cfg.name, cur);
-      if (page.length < PAGE) break;
+  },
+  getCursor: (table) => {
+    const raw = kvGet(`sync.cursor.${table}`);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as Cursor;
+    } catch {
+      return null;
     }
-  }
-  return changed;
-}
+  },
+  setCursor: (table, c) => {
+    // Izravno u bazu: kvSet bi bez potrebe osvježavao zaslone.
+    getDb().runSync("insert into kv (key, value) values (?, ?) on conflict(key) do update set value = excluded.value", [
+      `sync.cursor.${table}`,
+      JSON.stringify(c),
+    ]);
+  },
+  transaction: (fn) => {
+    let out!: ReturnType<typeof fn>;
+    getDb().withTransactionSync(() => {
+      out = fn();
+    });
+    return out;
+  },
+};
+
+/** Udaljena pohrana motora: Supabase (RPC `sync_push` za slanje, tablice za povlačenje). */
+const remoteStore: RemoteStore = {
+  push: async (table, rows) => {
+    const { error } = await supabase!.rpc("sync_push", { p_table: table, p_op: "upsert", p_rows: rows });
+    if (error) throw new Error(`sync_push ${table}: ${error.message}`);
+  },
+  pull: async (table, after, limit) => {
+    const cfg = SYNC_TABLES.find((t) => t.name === table)!;
+    let q = supabase!
+      .from(table)
+      .select([...cfg.cols, "updated_at"].join(","))
+      .order("updated_at", { ascending: true })
+      .order("id", { ascending: true })
+      .limit(limit);
+    if (after) q = q.or(keysetFilter(after));
+    const { data, error } = await q;
+    if (error) throw new Error(`pull ${table}: ${error.message}`);
+    return (data ?? []) as unknown as Row[];
+  },
+};
+
+const pushAll = () => enginePush(localStore, remoteStore, SYNC_TABLES, BATCH);
+const pullAll = () => enginePull(localStore, remoteStore, SYNC_TABLES, PAGE);
 
 /**
  * Poziva se kad se promijeni korisnik (prijava u postojeći račun): kursori kreću ispočetka,
@@ -189,7 +128,7 @@ export function resetSyncState(): void {
     db.runSync("delete from kv where key like 'sync.cursor.%'");
     db.runSync("delete from outbox");
     const t = new Date().toISOString();
-    for (const cfg of TABLES) {
+    for (const cfg of SYNC_TABLES) {
       db.runSync(
         `insert into outbox (table_name, row_id, op, payload, created_at) select ?, id, 'upsert', '{}', ? from ${cfg.name}`,
         [cfg.name, t],
