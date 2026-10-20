@@ -10,6 +10,7 @@ import { T } from "../src/ui";
 import { addCategory, deleteCategory, getBudget, getCategory, setBudget, updateCategory } from "../src/db/repo";
 import { usePremium, premiumHref } from "../src/premium";
 import { AmountField } from "../src/components";
+import { useConfirmDiscard } from "../src/discard";
 import { parseAmount, type Cents } from "@unitcent/core";
 import type { Href } from "expo-router";
 
@@ -36,6 +37,11 @@ export default function Kategorija() {
   const [limitText, setLimitText] = useState(existingBudget ? (existingBudget % 100 === 0 ? String(existingBudget / 100) : (existingBudget / 100).toFixed(2).replace(".", ",")) : "");
   const limitCents: Cents | null = limitText ? parseAmount(limitText) : null;
   const valid = name.trim().length > 0;
+  const initialLimit = existingBudget ? (existingBudget % 100 === 0 ? String(existingBudget / 100) : (existingBudget / 100).toFixed(2).replace(".", ",")) : "";
+  const dirty = existing
+    ? name !== existing.name || color !== existing.colorToken || icon !== existing.icon || limitText !== initialLimit
+    : name.trim() !== "" || limitText !== "";
+  const allowLeave = useConfirmDiscard(dirty);
 
   const save = () => {
     if (!valid) return;
@@ -46,6 +52,7 @@ export default function Kategorija() {
       const created = addCategory({ name, icon, colorToken: color, kind });
       if (kind === "expense" && premium && limitCents) setBudget(created.id, limitCents);
     }
+    allowLeave();
     router.back();
     toast.show(existing ? "Kategorija spremljena" : "Kategorija dodana");
   };
@@ -58,6 +65,7 @@ export default function Kategorija() {
         style: "destructive",
         onPress: () => {
           deleteCategory(existing!.id);
+          allowLeave();
           router.back();
         },
       },
@@ -82,7 +90,7 @@ export default function Kategorija() {
         <T v="headline" numberOfLines={1}>{name.trim() || "Naziv"}</T>
       </View>
 
-      <TextField label="Naziv" value={name} onChangeText={setName} maxLength={24} autoFocus={!existing} placeholder={kind === "income" ? "npr. Coaching" : "npr. Ljubimci"} />
+      <TextField label="Naziv" value={name} onChangeText={setName} maxLength={24} autoFocus placeholder={kind === "income" ? "npr. Coaching" : "npr. Ljubimci"} />
 
       {kind === "income" ? null : premium ? (
         <AmountField label="Mjesečni limit (neobavezno)" value={limitText} onChange={(t) => setLimitText(t)} placeholder="npr. 200" />

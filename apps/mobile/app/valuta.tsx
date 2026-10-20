@@ -47,10 +47,6 @@ export default function Valuta() {
 
   return (
     <ModalScreen eyebrow="Postavke" title="Valuta" onClose={() => router.back()}>
-      <T v="caption" muted>
-        U zadanoj valuti vodi se sve. Račun u dinarima ili pretplatu u dolarima pri unosu pretvaramo po tečaju
-        {rates.date ? ` (tečaj od ${rates.date.split("-").reverse().join(". ")}.)` : " (približni tečaj dok se ne osvježi)"}.
-      </T>
       <Group>
         {CURRENCIES.map((c) => (
           <Row

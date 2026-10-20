@@ -17,6 +17,7 @@ import { fitFontSize } from "../src/format";
 import { textStyle, useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
+import { useConfirmDiscard } from "../src/discard";
 import { addTransaction, categorySpent, defaultExpenseCategoryId, deleteTransaction, getBudget, getTransaction, listCategoriesByUsage, today, updateTransaction } from "../src/db/repo";
 
 type Kind = "expense" | "income";
@@ -69,6 +70,16 @@ export default function Dodaj() {
   const foreign = cur !== home;
   const cents = typed !== null && foreign ? toHome(typed, cur) : typed;
 
+  // Nespremljen unos: swipe dolje ili X pita prije odbacivanja (bez promjena se zatvara odmah).
+  const dirty = editing
+    ? value !== centsToInput(editing.amountCents) ||
+      noteText !== (editing.note ?? "") ||
+      type !== editing.type ||
+      selected !== editing.categoryId ||
+      date !== editing.localDate
+    : value !== "" || noteText.trim() !== "";
+  const allowLeave = useConfirmDiscard(dirty);
+
   const save = () => {
     let note = noteText;
     const categoryId = selected ?? (type === "expense" ? defaultExpenseCategoryId() : null);
@@ -82,6 +93,7 @@ export default function Dodaj() {
     if (editing) {
       updateTransaction(editing.id, { amountCents: cents, type, categoryId, note, localDate: date });
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      allowLeave();
       router.back();
       toast.show("Izmjene spremljene");
       return;
@@ -89,6 +101,7 @@ export default function Dodaj() {
     const tx = addTransaction({ amountCents: cents, type, categoryId, note, localDate: date });
     track("tx_added", { type, source: "manual", hasNote: noteText.trim().length > 0 });
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    allowLeave();
     router.back();
     // Budžet kategorije (Premium): obavijest kad trošak prijeđe 80 % ili 100 % mjesečnog limita.
     let msg = "Spremljeno";
@@ -160,7 +173,7 @@ export default function Dodaj() {
           </View>
 
           <View style={{ alignItems: "center", gap: 2 }}>
-            <View style={{ flexDirection: "row", alignItems: "baseline" }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <T
                 v="amount-hero"
                 color={value ? colors.ink : colors["ink-muted"]}
@@ -171,7 +184,7 @@ export default function Dodaj() {
               >
                 {value || "0"}
               </T>
-              <View style={{ marginLeft: 8, alignSelf: "center" }}>
+              <View style={{ marginLeft: 8 }}>
                 <CurrencyTag code={cur} size={22} onPress={() => setCurOpen(!curOpen)} />
               </View>
             </View>

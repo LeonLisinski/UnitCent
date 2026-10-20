@@ -25,7 +25,7 @@ const SOCIAL_PROOF: string | null = null;
 /** Što Premium otključava: zlatna medaljica s ikonom + kratak naziv. */
 const PERKS: { key: PremiumFeature; icon: string; title: string; hint: string; soon?: boolean; ai?: boolean }[] = [
   { key: "scan", icon: "camera", title: "Neograničeno skeniranje", hint: "Slikaš račun, stavke se razvrstaju same", ai: true },
-  { key: "history", icon: "calendar", title: "Cijela povijest", hint: "Svi mjeseci, ne samo zadnjih šest" },
+  { key: "history", icon: "calendar", title: "Cijela povijest", hint: "Svaki mjesec, usporedbe kroz godinu" },
   { key: "insights", icon: "chart", title: "Uvidi i savjeti", hint: "Gdje ti curi novac i što možeš uštedjeti", ai: true },
   { key: "budgets", icon: "tag", title: "Limiti po kategorijama", hint: "Koliko smiješ na hranu, gorivo, izlaske" },
 ];
@@ -35,10 +35,10 @@ const PERKS: { key: PremiumFeature; icon: string; title: string; hint: string; s
  * naslov kaže što dobiva, rečenica ispod zašto je ovdje, a ostale pogodnosti su ispod kao „Uz to dobivaš“.
  */
 const FEATURE_COPY: Record<PremiumFeature, { title: string; line?: (q: { used: number; limit: number }) => string | null }> = {
-  scan: { title: "Bezbrižno skeniranje računa", line: (q) => (q.used >= q.limit ? `Sva ${q.limit} besplatna skeniranja su iskorištena` : null) },
-  history: { title: "Cijela tvoja povijest", line: () => "Besplatno vidiš zadnjih 6 mjeseci" },
+  scan: { title: "Skeniraj bez brojanja", line: (q) => (q.used >= q.limit ? `Sva ${q.limit} besplatna skeniranja su iskorištena` : null) },
+  history: { title: "Otključaj cijelu povijest", line: () => "Svaki mjesec otkad koristiš UnitCent" },
   insights: { title: "Gdje ti curi novac" },
-  budgets: { title: "Limit za svaku kategoriju" },
+  budgets: { title: "Limit za svaku kategoriju", line: () => "Javimo ti na 80 % i 100 %" },
 };
 
 /** Petokraka kao poligon (za medaljon): vanjski i unutarnji polumjer, središte (0,0). */
@@ -133,7 +133,7 @@ function PlanToggle({ value, onChange }: { value: PlanKey; onChange: (p: PlanKey
   return (
     <View style={{ flexDirection: "row", backgroundColor: fx.track, borderRadius: 26, padding: 3 }}>
       {opt("monthly", "Mjesečno")}
-      {opt("yearly", `Godišnje ${PLANS.yearly.priceLabel}`)}
+      {opt("yearly", "Godišnje")}
     </View>
   );
 }
@@ -189,7 +189,7 @@ export default function Premium() {
         ) : (
           <>
             <Button
-              label={TRIAL_ENABLED ? `Isprobaj ${TRIAL_DAYS} dana besplatno` : "Nastavi"} // cijena je odmah iznad gumba (ne ponavlja se)
+              label={TRIAL_ENABLED ? `Isprobaj ${TRIAL_DAYS} dana besplatno` : `Nastavi · ${p.priceLabel} ${p.per}`} // cijena je na gumbu (iznad je samo mjesečni ekvivalent)
               disabled={busy}
               onPress={() => void buy()}
             />
@@ -265,25 +265,16 @@ export default function Premium() {
       {premium ? null : (
         <View style={{ gap: 10 }}>
           <PlanToggle value={plan} onChange={setPlan} />
-          {/* Cijena odabranog plana. Godišnji: mjesečna cijena prekrižena, a ispod jasno koliko se i kada plaća
-              (usporedba s mjesečnim planom, ne „sniženje“). */}
-          <View style={{ alignItems: "center", gap: 2, minHeight: 44, justifyContent: "center" }}>
+          {/* Ispod prebacivača samo usporedba (godišnje: koliko to dođe mjesečno); stvarna cijena je na gumbu. */}
+          <View style={{ alignItems: "center", minHeight: 28, justifyContent: "center" }}>
             {perMonth ? (
-              <>
-                <View style={{ flexDirection: "row", alignItems: "baseline", gap: 8 }}>
-                  <T v="headline" muted style={{ textDecorationLine: "line-through" }}>{PLANS.monthly.priceLabel}</T>
-                  <T v="title-2" style={{ fontWeight: "800" }}>{perMonth}</T>
-                  <T v="caption" muted>mjesečno</T>
-                </View>
-              </>
+              <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6 }}>
+                <T v="caption" muted style={{ textDecorationLine: "line-through" }}>{PLANS.monthly.priceLabel}</T>
+                <T v="headline" style={{ fontWeight: "800" }}>{perMonth}</T>
+                <T v="caption" muted>mjesečno, plaća se godišnje</T>
+              </View>
             ) : (
-              <>
-                <View style={{ flexDirection: "row", alignItems: "baseline", gap: 8 }}>
-                  <T v="title-2" style={{ fontWeight: "800" }}>{PLANS.monthly.priceLabel}</T>
-                  <T v="caption" muted>mjesečno</T>
-                </View>
-                <T v="caption" muted>Otkaži kad god želiš</T>
-              </>
+              <T v="caption" muted>Otkaži kad god želiš</T>
             )}
           </View>
         </View>

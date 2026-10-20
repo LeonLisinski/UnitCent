@@ -3,6 +3,7 @@ import { View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { formatEur, obligatoryForMonth, occurrenceDate, yearMonthOf, type Cents } from "@unitcent/core";
 import { AmountField, Button } from "../src/components";
+import { useConfirmDiscard } from "../src/discard";
 import { useDb } from "../src/data";
 import { monthTitle } from "../src/format";
 import { ModalScreen } from "../src/layout";
@@ -36,6 +37,7 @@ export default function Plan() {
   const count = recurring.filter((r) => occurrenceDate(r, month) !== null).length;
   const available = (income.cents ?? 0) - obligatory - savings;
   const valid = (income.cents ?? 0) > 0;
+  const allowLeave = useConfirmDiscard(income.text !== toText(plan?.incomeCents));
 
   const line = (label: string, value: string, strong?: boolean, color?: string) => (
     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", paddingVertical: 6 }}>
@@ -55,13 +57,14 @@ export default function Plan() {
           disabled={!valid}
           onPress={() => {
             upsertPlan({ month, incomeCents: income.cents ?? 0, savingsCents: savings });
+            allowLeave();
             router.back();
             toast.show("Plan spremljen");
           }}
         />
       }
     >
-      <AmountField label="Primanja" value={income.text} onChange={(text, cents) => setIncome({ text, cents })} />
+      <AmountField label="Primanja" value={income.text} onChange={(text, cents) => setIncome({ text, cents })} autoFocus />
 
       <View>
         {line("Primanja", formatEur(income.cents ?? 0))}

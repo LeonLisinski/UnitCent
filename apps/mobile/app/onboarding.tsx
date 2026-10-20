@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, TextInput, View } from "react-native";
-import { useRouter, type Href } from "expo-router";
-import { TRIAL_ENABLED } from "../src/premium";
+import { Pressable, ScrollView, TextInput, View, useWindowDimensions } from "react-native";
+import { useRouter } from "expo-router";
 import Animated, { FadeInRight, FadeOutLeft } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import {
@@ -17,7 +16,7 @@ import {
   type RecurringItem,
 } from "@unitcent/core";
 import { signInWith, type Provider } from "../src/account";
-import { APPLE_ENABLED } from "../src/AccountSection";
+import { APPLE_ENABLED, ProviderButton } from "../src/AccountSection";
 import { Button, Chip, Keypad, TextField } from "../src/components";
 import { Amount, Glow, Ring, RoundButton } from "../src/fx";
 import { fitFontSize } from "../src/format";
@@ -63,6 +62,8 @@ export default function Onboarding() {
   const lastStep = midMonth ? 4 : 3;
   const [picks, setPicks] = useState<Record<string, Pick>>({});
   const [signing, setSigning] = useState(false);
+  // Na malim ekranima (iPhone SE) prsten je manji, da gumbi za prijavu ostanu vidljivi bez skrolanja.
+  const heroRing = Math.min(250, Math.round(useWindowDimensions().height * 0.3));
 
   const income = incomeText ? parseAmount(incomeText) : null;
   const savings = savingsText ? parseAmount(savingsText) : null;
@@ -115,10 +116,8 @@ export default function Onboarding() {
     kvSet("onboarded", "1");
     void rescheduleReminders();
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    if (TRIAL_ENABLED) {
-      router.replace("/");
-      setTimeout(() => router.push({ pathname: "/premium", params: { first: "1" } } as Href), 350);
-    } else router.replace("/");
+    // Premium se ne nudi na ulazu (odluka 20. 10.): tek na okidačima, kad korisnik već vidi vrijednost.
+    router.replace("/");
   };
 
   const togglePick = (key: string, suggested: Cents, day: number) => {
@@ -249,7 +248,7 @@ export default function Onboarding() {
             {step === 0 && !guestName ? (
               <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: "center", gap: 28 }}>
                 <View style={{ alignItems: "center" }}>
-                  <Ring size={250} remaining={demo} state="ok">
+                  <Ring size={heroRing} remaining={demo} state="ok">
                     <T v="mono-label" muted>Dnevni budžet</T>
                     <T v="amount-hero" style={{ fontSize: 50, lineHeight: 56, letterSpacing: -2 }}>19,96 €</T>
                   </Ring>
@@ -427,10 +426,10 @@ export default function Onboarding() {
             ) : step === 0 ? (
               // Prvi ekran: prijava (podaci odmah zaštićeni) ili gost. Jedna glavna radnja; Apple na iOS-u uz nju.
               <>
-                <Button label={signing ? "Prijavljujem…" : "Nastavi s Googleom"} disabled={signing} onPress={() => void signInStart("google")} />
-                {APPLE_ENABLED ? (
-                  <Button variant="secondary" label="Nastavi s Appleom" disabled={signing} onPress={() => void signInStart("apple")} style={{ marginTop: 8 }} />
-                ) : null}
+                {APPLE_ENABLED ? <ProviderButton provider="apple" busy={signing} onPress={() => void signInStart("apple")} /> : null}
+                <View style={{ height: APPLE_ENABLED ? 10 : 0 }} />
+                <ProviderButton provider="google" busy={signing} onPress={() => void signInStart("google")} />
+                <T v="caption" muted style={{ textAlign: "center", marginTop: 10 }}>Već imaš račun? Isti gumb te prijavljuje.</T>
                 <Button variant="text" size="sm" label="Nastavi kao gost" disabled={signing} onPress={() => setGuestName(true)} />
               </>
             ) : (

@@ -3,6 +3,7 @@ import { View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { formatEur, parseAmount, yearMonthOf, type Cents } from "@unitcent/core";
 import { AmountField, Button, Chip } from "../src/components";
+import { useConfirmDiscard } from "../src/discard";
 import { monthTitle } from "../src/format";
 import { ModalScreen } from "../src/layout";
 import { T } from "../src/ui";
@@ -30,6 +31,7 @@ export default function StednjaUnos() {
     mode === "monthly" ? (effectivePlan(thisMonth)?.savingsCents ?? null) : mode === "balance" ? savingsStats().totalCents : (existing?.actualCents ?? null);
   const [text, setText] = useState(initial ? toText(initial) : "");
   const cents: Cents | null = text ? parseAmount(text) : null;
+  const allowLeave = useConfirmDiscard(text !== (initial ? toText(initial) : ""));
 
   const save = () => {
     if (mode === "monthly") {
@@ -42,6 +44,7 @@ export default function StednjaUnos() {
       setSavings(month, cents ?? 0, planned);
       toast.show("Spremljeno");
     }
+    allowLeave();
     router.back();
   };
 
@@ -50,14 +53,15 @@ export default function StednjaUnos() {
   const label = mode === "monthly" ? "Iznos svaki mjesec" : mode === "balance" ? "Koliko sada imaš ušteđeno" : "Koliko si prebacio na štednju";
   const help =
     mode === "monthly"
-      ? "Ovaj iznos se odvaja od primanja prije dnevnog izračuna. Može i 0 €."
+      ? "Odvaja se od primanja prije dnevnog budžeta."
       : mode === "balance"
-        ? "Upiši stanje sa štednog računa. Svaka potvrđena štednja dalje se dodaje na njega."
+        ? "Stanje sa štednog računa."
         : null;
 
   return (
     <ModalScreen eyebrow={eyebrow} title={title} onClose={() => router.back()} footer={<Button label="Spremi" disabled={mode ? false : cents === null} onPress={save} />}>
-      <AmountField label={label} value={text} onChange={(t) => setText(t)} placeholder="0,00" />
+      {/* Potvrda mjeseca bez tipkovnice: brzi izbori (Sve / Ništa) ostaju vidljivi. */}
+      <AmountField label={label} value={text} onChange={(t) => setText(t)} placeholder="0,00" autoFocus={!!mode} />
       {help ? <T v="caption" muted>{help}</T> : null}
       {!mode && planned > 0 ? (
         <View style={{ gap: 10 }}>

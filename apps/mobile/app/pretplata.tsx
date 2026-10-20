@@ -15,6 +15,7 @@ import {
   type LocalDate,
 } from "@unitcent/core";
 import { AiTag, AmountField, Button, CatIcon, Chip, TextField } from "../src/components";
+import { useConfirmDiscard } from "../src/discard";
 import { classifyRecurring } from "../src/classify";
 import { usePremium } from "../src/premium";
 import { recurringIcon } from "../src/BrandIcon";
@@ -69,6 +70,18 @@ export default function Pretplata() {
   const [cur, setCur] = useState(home);
   const [curOpen, setCurOpen] = useState(false);
   const homeCents = amount.cents === null ? null : cur === home ? amount.cents : toHome(amount.cents, cur);
+
+  // Nespremljene promjene: swipe dolje ili X pita prije odbacivanja.
+  const dirty = editing
+    ? name !== editing.name ||
+      amount.cents !== editing.amountCents ||
+      day !== String(editing.dayOfMonth) ||
+      categoryId !== editing.categoryId ||
+      start !== editing.startDate ||
+      hasEnd !== !!editing.endDate ||
+      (hasEnd && end !== editing.endDate)
+    : name.trim() !== "" || amount.text !== "" || day !== "";
+  const allowLeave = useConfirmDiscard(dirty);
 
   const rangeOk = !hasEnd || end >= start;
   const valid = name.trim().length > 0 && (homeCents ?? 0) > 0 && rangeOk;
@@ -165,6 +178,7 @@ export default function Pretplata() {
     if (editing) {
       updateRecurring(editing.id, { name, amountCents: homeCents, dayOfMonth: d, categoryId, iconKey: savedIcon, startDate: start, endDate });
       void rescheduleReminders();
+      allowLeave();
       router.back();
       toast.show("Izmjene spremljene · vrijede od sljedeće naplate");
       return;
@@ -172,6 +186,7 @@ export default function Pretplata() {
     addRecurring({ name, amountCents: homeCents, dayOfMonth: d, categoryId, iconKey: savedIcon, startDate: start, endDate });
     const booked = bookDueRecurring();
     void rescheduleReminders();
+    allowLeave();
     router.back();
     toast.show(booked > 0 ? "Dodano i već knjiženo ovaj mjesec" : `Dodano · naplata ${d}. u mjesecu`);
   };
@@ -188,6 +203,7 @@ export default function Pretplata() {
           onPress: () => {
             deleteRecurring(editing!.id);
             void rescheduleReminders();
+            allowLeave();
             router.back();
           },
         },
@@ -220,6 +236,7 @@ export default function Pretplata() {
               onBlur={() => setTimeout(() => setNameFocus(false), 150)}
               placeholder="npr. Netflix, kredit, teretana"
               maxLength={30}
+              autoFocus
             />
           </View>
         </View>

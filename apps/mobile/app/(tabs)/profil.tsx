@@ -19,6 +19,7 @@ import { useToast } from "../../src/toast";
 import { T } from "../../src/ui";
 import { getLatestPlanBefore, getMonthSummary, getPlan, kvGet, kvSet, listCategories, savingsStats, today } from "../../src/db/repo";
 import { disableReminders, enableReminders, remindersEnabled } from "../../src/notifications";
+import { openManageSubscription } from "../../src/purchases";
 import { LOCK_AVAILABLE, isLockEnabled, setLockEnabled, unlockMethodLabel } from "../../src/appLock";
 
 const THEMES: { key: ThemePreference; icon: string; label: string }[] = [
@@ -130,6 +131,8 @@ export default function Profil() {
       {premium ? (
         <Group>
           <Row icon="star" gold title="Premium je aktivan" subtitle="Cijela povijest i neograničeno skeniranje" onPress={() => router.push("/premium" as Href)} />
+          {/* Promjena plana i otkazivanje idu preko trgovine; uvijek dostupno, ali tiho. */}
+          <Row icon="card" title="Upravljaj pretplatom" external onPress={() => void openManageSubscription()} />
         </Group>
       ) : null}
 

@@ -14,6 +14,8 @@ import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
 import { clearLastScan, getLastScan, type ScanItem } from "../src/scan";
+import { useConfirmDiscard } from "../src/discard";
+import type { Category } from "../src/db/repo";
 import { addTransaction, listCategories, saveReceipt, today } from "../src/db/repo";
 
 /**
@@ -45,6 +47,8 @@ export default function Pregledaj() {
   // Bez tečaja (rijetka valuta, a još nije bilo interneta) ne spremamo krivi iznos: korisnik bira valutu ili čeka tečaj.
   const noRate = cur !== home && toHome(100, cur) === null;
   const conv = (c: Cents) => (cur === home ? c : (toHome(c, cur) ?? c));
+  // Pročitani račun je nespremljen unos: slučajan swipe dolje ne smije ga izgubiti.
+  const allowLeave = useConfirmDiscard(!!scan, { title: "Odbaciti račun?", message: "Stavke s računa neće se spremiti.", onDiscard: clearLastScan });
 
   if (!scan) {
     return (
@@ -107,6 +111,7 @@ export default function Pregledaj() {
     }
     clearLastScan();
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    allowLeave();
     router.dismissAll();
     toast.show(`Spremljeno · ${formatEur(conv(total))}`);
   };
@@ -127,7 +132,7 @@ export default function Pregledaj() {
         <View style={{ flex: 1, paddingHorizontal: space["4"] + 4, paddingTop: space["3"], paddingBottom: space["3"], gap: space["3"] }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <T v="title-1" style={{ fontSize: 26, lineHeight: 32 }}>Pregledaj račun</T>
-            <RoundButton icon="x" label="Zatvori" onPress={() => { clearLastScan(); router.back(); }} />
+            <RoundButton icon="x" label="Zatvori" onPress={() => router.back()} />
           </View>
 
           <View style={{ gap: 2 }}>
@@ -210,6 +215,7 @@ export default function Pregledaj() {
           <ItemEditor
             item={editing !== null ? (items[editing] ?? null) : null}
             symbol={sym}
+            cats={cats}
             onClose={() => setEditing(null)}
             onSave={(patch) => {
               setItems((prev) => prev.map((it, k) => (k === editing ? { ...it, ...patch } : it)));
@@ -242,22 +248,28 @@ const toInput = (cents: Cents) => (Math.abs(cents) / 100).toFixed(2).replace("."
 function ItemEditor({
   item,
   symbol,
+  cats,
   onSave,
   onClose,
 }: {
   item: ScanItem | null;
   symbol: string;
-  onSave: (patch: { name: string; amount_cents: Cents }) => void;
+  cats: Category[];
+  onSave: (patch: { name: string; amount_cents: Cents; category_id: string | null }) => void;
   onClose: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, fx } = useTheme();
   const insets = useInsets();
   const kb = useKeyboardHeight();
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [cents, setCents] = useState<Cents | null>(null);
+  const [catId, setCatId] = useState<string | null>(null);
+  const [catOpen, setCatOpen] = useState(false);
   useEffect(() => {
     if (!item) return;
+    setCatId(item.category_id);
+    setCatOpen(false);
     setName(item.name);
     setAmount(toInput(item.amount_cents));
     setCents(Math.abs(item.amount_cents));
@@ -275,7 +287,7 @@ function ItemEditor({
               <T v="title-2">{negative ? "Uredi popust" : "Uredi stavku"}</T>
               <RoundButton icon="x" label="Zatvori" onPress={onClose} />
             </View>
-            <TextField label="Naziv" value={name} onChangeText={setName} maxLength={60} />
+            <TextField label="Naziv" value={name} onChangeText={setName} maxLength={60} autoFocus />
             <AmountField
               label={negative ? "Iznos popusta" : "Iznos"}
               value={amount}
@@ -285,11 +297,48 @@ function ItemEditor({
               }}
               currency={<T v="headline" muted>{symbol}</T>}
             />
+            {/* Kategorija: tihi redak, dodir otvara izbor (isti uzorak kao u pregledu računa). */}
+            {(() => {
+              const cat = cats.find((c) => c.id === catId);
+              return (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Kategorija: ${cat?.name ?? "bez kategorije"}`}
+                  onPress={() => setCatOpen(!catOpen)}
+                  style={{ minHeight: 48, flexDirection: "row", alignItems: "center", gap: 12 }}
+                >
+                  {cat ? (
+                    <CatIcon colorToken={cat.colorToken} icon={cat.icon} size={30} />
+                  ) : (
+                    <View style={{ width: 30, height: 30, borderRadius: 15, borderWidth: 1.5, borderStyle: "dashed", borderColor: fx.glassBorder }} />
+                  )}
+                  <T v="headline" style={{ flex: 1 }} numberOfLines={1}>{cat?.name ?? "Odaberi kategoriju"}</T>
+                  <T v="caption" muted>{catOpen ? "Zatvori" : "Promijeni"}</T>
+                </Pressable>
+              );
+            })()}
+            {catOpen ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8 }}>
+                {cats.map((cat) => (
+                  <Chip
+                    key={cat.id}
+                    label={cat.name}
+                    selected={catId === cat.id}
+                    onPress={() => {
+                      void Haptics.selectionAsync();
+                      setCatId(cat.id);
+                      setCatOpen(false);
+                    }}
+                    left={<CatIcon colorToken={cat.colorToken} icon={cat.icon} size={26} />}
+                  />
+                ))}
+              </ScrollView>
+            ) : null}
             <View style={{ alignItems: "center", paddingTop: 4 }}>
               <Button
                 label="Spremi"
                 disabled={!valid}
-                onPress={() => valid && onSave({ name: name.trim(), amount_cents: negative ? -cents! : cents! })}
+                onPress={() => valid && onSave({ name: name.trim(), amount_cents: negative ? -cents! : cents!, category_id: catId })}
               />
             </View>
           </Glass>

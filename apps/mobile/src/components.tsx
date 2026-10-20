@@ -179,10 +179,13 @@ export function AmountField({
   placeholder = "0,00",
   currency,
   below,
+  autoFocus,
 }: {
   label: string;
   value: string;
   onChange: (text: string, cents: Cents | null) => void;
+  /** Tipkovnica odmah otvorena (glavno polje ekrana za uređivanje). */
+  autoFocus?: boolean;
   placeholder?: string;
   /** Umjesto oznake zadane valute (npr. dodirljiva oznaka za izbor valute). */
   currency?: ReactNode;
@@ -213,6 +216,7 @@ export function AmountField({
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
           keyboardType="decimal-pad"
+          autoFocus={autoFocus}
           placeholder={placeholder}
           placeholderTextColor={colors["ink-muted"]}
           accessibilityLabel={label}

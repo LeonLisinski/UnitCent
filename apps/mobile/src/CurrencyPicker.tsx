@@ -38,7 +38,7 @@ export function CurrencyTag({ code, onPress, size = 17 }: { code: string; onPres
         opacity: pressed ? 0.6 : 1,
       })}
     >
-      <T v="headline" muted={!foreign} color={foreign ? colors.brand : undefined} style={{ fontSize: size, fontWeight: "800" }}>
+      <T v="headline" muted={!foreign} color={foreign ? colors.brand : undefined} style={{ fontSize: size, lineHeight: Math.round(size * 1.3), fontWeight: "800" }}>
         {currencyInfo(code).symbol}
       </T>
     </Pressable>

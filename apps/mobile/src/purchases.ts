@@ -1,4 +1,4 @@
-import { Platform } from "react-native";
+import { Linking, Platform } from "react-native";
 import { getDb } from "./db/client";
 import { notifyDbChanged } from "./db/events";
 import { refreshEntitlement, type PlanKey } from "./premium";
@@ -82,4 +82,13 @@ export async function restorePurchases(): Promise<PurchaseResult> {
   } catch {
     return "error";
   }
+}
+
+/**
+ * Upravljanje pretplatom (promjena plana, otkazivanje) radi trgovina, ne aplikacija: otvara stranicu pretplata
+ * u App Storeu ili Google Playu. Uvijek dostupno (pravila trgovina i EU), ali tiho, u skupini Premium.
+ */
+export async function openManageSubscription(): Promise<void> {
+  const url = Platform.OS === "ios" ? "https://apps.apple.com/account/subscriptions" : "https://play.google.com/store/account/subscriptions";
+  await Linking.openURL(url);
 }

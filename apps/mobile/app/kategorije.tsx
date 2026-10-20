@@ -120,7 +120,7 @@ export default function Kategorije() {
             {groups.filter((g) => g.kind === tab).map((g) => (
               <View key={g.kind} style={{ marginBottom: space["4"] }}>
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 40 }}>
-                  <T v="caption" muted>{selecting ? "Dodirni kategorije koje želiš obrisati." : "Dodirni za uređivanje."}</T>
+                  <T v="caption" muted>{selecting ? "Dodirni kategorije koje želiš obrisati." : ""}</T>
                   {selecting ? null : (
                     <Pressable
                       accessibilityRole="button"

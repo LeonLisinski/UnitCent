@@ -69,6 +69,54 @@ export default function Pocetna() {
     else sections.push([t.localDate, [t]]);
   }
 
+  const empty = recent.length === 0;
+  const lastSection = (
+        <Animated.View entering={enter(4)}>
+          <Section
+            title="Zadnje"
+            right={
+              recent.length > 0 ? <SectionLink label="Svi troškovi" onPress={() => router.push("/transakcije" as Href)} /> : undefined
+            }
+          >
+            {recent.length === 0 ? (
+              <EmptyState
+                text="Još nema troškova."
+                action={<Button icon="plus" label="Dodaj trošak" onPress={() => router.push("/dodaj")} />}
+              />
+            ) : (
+              <View>
+                {sections.map(([date, list], si) => (
+                  <View key={date}>
+                    {sections.length > 1 ? (
+                      <T v="caption" muted style={{ marginTop: si === 0 ? 0 : 16, fontWeight: "600" }}>{relativeDay(date, day)}</T>
+                    ) : null}
+                    {list.map((t, i) => (
+                      <SwipeRow
+                        key={t.id}
+                        onDelete={() => {
+                          deleteTransaction(t.id);
+                          toast.show("Obrisano", { label: "Poništi", run: () => restoreTransaction(t.id) });
+                        }}
+                      >
+                        <View>
+                          <TxRow
+                            tx={t}
+                            first={i === 0}
+                            category={t.categoryId ? catById.get(t.categoryId) : undefined}
+                            hideDate
+                            onPress={() => router.push({ pathname: "/dodaj", params: { id: t.id } })}
+                          />
+                        </View>
+                      </SwipeRow>
+                    ))}
+                  </View>
+                ))}
+              </View>
+            )}
+          </Section>
+        </Animated.View>
+  );
+
   return (
     <TabScreen>
       <Animated.View entering={enter(0)}>
@@ -90,6 +138,9 @@ export default function Pocetna() {
         </Ring>
         </Hero>
       </Animated.View>
+
+      {/* Bez troškova: prazno stanje odmah ispod prstena, na istoj visini kao na Pregledu. */}
+      {empty ? lastSection : null}
 
       <Animated.View entering={enter(2)}>
         {/* Mjesec bez brojeva (jedini par brojeva na ekranu je u prstenu): stanje desno od oznake i traka.
@@ -139,50 +190,7 @@ export default function Pocetna() {
         </Animated.View>
       ) : null}
 
-      <Animated.View entering={enter(4)}>
-        <Section
-          title="Zadnje"
-          right={
-            recent.length > 0 ? <SectionLink label="Svi troškovi" onPress={() => router.push("/transakcije" as Href)} /> : undefined
-          }
-        >
-          {recent.length === 0 ? (
-            <EmptyState
-              text="Još nema troškova."
-              action={<Button icon="plus" label="Dodaj trošak" onPress={() => router.push("/dodaj")} />}
-            />
-          ) : (
-            <View>
-              {sections.map(([date, list], si) => (
-                <View key={date}>
-                  {sections.length > 1 ? (
-                    <T v="caption" muted style={{ marginTop: si === 0 ? 0 : 16, fontWeight: "600" }}>{relativeDay(date, day)}</T>
-                  ) : null}
-                  {list.map((t, i) => (
-                    <SwipeRow
-                      key={t.id}
-                      onDelete={() => {
-                        deleteTransaction(t.id);
-                        toast.show("Obrisano", { label: "Poništi", run: () => restoreTransaction(t.id) });
-                      }}
-                    >
-                      <View>
-                        <TxRow
-                          tx={t}
-                          first={i === 0}
-                          category={t.categoryId ? catById.get(t.categoryId) : undefined}
-                          hideDate
-                          onPress={() => router.push({ pathname: "/dodaj", params: { id: t.id } })}
-                        />
-                      </View>
-                    </SwipeRow>
-                  ))}
-                </View>
-              ))}
-            </View>
-          )}
-        </Section>
-      </Animated.View>
+      {empty ? null : lastSection}
     </TabScreen>
   );
 }

@@ -209,7 +209,7 @@ export default function Skeniraj() {
             </View>
             <T v="title-1" style={{ fontSize: 28, lineHeight: 34, textAlign: "center" }}>Skeniraj račun</T>
             <T muted style={{ textAlign: "center", maxWidth: 320 }}>
-              Kameru koristimo samo dok skeniraš. Slika se pročita i odmah odbaci, ne sprema se.
+              Slikaj račun, stavke se razvrstaju same.
             </T>
           </View>
           <View style={{ alignItems: "center", gap: 6, paddingBottom: 28, paddingHorizontal: 24 }}>

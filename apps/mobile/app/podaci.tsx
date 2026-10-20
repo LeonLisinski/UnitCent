@@ -84,7 +84,6 @@ export default function Podaci() {
             <Row
               icon="download"
               title="Izvezi podatke"
-              subtitle="Sve tvoje podatke u JSON datoteci"
               onPress={async () => {
                 try {
                   if (!(await exportData())) toast.show("Dijeljenje nije dostupno na ovom uređaju");
@@ -93,14 +92,7 @@ export default function Podaci() {
                 }
               }}
             />
-            <Row icon="trash" danger title="Obriši račun i sve podatke" onPress={confirmDelete} />
           </Group>
-
-          {account.hasSession && !account.anonymous ? (
-            <Group title="Račun">
-              <Row icon="user" title="Odjavi se" subtitle={account.email ?? undefined} onPress={confirmSignOut} />
-            </Group>
-          ) : null}
 
           <Group title="Premium">
             <Row
@@ -134,6 +126,11 @@ export default function Podaci() {
             />
           </Group>
 
+          <Group title="Pravno">
+            <Row icon="shield" title="Privatnost" external onPress={() => void Linking.openURL(`${SITE}/privatnost`)} />
+            <Row icon="file" title="Uvjeti korištenja" external onPress={() => void Linking.openURL(`${SITE}/uvjeti`)} />
+          </Group>
+
           {__DEV__ ? (
             <Group title="Razvoj">
               <Row
@@ -148,9 +145,15 @@ export default function Podaci() {
             </Group>
           ) : null}
 
-          <Group title="Pravno">
-            <Row icon="shield" title="Privatnost" external onPress={() => void Linking.openURL(`${SITE}/privatnost`)} />
-            <Row icon="file" title="Uvjeti korištenja" external onPress={() => void Linking.openURL(`${SITE}/uvjeti`)} />
+          {account.hasSession && !account.anonymous ? (
+            <Group title="Račun">
+              <Row icon="user" title="Odjavi se" subtitle={account.email ?? undefined} onPress={confirmSignOut} />
+            </Group>
+          ) : null}
+
+          {/* Razorna radnja uvijek na samom dnu, odvojena od ostalog (i uz potvrdu). */}
+          <Group>
+            <Row icon="trash" danger title="Obriši račun i sve podatke" onPress={confirmDelete} />
           </Group>
         </ScrollView>
       </Safe>
