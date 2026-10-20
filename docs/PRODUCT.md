@@ -18,7 +18,7 @@ Excel nije samo popis troškova — ima **logiku planiranja** koju app mora zadr
 | Obavezna davanja (kredit, mobitel, coaching) + pretplate (Spotify, Netflix, gym, AI alati, Vercel…) + rate | **Fiksni troškovi i pretplate** s danom naplate, kalendar, podsjetnici |
 | Željena ušteda | **Cilj štednje** po mjesecu |
 | *Ostalo za trošiti* = primanja − obavezno − ušteda | **Slobodno za trošiti** (glavni broj aplikacije) |
-| *Preporučeni dnevni trošak* = ostalo / preostali dani | **„Danas smiješ: 29 €"** — hero na početnom ekranu |
+| *Dnevni budžet* = ostalo / preostali dani | **„Ostalo za danas: 29 €"** (dnevni budžet minus današnja potrošnja) — hero na početnom ekranu |
 | *Prosječni dnevni trošak* | Tempo potrošnje (ispred/iza plana) |
 | Plan vs. trošak po kategoriji (Hrana, Gorivo, ENC, Izlasci, Auto ostalo…) | **Budžeti po kategoriji** s progress trakama |
 | Dnevni unos: dan, naziv, iznos (Trgovina, Snus, Gorivo…) | **Brzi unos** (< 3 s) + AI skeniranje računa |
@@ -31,7 +31,7 @@ diferencijator — većina konkurencije to nema ili je skriveno.
 ### Besplatno (Free) — sve zbog čega se korisnik vraća svaki dan
 - Brzi unos troška/prihoda: tipka +, numerička tipkovnica odmah, **tap na kategoriju odmah sprema**
 - Pretplate i fiksni troškovi (Spotify, Netflix, gym, najam, kredit, mobitel, režije): kalendar naplata, automatsko knjiženje, podsjetnik dan prije („Sutra ti skida Netflix 13,99 €")
-- Mjesečni plan: primanja − obavezno − štednja → slobodno za trošiti → dnevni limit
+- Mjesečni plan: primanja − obavezno − štednja → slobodno za trošiti → dnevni budžet
 - Pregled mjeseca po kategorijama i usporedba s prošlim mjesecom
 - Zadane kategorije s ikonama i bojama, mogu se mijenjati
 - Rad bez interneta (unos trenutan, sync u pozadini)
@@ -47,7 +47,7 @@ diferencijator — većina konkurencije to nema ili je skriveno.
 
 **Model:** freemium s pretplatom, bez reklama, bez prodaje podataka.
 
-**Pravilo:** nikad ne naplaćujemo ono zbog čega se ljudi vraćaju svaki dan (ručni unos, pretplate, dnevni limit, osnovni pregled). Naplaćujemo ono što nas košta (AI) ili donosi očitu dodatnu vrijednost.
+**Pravilo:** nikad ne naplaćujemo ono zbog čega se ljudi vraćaju svaki dan (ručni unos, pretplate, dnevni budžet, osnovni pregled). Naplaćujemo ono što nas košta (AI) ili donosi očitu dodatnu vrijednost.
 
 | Paket | Cijena | Napomena |
 |---|---|---|

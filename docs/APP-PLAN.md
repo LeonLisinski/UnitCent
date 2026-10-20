@@ -25,7 +25,7 @@ Namjena dokumenta: da svatko (vlasnik, agent, budući suradnik) u svakom trenutk
 ### 2.1 Free (uvijek besplatno)
 - Brzi unos troška/prihoda, kategorije (zadane + vlastite), bilješka, datum.
 - Pretplate i fiksni troškovi: automatsko knjiženje, kalendar naplata, podsjetnik dan prije.
-- Mjesečni plan: primanja, obavezno, štednja → preporučeni dnevni trošak (formula u §4.2).
+- Mjesečni plan: primanja, obavezno, štednja → dnevni budžet (formula u §4.2).
 - Pregled po kategorijama i usporedba s prošlim mjesecom.
 - Rad bez interneta, sinkronizacija u pozadini (uz povezani račun).
 - Tamna/svijetla tema, hrvatski jezik, euro.
@@ -72,7 +72,7 @@ Povezivanje s bankom (PSD2), investicije, više valuta u istom planu, web aplika
 ```
 Mobilna aplikacija (Expo)
  ├─ UI (ekrani, komponente, teme)
- ├─ Domena (čista logika: novac u centima, dnevni limit, ponavljanja)  ← dijeli se s webom i testovima
+ ├─ Domena (čista logika: novac u centima, dnevni budžet, ponavljanja)  ← dijeli se s webom i testovima
  ├─ Lokalna baza (SQLite) ── izvor istine za UI
  ├─ Sync motor (outbox ↔ Supabase, pozadinski)
  └─ Servisi (kamera/QR, obavijesti, RevenueCat, Auth, Sentry, App Attest/Play Integrity)
@@ -91,7 +91,7 @@ Supabase (EU)
 ```
 apps/mobile      Expo aplikacija
 apps/web         marketing stranica (trenutno u /web, preseljenje kad krene app)
-packages/core    domenska logika: novac, dnevni limit, ponavljanja, formatiranje (TS, bez ovisnosti)
+packages/core    domenska logika: novac, dnevni budžet, ponavljanja, formatiranje (TS, bez ovisnosti)
 packages/tokens  dizajn tokeni (boje svijetla/tamna, razmaci, tipografija) → generira CSS i RN objekt
 supabase/        migracije, RLS pravila, Edge Functions, seed
 docs/            plan, proizvod, odluke (ADR)
@@ -99,7 +99,7 @@ docs/            plan, proizvod, odluke (ADR)
 
 **Pravilo:** bilo koja formula koja daje iznos živi samo u `packages/core` i ima jedinične testove. Web, app i Edge Functions koriste isti kod.
 
-### 4.2 Novac, vrijeme i dnevni limit
+### 4.2 Novac, vrijeme i dnevni budžet
 - Iznosi su cijeli brojevi u centima (int), nikad float. Prikaz formatira `Intl.NumberFormat('hr-HR')`.
 - Vremenska zona korisnika: Europe/Zagreb zadano. Datumi troškova se spremaju kao lokalni datum (`YYYY-MM-DD`) uz `occurred_at` (UTC) za sortiranje.
 - Mjesec za plan = kalendarski mjesec; „preostali dani“ uključuju današnji dan.
@@ -109,13 +109,16 @@ docs/            plan, proizvod, odluke (ADR)
 1. **Raspoloživo za mjesec** = primanja − obavezno − štednja.
 2. **Obavezno** = zbroj aktivnih `recurring_items` koji padaju u taj mjesec.
 3. **Potrošeno** = troškovi u mjesecu **bez** onih sa `source = recurring`. Ti su već oduzeti kroz „obavezno“; brojati ih i ovdje znači oduzeti istu pretplatu dvaput.
-4. **Dnevni iznos za danas** = (raspoloživo − potrošeno *prije današnjeg dana*) ÷ preostali dani uključujući danas. Računa se jednom za taj dan.
-5. **Danas još smiješ** = dnevni iznos − potrošeno *danas*. Može biti negativan; tada se prikazuje kao „X € preko“, nikad kao 0.
+4. **Dnevni budžet** = (raspoloživo − potrošeno *prije današnjeg dana*) ÷ preostali dani uključujući danas. Računa se jednom za taj dan.
+5. **Ostalo za danas** = dnevni budžet − potrošeno *danas*. Može biti negativan; tada se prikazuje kao „Danas preko“ i iznos, nikad kao 0.
 
 Zašto točke 4 i 5 moraju biti odvojene: ako se današnja potrošnja oduzme od raspoloživog pa ponovno podijeli s danima, trošak od 10 € smanji današnji broj za samo 10 € ÷ 17 dana ≈ 0,59 €. Korisnik bi i nakon trošenja vidio skoro isti iznos.
 
 - **Ponavljanja:** `day_of_month` 29–31 u kraćem mjesecu knjiži se na zadnji dan mjeseca.
 - **[ODLUKA D-09] Neplanirani prihodi** (`type = income` izvan plana): dodaju se raspoloživom za taj mjesec ili ne. Preporuka: dodaju se.
+- **[D-13] Mjesec je kalendarski, bez „dana plaće“.** Plan je mjesečni iznos, pa trenutak kad plaća sjeda ne mijenja koliko smiješ trošiti po danu; računi i pretplate su također mjesečni. Postavka „od plaće do plaće“ dodala bi složenost svakom ekranu (Pregled, usporedbe, štednja), a koristila bi samo dijelu korisnika. Može se dodati kao opcija ako beta pokaže potrebu.
+- **[D-13] Početak usred mjeseca:** stari troškovi se ne unose. Onboarding pita „Koliko ti je sad na računu?“ i iz toga računa `month_plans.spent_before_cents` = primanja − pretplate plaćene prije danas − stanje (nikad < 0; `spentBeforeFromBalance`). Taj iznos ulazi u „potrošeno prije današnjeg dana“, samo za mjesec u kojem je upisan.
+- **Štednja na jednom mjestu:** mjesečni iznos štednje je `month_plans.savings_cents` i uređuje se na ekranu Štednja (Plan ga samo prikazuje). „Ušteđeno ukupno“ = zadnje postavljeno stanje (`savings_entries.opening_cents`, na početku svog mjeseca) + potvrđena štednja od tog mjeseca nadalje. Na kraju mjeseca: „Prebaci X € na štednju?“ (Da / Drugi iznos), zatim jednom ponuda da se nepotrošeni ostatak mjeseca doda u štednju.
 
 ### 4.3 Model podataka (skica)
 
@@ -127,7 +130,8 @@ Svaki redak: `id` (uuid v7, generira klijent), `user_id`, `created_at`, `updated
 | categories | name, icon, color_token, sort, is_system, archived |
 | transactions | amount_cents, type (expense/income), category_id, note, merchant, local_date, occurred_at, source (manual/scan/recurring), receipt_id?, recurring_id? |
 | recurring_items | name, amount_cents, day_of_month, category_id, active, start_date, end_date?, icon_key |
-| month_plans | month (YYYY-MM), income_cents, savings_cents |
+| month_plans | month (YYYY-MM), income_cents, savings_cents, spent_before_cents (D-13) |
+| savings_entries | month, planned_cents, actual_cents (null = nepotvrđeno), opening_cents (stanje na početku mjeseca) |
 | budgets | category_id, month?, limit_cents (Premium) |
 | receipts | merchant, total_cents, issued_at, fiscal_ref? (JIR), status, image_path? |
 | receipt_items | receipt_id, raw_name, name, amount_cents, category_id, confidence, line_type (item/discount/deposit) |
@@ -165,7 +169,7 @@ Svaki redak: `id` (uuid v7, generira klijent), `user_id`, `created_at`, `updated
 - **Pošteno korištenje:** sva Premium skeniranja imaju gornju granicu (radno 100 mjesečno), napisanu u uvjetima prije prve prodaje. Posebno je važna za doživotni plan: prihod je jednokratan, a trošak AI-ja traje.
 - „Vrati kupnju“ i upravljanje pretplatom vode u postavke trgovine. Svi paywallovi imaju jasan „Zatvori“.
 - Paywall se prikazuje samo na trenucima vrijednosti (skeniranje preko kvote, uvidi, izvoz, uvoz).
-- **[ODLUKA D-03] Cijene:** objaviti tek nakon bete (trošak AI-ja + reakcije). Radno: 19,99 €/god, 2,99 €/mj, 39 € doživotno (prvih 200), sve uz granicu poštenog korištenja.
+- **[ODLUKA D-03] Cijene:** 19,99 €/god, 2,99 €/mj (doživotno 39 € za prvih 200 još otvoreno), uz granicu poštenog korištenja. 2026-10-20: vlasnik je odlučio objaviti cijene na webu (cjenik uz usporedbu planova, `web/app/site.ts` → `PRICES`). Sidrena cijena (NN 101/26) je `PRICE_ANCHOR`; zasad null jer se Premium 10. 9. 2026. nije prodavao (potvrditi s knjigovođom).
 
 ### 4.7 Prijava
 - Pri prvom pokretanju stvara se anonimna Supabase sesija. Aplikacija radi bez računa, podaci su lokalni. Anonimni korisnik može skenirati (u kvoti) i kupiti Premium.
@@ -201,8 +205,8 @@ Svaki redak: `id` (uuid v7, generira klijent), `user_id`, `created_at`, `updated
 - **Izvor:** dizajn sustav UnitCent (boje, tipografija, razmaci, obrasci). Tokeni se generiraju u `packages/tokens` i koriste u aplikaciji i webu.
 - **Teme:** u aplikaciji svijetla i tamna kao ravnopravne; prate sustav, korisnik može zaključati. Svaki ekran se dizajnira i provjerava u obje. Marketinška stranica je samo tamna (vidi §12).
 - **Navigacija:** Početna · Pregled · [+] · Pretplate · Profil. Tipka + uvijek vidljiva, unos je bottom sheet, ne novi ekran.
-- **Početna:** „Danas još smiješ“ (jedan veliki broj, §4.2), mjesec (potrošeno/plan), sljedeće naplate, zadnji troškovi.
-- **Onboarding (≤ 60 s):** 1) primanja, 2) obavezni troškovi (ponuđeni popularni), 3) štednja → odmah prikaži preporučeni dnevni trošak. Bez računa.
+- **Početna:** „Ostalo za danas“ (jedan veliki broj, §4.2; ispod „od X € danas“; jedini par brojeva na ekranu), mjesec kao stanje i traka bez iznosa (iznosi su na Pregledu), sljedeće naplate, zadnji troškovi.
+- **Onboarding (≤ 60 s):** 1) primanja, 2) obavezni troškovi (ponuđeni popularni), 3) štednja → odmah prikaži dnevni budžet. Bez računa.
 - **Mikro-interakcije:** haptika na spremanju/brisanju/limitu, odbrojavanje iznosa, povlačenje ulijevo za brisanje s „Poništi“.
 - **Pristupačnost:** Dynamic Type do 130 % bez rezanja, kontrast ≥ 4.5:1, oznake za čitače zaslona, bez značenja samo bojom.
 - **Jezik:** hrvatski prvi; sav tekst kroz i18n (i18next + expo-localization), formati valute/datuma po lokalitetu. Spremno za sl/bs/sr (latinica) i druge valute.
@@ -221,7 +225,7 @@ Svaki redak: `id` (uuid v7, generira klijent), `user_id`, `created_at`, `updated
 ## 8. Kvaliteta i testiranje
 - **Jedinični testovi (obavezni):**
   - novac;
-  - dnevni limit: zadnji dan mjeseca, prekoračenje i negativan „danas još smiješ“, mjesec s 28/29/30/31 dana, današnja potrošnja smanjuje današnji broj točno za svoj iznos, knjižena pretplata ne smanjuje limit dvaput;
+  - dnevni budžet: zadnji dan mjeseca, prekoračenje i negativno „ostalo za danas“, mjesec s 28/29/30/31 dana, današnja potrošnja smanjuje današnji broj točno za svoj iznos, knjižena pretplata ne smanjuje budžet dvaput;
   - ponavljanja: `day_of_month` 31 u veljači;
   - sync: sukobi po `client_updated_at` (offline izmjena stigne kasnije), duplikati, preklop kursora;
   - pretvorba skeniranog računa u transakcije, uključujući popuste i povratnu naknadu.
@@ -255,7 +259,7 @@ Svaka faza završava demonstracijom, ažuriranjem ovog dokumenta (§12) i odluko
 | Odbijanje u storeu (plaćanja, prijava, brisanje računa) | Apple IAP za digitalne usluge, Apple prijava uz Google, brisanje računa u aplikaciji, jasan paywall |
 | Spora aplikacija na slabim uređajima | Proračun performansi, profiliranje, lijeno učitavanje, FlashList |
 | Gubitak podataka pri sinkronizaciji | Idempotentni zapisi, soft delete, sukobi po vremenu uređaja, preklop kursora, testovi sukoba, lokalna sigurnosna kopija prije spajanja računa |
-| Pogrešan dnevni limit (dvostruko brojanje, današnja potrošnja) | Jedna formula u packages/core (§4.2), testovi rubnih slučajeva |
+| Pogrešan dnevni budžet (dvostruko brojanje, današnja potrošnja) | Jedna formula u packages/core (§4.2), testovi rubnih slučajeva |
 | Cjenici trgovina nedostupni/licenca | Provjeriti format i uvjete prije obećanja; shopping lista tek u v1.1 |
 | Pravni rizik (privatnost, uvjeti) | Pravni pregled prije lansiranja |
 
@@ -271,8 +275,9 @@ Svaka faza završava demonstracijom, ažuriranjem ovog dokumenta (§12) i odluko
 | D-06 | Apple Developer i Google Play račun (tko je vlasnik, obrt/privatno) | Obrt ako postoji (porezni tretman, knjigovođa). Napomena: u storeu se kao prodavatelj prikazuje pravni naziv računa. Apple organizacijski račun traži pravnu osobu i D-U-N-S broj; obrt (jedan vlasnik) se vjerojatno upisuje kao fizička osoba. Provjeriti prije registracije. |
 | D-07 | Analitika (PostHog EU vs. samo Vercel/Plausible na webu) | PostHog EU, bez osobnih podataka |
 | D-08 | Podrška i e-adresa (podrska@unitcent.com još nema sandučić) | Napraviti prije bete |
-| D-09 | Neplanirani prihodi ulaze u dnevni limit? | Da, dodaju se raspoloživom za mjesec |
+| D-09 | Neplanirani prihodi ulaze u dnevni budžet? | Da, dodaju se raspoloživom za mjesec |
 | D-10 | Prijava u postojeći račun s lokalnim podacima: spojiti ili zamijeniti | Spojiti, uz lokalnu kopiju prije spajanja |
+| D-13 | Mjesec od 1. ili od dana plaće; početak usred mjeseca | **Odlučeno 2026-10-19:** kalendarski mjesec; usred mjeseca se potrošeno procjenjuje iz stanja na računu (§4.2) |
 
 ## 12. Dnevnik odluka i stanja (ažurirati)
 - **2026-10-15:** odlučeno ime UnitCent, domena unitcent.com, stog Expo + Supabase + RevenueCat + Vercel (web).
@@ -300,7 +305,7 @@ Svaka faza završava demonstracijom, ažuriranjem ovog dokumenta (§12) i odluko
 
 - **2026-10-16: Faza 1 (lokalni MVP), napisano i provjereno koliko je moguće bez uređaja:**
   - lokalna SQLite baza (expo-sqlite, vlastiti runner migracija umjesto Drizzlea radi jednostavnosti; outbox se već puni za Fazu 2), deterministički ID-evi za knjiženja pretplata i planove (UUID v5), UUID v7 za ostalo;
-  - ekrani: onboarding (3 koraka s prikazom preporučenog dnevnog troška), početna („Danas još smiješ“ + preporučeni dnevni trošak), brzi unos (tipkovnica + dodir na kategoriju sprema, „Poništi“), pregled po kategorijama s usporedbom s prošlim mjesecom, pretplate s kalendarom i dodavanjem, profil (plan, podsjetnici, tema);
+  - ekrani: onboarding (3 koraka s prikazom dnevnog budžeta), početna („Ostalo za danas“ + dnevni budžet), brzi unos (tipkovnica + dodir na kategoriju sprema, „Poništi“), pregled po kategorijama s usporedbom s prošlim mjesecom, pretplate s kalendarom i dodavanjem, profil (plan, podsjetnici, tema);
   - lokalni podsjetnici dan prije naplate (expo-notifications), anonimna Supabase sesija (ne blokira, preskače se bez mreže);
   - provjere: `tsc` čist, `expo-doctor` 21/21, Android i iOS bundle prolaze, SQL shema i idempotentno knjiženje provjereni na pravom SQLite-u; domena 28 + tokeni 27 testova. **Nije isprobano na uređaju/emulatoru** (vizualni pregled i dodiri tek slijede).
   - još nedostaje do izlaznog kriterija Faze 1: izvršavanje na uređaju, uređivanje postojeće pretplate/transakcije, 2 tjedna stvarne uporabe.
@@ -335,6 +340,13 @@ Svaka faza završava demonstracijom, ažuriranjem ovog dokumenta (§12) i odluko
 
 - **2026-10-19: [IDEJA D-12] Obiteljski račun (Premium, kasnije, ne sada):** dvoje ili više ljudi (par, obitelj) prate zajedničke financije. Radna cijena **5,99 €/mj** za do **4 računa**. Posljedice za arhitekturu (zapisati prije izgradnje): entitet „kućanstvo“ s članovima i ulogama (vlasnik, član); zajednički budžet i zajednički troškovi, uz mogućnost privatnih troškova po članu; pozivnica (poveznica/kod); RLS po kućanstvu uz postojeći po korisniku; Premium vrijedi za cijelo kućanstvo (jedan entitlement, do 4 člana); kvota skeniranja po kućanstvu ili po članu (odlučiti); naplata kao zaseban proizvod u trgovinama (ili Family Sharing, provjeriti pravila Applea/Googlea). Povezano s postojećom fazom „zajednički budžet“ (§ faze 7). Prvo nakon lansiranja i izmjerene potražnje.
 - **2026-10-19: stanje prijava i naplate:** Google prijava radi (testirano); Apple provider je podešen u Supabaseu, a gumb se uključuje zastavicom `EXPO_PUBLIC_APPLE_SIGNIN=1` (testira se tek na pravom iOS buildu). Naplata (RevenueCat, proizvodi u trgovinama) ostaje za kasnije: kod je spreman (`src/purchases.ts`, `revenuecat-webhook`).
+- **2026-10-19: povratne informacije s testiranja (riješeno u kodu, neisprobano na uređaju):**
+  - pretplate se ne broje u Pregledu, „Svi troškovi“ ni limitima kategorija (isti broj „Potrošeno“ kao na Početnoj); „Ostalo“ je zadnje i zadano;
+  - pretplata: kategorija kao padajući izbor s „+ Nova kategorija“, prijedlozi s logotipima dok tipkaš (katalog `packages/core/src/catalog.ts`; znakovi iz Simple Icons (CC0, dio iz v9) i Tabler Icons (MIT) u `apps/mobile/src/brandGlyphs.ts`; marke bez otvorenog znaka imaju kraticu u boji marke), AI prijedlog za nepoznate nazive (Premium, Edge Function `classify-recurring`, objavljena na dev 2026-10-19);
+  - štednja na jednom mjestu i D-13 (početak usred mjeseca); migracija `20261022000000_start_midmonth.sql` (dva stupca, primijenjena na dev 2026-10-19);
+  - AI boja: zlatno-ljubičasti prijelaz bez Premiuma, čista ljubičasta s Premiumom; prekidač „Premium (test)“ u Profilu (razvoj i EAS preview).
+  - **valuta:** zadana valuta u Profilu → Valuta (zadano EUR; promjena ne pretvara postojeće iznose, samo oznaku). Strani iznos (brzi unos, skenirani račun, pretplata) bira se dodirom na oznaku valute i sprema pretvoren u zadanu valutu, a izvorni iznos ostaje u bilješci. Tečajevi: open.er-api.com (1 € = …), jednom dnevno, pamte se lokalno; bez interneta vrijede približni `FALLBACK_RATES` (core). `scan-receipt` vraća `currency` (objavljeno na dev, v6). Planovi u USD nude se s iznosom „≈ u zadanoj valuti“;
+  - planovi i cijene pretplata iz HR kataloga (`packages/core/src/plans.ts`, generirano); logotipi marki bez otvorenog znaka su slike sa službenih stranica (`apps/mobile/assets/brands`).
 
 **Sljedeće:** dovršiti Fazu 0 (stavke koje traže vlasnika) pa Faza 1. Preostalo u Fazi 0:
 1. rezervirati bundle ID i developer račune (D-05, D-06);

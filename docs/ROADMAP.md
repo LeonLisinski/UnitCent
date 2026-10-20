@@ -7,14 +7,14 @@ Prioritizirani popis svega što je ostalo. Redoslijed ide od onoga što otključ
 ### Free i Premium (predlažem ovo kao službeno)
 | | Free | Premium (2,99 €/mj, 19,99 €/god) |
 |---|---|---|
-| Unos, kategorije, dnevni limit, pretplate, offline, sinkronizacija, izvoz podataka | ✔ | ✔ |
+| Unos, kategorije, dnevni budžet, pretplate, offline, sinkronizacija, izvoz podataka | ✔ | ✔ |
 | Povijest i pregled | zadnjih 6 mjeseci | cijela |
 | Skeniranje računa | 3 mjesečno | do 100 mjesečno (pošteno korištenje) |
 | Praćenje štednje (osnovno: plan, mjesečna potvrda, ukupno ušteđeno) | ✔ | ✔ |
 | Štednja: više ciljeva, projekcije | – | ✔ (kasnije) |
 | Budžeti po kategoriji s upozorenjem | – | ✔ |
 | AI uvidi i savjeti | pregled jednog uvida (mamac) | ✔ svi |
-| Widget „Danas još smiješ" | ✔ | ✔ (retencija je važnija od prodaje) |
+| Widget „Ostalo za danas" | ✔ | ✔ (retencija je važnija od prodaje) |
 | Obiteljski račun (D-12) | – | zasebni paket, kasnije |
 
 Načelo: ono što korisnika drži u aplikaciji (unos, limit, štednja, widget) ostaje besplatno; naplaćuje se ono što košta (AI) ili donosi dodatnu vrijednost (povijest, budžeti, uvidi).
