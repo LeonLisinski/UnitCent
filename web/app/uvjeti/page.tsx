@@ -33,7 +33,7 @@ export default function Uvjeti() {
       <p>Aplikacija radi odmah, bez prijave, a podaci se u početku čuvaju na tvom uređaju i u zaštićenom računu u oblaku. Prijavom Googleom ili Appleom štitiš račun i omogućuješ prijenos podataka na novi uređaj. Odgovoran si za zaštitu svog uređaja i prijave. Račun i sve povezane podatke možeš izbrisati u aplikaciji (Profil), nakon čega se trajno brišu.</p>
 
       <h2>4. Besplatno i Premium</h2>
-      <p>Besplatna jezgra (ručni unos, pretplate i fiksni troškovi, dnevni limit, pregled, rad bez interneta) ne naplaćuje se. Uključena su i ograničena AI skeniranja mjesečno, a njihov broj je naveden u aplikaciji.</p>
+      <p>Besplatna jezgra (ručni unos, pretplate i fiksni troškovi, dnevni budžet, pregled, rad bez interneta) ne naplaćuje se. Uključena su i ograničena AI skeniranja mjesečno, a njihov broj je naveden u aplikaciji.</p>
       <p>Premium otključava dodatne funkcije, uključujući AI skeniranje računa u većem opsegu. Cijena, razdoblje naplate i opseg prikazani su u aplikaciji prije kupnje. Plaćanje i obnova idu isključivo preko Apple App Storea ili Google Playa. Pretplata se automatski obnavlja dok je ne otkažeš u postavkama računa tog storea, najkasnije dan prije kraja razdoblja. Povrat novca i pravo na odustanak ostvaruju se prema pravilima storea i zakonima o zaštiti potrošača. Cijene i opseg Premiuma možemo promijeniti za buduća razdoblja, uz obavijest unaprijed.</p>
 
       <h2>5. Pošteno korištenje AI skeniranja</h2>

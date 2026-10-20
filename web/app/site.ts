@@ -7,6 +7,16 @@ export const CONTACT_EMAIL = "podrska@unitcent.com";
 // ovo je javno obećanje. Zasad namjerno bez konkretnog iznosa i roka.
 export const WAITLIST_OFFER = "Prijavi se i dobij posebnu ponudu pri lansiranju.";
 
+// Cjenik Premiuma (isti kao u aplikaciji, apps/mobile/src/premium.ts). Plaća se kroz App Store / Google Play.
+export const PRICES = { monthly: "2,99 €", yearly: "19,99 €", yearlyPerMonth: "1,67 €" } as const;
+
+/**
+ * Sidrena cijena (Odluka NN 101/26, od 1. 10. 2026. i za pružatelje usluga): cijena na dan 10. 9. 2026., istaknuta uz
+ * trenutnu. Premium se tada još nije prodavao, pa sidrene cijene nema (null). Ako je knjigovođa/pravnik drukčije
+ * protumači ili se cijena promijeni nakon lansiranja, ovdje upisati npr. { date: "10. 9. 2026.", monthly: "2,99 €", yearly: "19,99 €" }.
+ */
+export const PRICE_ANCHOR: { date: string; monthly: string; yearly: string } | null = null;
+
 export const FAQ: { q: string; a: string }[] = [
   {
     q: "Jesu li moji podaci sigurni?",
@@ -22,6 +32,6 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "Koliko košta?",
-    a: "Osnovno praćenje troškova, pretplate i dnevni limit su besplatni bez ograničenja. Premium otključava neograničeno AI skeniranje računa i dodatne funkcije. Cijene objavljujemo uz lansiranje.",
+    a: "Osnovno praćenje troškova, pretplate i dnevni budžet su besplatni bez ograničenja. Premium košta 2,99 € mjesečno ili 19,99 € godišnje (1,67 € mjesečno) i otključava neograničeno AI skeniranje računa, uvide, budžete po kategoriji i cijelu povijest. Otkazuje se kad god želiš.",
   },
 ];

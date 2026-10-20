@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Icon } from "./icons";
 import { RING_ARC } from "./Logo";
 
-const LIMIT = 19.96; // isti dnevni limit kao u heroju i jednadžbi
+const LIMIT = 19.96; // isti dnevni budžet kao u heroju i jednadžbi
 const nf = new Intl.NumberFormat("hr-HR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const eur = (v: number) => `${nf.format(Math.abs(v))} €`;
 
@@ -15,7 +15,7 @@ const CHIPS: { n: string; a: number; icon: string }[] = [
 ];
 
 /**
- * „Isprobaj”: dodaj trošak i gledaj kako se dnevni limit mijenja. Ton je isti kao u aplikaciji:
+ * „Isprobaj”: dodaj trošak i gledaj koliko ti ostaje za danas. Ton je isti kao u aplikaciji:
  * činjenice, bez osude. Prsten je isti oblik kao logotip i puni se kako trošiš.
  */
 export function TryIt() {
@@ -28,10 +28,10 @@ export function TryIt() {
     spent === 0
       ? "Još ništa danas. Lijep dan."
       : state === "ok"
-        ? "I dalje si u limitu."
+        ? "I dalje si u budžetu."
         : state === "warn"
           ? `Pazi, ostalo je još samo ${eur(left)}.`
-          : `Preko za ${eur(left)}. Ništa strašno, sutra se limit preračuna.`;
+          : `Preko za ${eur(left)}. Ništa strašno, sutra se budžet preračuna.`;
 
   return (
     <section id="isprobaj" className="tryit" aria-labelledby="h-try">
@@ -50,7 +50,7 @@ export function TryIt() {
               />
             </svg>
             <div className="try-c">
-              <span className="label">{left < 0 ? "Preko limita" : "Još danas smiješ"}</span>
+              <span className="label">{left < 0 ? "Danas preko" : "Ostalo za danas"}</span>
               <b className="num" aria-live="polite">{left < 0 ? "−" : ""}{eur(left)}</b>
             </div>
           </div>

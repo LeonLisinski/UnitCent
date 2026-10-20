@@ -1,5 +1,5 @@
 /**
- * Znak UnitCent: prsten dnevnog limita (izvor: public/brand/svg). Crta se u boji `--brand`, pa sam prati svijetlu i tamnu temu.
+ * Znak UnitCent: prsten dnevnog budžeta (izvor: public/brand/svg). Crta se u boji `--brand`, pa sam prati svijetlu i tamnu temu.
  * Isti prsten koristi indikator napretka stranice (ScrollRing u Motion.tsx).
  */
 export const RING_ARC = "M74.04 25.96A34 34 0 1 0 74.04 74.04";

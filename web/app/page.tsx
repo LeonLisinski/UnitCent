@@ -7,7 +7,7 @@ import { Stores } from "./Stores";
 import { TryIt } from "./TryIt";
 import { Words } from "./Words";
 import { Waitlist } from "./Waitlist";
-import { CONTACT_EMAIL, FAQ, SITE_NAME, SITE_URL } from "./site";
+import { CONTACT_EMAIL, FAQ, PRICES, PRICE_ANCHOR, SITE_NAME, SITE_URL } from "./site";
 
 /*
  * Jedan plan, isti brojevi svugdje (primanja 1.468 − obavezno 771,33 − štednja 150 = 546,67;
@@ -36,13 +36,13 @@ function PhoneMock() {
     <div className="phone-wrap">
       <span className="float-chip fc1" aria-hidden="true"><Icon name="bell" size={16} stroke={2} /><span><b>Sutra naplata</b><small>Netflix · −6,00 €</small></span></span>
       <span className="float-chip fc2" aria-hidden="true"><Icon name="check" size={16} stroke={2.4} /><span><b>Račun razvrstan</b><small>Hrana · Auto · Kućanstvo</small></span></span>
-      <div className="phone" role="img" aria-label="Početni ekran aplikacije UnitCent: preporučeni dnevni trošak 19,96 €, potrošeno 207,40 € od 546,67 € ovaj mjesec">
+      <div className="phone" role="img" aria-label="Početni ekran aplikacije UnitCent: dnevni budžet 19,96 €, potrošeno 207,40 € od 546,67 € ovaj mjesec">
         <div className="p-top">
           <div><small className="muted">Četvrtak, 15. listopada</small><br /><b>Bok, Luka</b></div>
           <span className="avatar">L</span>
         </div>
         <div className="p-hero">
-          <div className="label">Preporučeni dnevni trošak</div>
+          <div className="label">Dnevni budžet</div>
           <div className="amt num">19,96 €</div>
           <small>Još 17 dana u mjesecu</small>
         </div>
@@ -72,14 +72,14 @@ export default function Home() {
         applicationCategory: "FinanceApplication",
         operatingSystem: "iOS, Android",
         inLanguage: "hr",
-        description: "Hrvatska aplikacija za praćenje troškova s AI skeniranjem računa, automatskim pretplatama i dnevnim limitom potrošnje.",
+        description: "Hrvatska aplikacija za praćenje troškova s AI skeniranjem računa, automatskim pretplatama i dnevnim budžetom.",
         url: SITE_URL,
         publisher: { "@id": `${SITE_URL}/#org` },
         featureList: [
           "Unos troška za 3 sekunde",
           "Pretplate i fiksni troškovi se knjiže automatski",
           "AI skeniranje računa i razvrstavanje stavki po kategorijama",
-          "Dnevni limit: koliko danas još smiješ potrošiti",
+          "Dnevni budžet: koliko danas smiješ potrošiti",
           "Rad bez interneta",
         ],
       },
@@ -109,7 +109,7 @@ export default function Home() {
           <svg className="deco-ring" viewBox="0 0 100 100" fill="none" strokeLinecap="round" aria-hidden="true"><path d="M74.04 25.96A34 34 0 1 0 74.04 74.04" stroke="var(--brand)" strokeWidth="16" /></svg>
           <div className="wrap hero-grid">
             <div>
-              <div className="label">Preporučeni dnevni trošak</div>
+              <div className="label">Dnevni budžet</div>
               <div className="hero-number num"><CountUp to={DAILY} /></div>
               <h1 id="h-hero">Znaj koliko smiješ potrošiti. <em className="serif">Svaki dan.</em></h1>
               <div id="prijava" className="hero-form"><Waitlist id="wl-hero" where="hero" /></div>
@@ -131,7 +131,7 @@ export default function Home() {
             <div className="section-head" data-reveal>
               <span className="label">04 / Pretplate</span>
               <h2 id="h-subs"><Words text="Upišeš jednom." /> <em className="serif"><Words text="Knjiže se same." /></em></h2>
-              <p>Najam, režije i pretplate svaki mjesec na isti dan, bez tvog unosa. Dan prije stiže podsjetnik, a dnevni limit ih već uračunava.</p>
+              <p>Najam, režije i pretplate svaki mjesec na isti dan, bez tvog unosa. Dan prije stiže podsjetnik, a dnevni budžet ih već uračunava.</p>
             </div>
             <div className="mcal" data-reveal role="img" aria-label="Kalendar naplata za listopad 2026: najam 1., kredit 3., Spotify 5., režije 8., Netflix 11., teretana 12., mobitel 15., struja 18., HBO Max 21., iCloud 24., osiguranje 28.">
               <div className="mcal-grid" aria-hidden="true">
@@ -179,7 +179,7 @@ export default function Home() {
                   <tr>
                     <th scope="col"><span className="sr-only">Funkcija</span></th>
                     <th scope="col">Besplatno<small>0 €</small></th>
-                    <th scope="col" className="vs-pro">Premium<small>Cijena uz lansiranje</small></th>
+                    <th scope="col" className="vs-pro">Premium<small>{PRICES.monthly} / mj. · {PRICES.yearly} / god.</small></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -194,7 +194,7 @@ export default function Home() {
                     <td className="vs-pro"><span className="vs-yes"><Icon name="check" size={22} stroke={2.6} /><span className="sr-only">Premium: da</span></span></td>
                   </tr>
                   <tr>
-                    <th scope="row">Dnevni limit i pregled po kategorijama</th>
+                    <th scope="row">Dnevni budžet i pregled po kategorijama</th>
                     <td><span className="vs-yes"><Icon name="check" size={22} stroke={2.6} /><span className="sr-only">Besplatno: da</span></span></td>
                     <td className="vs-pro"><span className="vs-yes"><Icon name="check" size={22} stroke={2.6} /><span className="sr-only">Premium: da</span></span></td>
                   </tr>
@@ -225,6 +225,17 @@ export default function Home() {
                   </tr>
                 </tbody>
               </table>
+              {/* Cjenik uz tablicu: godišnji plan uz usporedbu s mjesečnim, datum važenja i (ako postoji) sidrena cijena. */}
+              <div style={{ marginTop: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, textAlign: "center" }}>
+                <p style={{ margin: 0, fontSize: 17 }}>
+                  Godišnje <b className="num">{PRICES.yearly}</b>, to je{" "}
+                  <s className="num" style={{ opacity: 0.6 }}>{PRICES.monthly}</s> <b className="num">{PRICES.yearlyPerMonth}</b> mjesečno
+                </p>
+                <small className="muted">
+                  Mjesečno {PRICES.monthly}. Plaćanje kroz App Store ili Google Play, otkazivanje kad god želiš. Cijene s PDV-om.
+                  {PRICE_ANCHOR ? ` Sidrena cijena (${PRICE_ANCHOR.date}): ${PRICE_ANCHOR.monthly} mjesečno, ${PRICE_ANCHOR.yearly} godišnje.` : ""}
+                </small>
+              </div>
             </div>
           </div>
         </section>
@@ -262,6 +273,7 @@ export default function Home() {
         <div className="wrap">
           <span>© {new Date().getFullYear()} UnitCent</span>
           <nav aria-label="Podnožje">
+            <Link href="/blog">Blog</Link>
             <Link href="/privatnost">Privatnost</Link>
             <Link href="/uvjeti">Uvjeti</Link>
             <a href={`mailto:${CONTACT_EMAIL}`}>Kontakt</a>

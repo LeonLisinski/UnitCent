@@ -634,7 +634,7 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 1; pointer-events
 
 /* ================= v6: čitljiv glavni iznos, prikovan račun, hero s mrežom ================= */
 
-/* "Preporučeni dnevni trošak": veliki iznos je sada tamni tekst na limeti (vidljiv u obje teme) */
+/* "Dnevni budžet": veliki iznos je sada tamni tekst na limeti (vidljiv u obje teme) */
 .eq-step.final .eq-res dd { background: var(--accent); color: var(--on-accent); padding: 4px 20px 8px; margin-right: 0; border-radius: 18px; font-size: clamp(44px, 6vw, 72px); line-height: 1; box-shadow: 0 10px 40px -10px color-mix(in srgb, var(--accent) 55%, transparent); }
 .eq-step.final .eq-res { align-items: center; }
 

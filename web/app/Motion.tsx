@@ -165,7 +165,7 @@ const EQ_ROWS: EqRow[] = [
   { op: "−", label: "Štednja", val: "150,00 €", v: 546.67, hint: "Za trošenje" },
   { op: "−", label: "Potrošeno do danas", val: "207,40 €", v: 339.27, hint: "Ostaje ovaj mjesec" },
   { op: "÷", label: "Dana do kraja mjeseca", val: "17", v: 19.96, hint: "Po danu" },
-  { op: "=", label: "Preporučeni dnevni trošak", val: "19,96 €", v: 19.96, hint: "Preporučeni dnevni trošak", final: true },
+  { op: "=", label: "Dnevni budžet", val: "19,96 €", v: 19.96, hint: "Dnevni budžet", final: true },
 ];
 const RING_FULL = 238.76; // opseg kruga r=38
 const RING_END = 59.69; // prsten se zatvara do 3/4 kruga
