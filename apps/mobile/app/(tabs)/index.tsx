@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import * as Haptics from "expo-haptics";
+import { markRecapShown, takeRecap } from "../../src/recap";
 import { useRouter, type Href } from "expo-router";
 import { Pressable, ScrollView, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -38,6 +41,19 @@ export default function Pocetna() {
   const recent = useDb(() => listRecentTransactions(6));
   const recurring = useDb(() => listRecurring());
   const name = useDb(() => kvGet("name"));
+
+  // Kraj jučerašnjeg dana / prošlog mjeseca: jedna tiha poruka pri prvom otvaranju dana.
+  useEffect(() => {
+    const r = takeRecap(day);
+    if (!r) return;
+    const t = setTimeout(() => {
+      if (r.good) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      toast.show(r.text);
+      markRecapShown(day);
+    }, 900);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [day]);
 
   const { limit } = summary;
   const catById = new Map(cats.map((c) => [c.id, c]));

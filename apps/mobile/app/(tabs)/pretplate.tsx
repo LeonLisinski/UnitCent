@@ -1,14 +1,15 @@
 import { useState } from "react";
+import { Sheet } from "../../src/Sheet";
 import { View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { formatEur, occurrenceDate, previousMonth, yearMonthOf, type YearMonth } from "@unitcent/core";
+import { formatEur, occurrenceDate, previousMonth, yearMonthOf, type LocalDate, type YearMonth } from "@unitcent/core";
 import { Calendar } from "../../src/Calendar";
 import { recurringIcon } from "../../src/BrandIcon";
 import { Button, CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
 import { Amount, Ring, RoundButton, SwipeRow } from "../../src/fx";
-import { monthTitle, nextMonthOf } from "../../src/format";
+import { longDate, monthTitle, nextMonthOf } from "../../src/format";
 import { HERO, Hero, ListRow, MonthSwitcher, minMonth, PageHeader, RowAmount, Section, SectionLink, EmptyState, TabScreen } from "../../src/layout";
 import { useTheme } from "../../src/theme";
 import { freeMinMonth, usePremium, premiumHref } from "../../src/premium";
@@ -31,6 +32,7 @@ export default function Pretplate() {
   const day = today();
   const thisMonth = yearMonthOf(day);
   const [month, setMonth] = useState<YearMonth>(thisMonth);
+  const [sheetDay, setSheetDay] = useState<LocalDate | null>(null); // dan iz kalendara (mali list)
   const items = useDb(() => listRecurring());
   const cats = useDb(() => listCategories());
   const catById = new Map(cats.map((c) => [c.id, c]));
@@ -90,8 +92,8 @@ export default function Pretplate() {
 
       {/* Kalendar je uvijek vidljiv (i prazan), pa je prva sekcija na istoj visini kao na ostalim tabovima. */}
       <Animated.View entering={enter(2)}>
-        <Section title="Kalendar">
-          <Calendar month={month} items={inMonth} categories={cats} todayDate={day} />
+        <Section title="Kalendar" right={<SectionLink label="+ Dodaj" accessibilityLabel="Dodaj pretplatu" onPress={() => router.push("/pretplata")} />}>
+          <Calendar month={month} items={inMonth} categories={cats} todayDate={day} onDayPress={setSheetDay} />
         </Section>
       </Animated.View>
 
@@ -153,6 +155,52 @@ export default function Pretplate() {
         </Section>
       </Animated.View>
 
+      {/* Dan u kalendaru: pretplate tog dana (povuci za uređivanje ili brisanje) i nova pretplata s tim danom. */}
+      <Sheet visible={sheetDay !== null} title={sheetDay ? longDate(sheetDay) : ""} onClose={() => setSheetDay(null)}>
+        {(() => {
+          if (!sheetDay) return null;
+          const onDay = inMonth.filter((it) => occurrenceDate(it, month) === sheetDay);
+          const open = (id: string) => {
+            setSheetDay(null);
+            router.push({ pathname: "/pretplata", params: { id } });
+          };
+          return (
+            <>
+              {onDay.length === 0 ? (
+                <T muted>Nema naplata.</T>
+              ) : (
+                <View>
+                  {onDay.map((it, i) => {
+                    const cat = catById.get(it.categoryId ?? "");
+                    return (
+                      <SwipeRow key={it.id} onDelete={() => { setSheetDay(null); remove(it.id); }} onEdit={() => open(it.id)}>
+                        <ListRow
+                          first={i === 0}
+                          left={<CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={recurringIcon(it, cat?.icon)} size={40} />}
+                          title={it.name}
+                          subtitle={cat?.name}
+                          right={<RowAmount>{formatEur(it.amountCents)}</RowAmount>}
+                          hint="Dodirni za uređivanje, povuci ulijevo za brisanje"
+                          onPress={() => open(it.id)}
+                        />
+                      </SwipeRow>
+                    );
+                  })}
+                </View>
+              )}
+              <Button
+                variant="text"
+                label="+ Nova pretplata"
+                onPress={() => {
+                  const d = sheetDay.slice(8).replace(/^0/, "");
+                  setSheetDay(null);
+                  router.push({ pathname: "/pretplata", params: { day: d } });
+                }}
+              />
+            </>
+          );
+        })()}
+      </Sheet>
     </TabScreen>
   );
 }

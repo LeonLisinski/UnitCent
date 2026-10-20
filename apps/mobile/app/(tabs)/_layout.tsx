@@ -2,10 +2,12 @@ import { Redirect, Tabs } from "expo-router";
 import { FloatingTabBar, type TabBarProps } from "../../src/TabBar";
 import { useDb } from "../../src/data";
 import { kvGet } from "../../src/db/repo";
+import { useQuickActions } from "../../src/quickActions";
 
 /** Navigacija: Početna · Pregled · [+] · Pretplate · Profil (plutajuća traka, vidi src/TabBar.tsx). */
 export default function TabsLayout() {
   const onboarded = useDb(() => kvGet("onboarded") === "1");
+  useQuickActions(onboarded);
   if (!onboarded) return <Redirect href="/onboarding" />;
 
   return (

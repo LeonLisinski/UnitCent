@@ -41,7 +41,7 @@ export default function Pretplata() {
   const toast = useToast();
   const cats = useDb(() => listCategories("expense"));
 
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, day: dayParam } = useLocalSearchParams<{ id?: string; day?: string }>(); // day: nova pretplata iz kalendara
   const editing = id ? getRecurring(id) : null;
   const [name, setName] = useState(editing?.name ?? "");
   const [amount, setAmount] = useState<{ text: string; cents: Cents | null }>(
@@ -50,7 +50,7 @@ export default function Pretplata() {
       : { text: "", cents: null },
   );
   // Dan: prazno polje s „1“ kao predloškom; ako ništa ne upišeš, naplata je 1. u mjesecu.
-  const [day, setDay] = useState(editing ? String(editing.dayOfMonth) : "");
+  const [day, setDay] = useState(editing ? String(editing.dayOfMonth) : (dayParam ?? ""));
   const [categoryId, setCategoryId] = useState<string | null>(editing ? editing.categoryId : defaultExpenseCategoryId());
   // Dok kategoriju nisi sam odabrao, predlaže se prema nazivu („Kredit“ → Stan i režije).
   const [catPicked, setCatPicked] = useState(!!editing);
@@ -80,7 +80,7 @@ export default function Pretplata() {
       start !== editing.startDate ||
       hasEnd !== !!editing.endDate ||
       (hasEnd && end !== editing.endDate)
-    : name.trim() !== "" || amount.text !== "" || day !== "";
+    : name.trim() !== "" || amount.text !== "" || day !== (dayParam ?? "");
   const allowLeave = useConfirmDiscard(dirty);
 
   const rangeOk = !hasEnd || end >= start;

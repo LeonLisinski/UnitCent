@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import { daysInMonth, occurrenceDate, parseYearMonth, toLocalDate, type LocalDate, type YearMonth } from "@unitcent/core";
 import { recurringIcon } from "./BrandIcon";
 import { CatIcon } from "./components";
@@ -18,11 +18,14 @@ export function Calendar({
   items,
   categories,
   todayDate,
+  onDayPress,
 }: {
   month: YearMonth;
   items: readonly RecurringRecord[];
   categories: readonly Category[];
   todayDate: LocalDate;
+  /** Dodir na dan mjeseca (npr. otvara list s pretplatama tog dana). */
+  onDayPress?: (date: LocalDate) => void;
 }) {
   const { colors } = useTheme();
   const { y, m } = parseYearMonth(month);
@@ -63,7 +66,14 @@ export function Calendar({
             const isToday = c.date === todayDate;
             const past = !!c.date && c.date < todayDate;
             return (
-              <View key={ci} style={{ flex: 1, alignItems: "center", minHeight: 40, paddingTop: 2, gap: 2, paddingBottom: 2 }}>
+              <Pressable
+                key={ci}
+                disabled={!c.date || !onDayPress}
+                accessibilityRole={c.date && onDayPress ? "button" : undefined}
+                accessibilityLabel={c.date ? `${c.label}.${subs.length ? `, ${subs.map((s) => s.name).join(", ")}` : ""}` : undefined}
+                onPress={() => c.date && onDayPress?.(c.date)}
+                style={({ pressed }) => ({ flex: 1, alignItems: "center", minHeight: 48, paddingTop: 2, gap: 2, paddingBottom: 2, opacity: pressed ? 0.5 : 1 })}
+              >
                 <View
                   style={{
                     width: 26,
@@ -93,7 +103,7 @@ export function Calendar({
                 {subs.length > 2 ? (
                   <T v="caption" muted style={{ fontSize: 10, fontWeight: "800", opacity: past ? 0.55 : 1 }}>+{subs.length - 1}</T>
                 ) : null}
-              </View>
+              </Pressable>
             );
           })}
         </View>

@@ -1,5 +1,5 @@
 import { Pressable, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -56,9 +56,18 @@ export function FloatingTabBar({ state, descriptors, navigation }: TabBarProps) 
                 key={route.key}
                 accessibilityRole="button"
                 accessibilityLabel="Dodaj trošak"
+                accessibilityHint="Drži za skeniranje računa"
+                accessibilityActions={[{ name: "longpress", label: "Skeniraj račun" }]}
+                onAccessibilityAction={(e) => e.nativeEvent.actionName === "longpress" && router.push("/skeniraj" as Href)}
                 onPress={() => {
                   void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   router.push("/dodaj");
+                }}
+                // Prečac: držanje + vodi ravno u kameru (dodir ostaje brzi ručni unos, koji je najčešći).
+                delayLongPress={350}
+                onLongPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push("/skeniraj" as Href);
                 }}
                 style={{ marginTop: -26 }}
               >

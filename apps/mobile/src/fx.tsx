@@ -603,11 +603,14 @@ export function RoundButton({
   label,
   disabled,
   tone,
+  size = 44,
 }: {
   icon: string;
   onPress: () => void;
   label: string;
   disabled?: boolean;
+  /** Promjer (zadano 44; glavne radnje uz „Spremi“ 52, isto kao gumb). */
+  size?: number;
   /** "gold" = Premium (zaključano): zlatna ikona i rub. "ai" = AI funkcija: AI prijelaz (vidi useAiGradient). */
   tone?: "gold" | "ai";
 }) {
@@ -620,9 +623,9 @@ export function RoundButton({
       onPress={onPress}
       disabled={disabled}
       style={{
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: size,
+        height: size,
+        borderRadius: size / 2,
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
@@ -635,7 +638,7 @@ export function RoundButton({
       {tone === "ai" ? (
         <Sheen colors={ai.colors} locations={ai.locations} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
       ) : null}
-      <Icon name={icon} size={20} color={tone === "gold" ? fx.gold : tone === "ai" ? fx.onAi : colors.ink} />
+      <Icon name={icon} size={size >= 50 ? 23 : 20} color={tone === "gold" ? fx.gold : tone === "ai" ? fx.onAi : colors.ink} />
     </Pressable>
   );
 }
