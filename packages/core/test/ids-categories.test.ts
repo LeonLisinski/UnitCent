@@ -74,3 +74,70 @@ describe("kategorije i agregacije", () => {
     expect(percentChange(100, 0)).toBeNull();
   });
 });
+
+describe("Prijedlog kategorije pretplate", () => {
+  it("prepoznaje česte nazive bez obzira na dijakritike i velika slova", async () => {
+    const { suggestRecurring } = await import("../src");
+    expect(suggestRecurring("Kredit")?.categoryKey).toBe("stan");
+    expect(suggestRecurring("stambeni kredit")?.categoryKey).toBe("stan");
+    expect(suggestRecurring("Režije")?.icon).toBe("drop");
+    expect(suggestRecurring("Disney+")?.icon).toBe("brand:disneyplus");
+    expect(suggestRecurring("YT Premium")?.icon).toBe("brand:youtube");
+    expect(suggestRecurring("Spotify Family")?.icon).toBe("brand:spotify");
+    expect(suggestRecurring("Teretana")?.categoryKey).toBe("zdravlje");
+    expect(suggestRecurring("kred")?.categoryKey).toBe("stan");
+  });
+  it("nepoznat ili prekratak naziv nema prijedlog", async () => {
+    const { suggestRecurring } = await import("../src");
+    expect(suggestRecurring("x")).toBeNull();
+    expect(suggestRecurring("Baka")).toBeNull();
+  });
+});
+
+describe("Katalog pretplata", () => {
+  it("prijedlozi dok tipkaš: najbolji pogodak prvi", async () => {
+    const { searchCatalog } = await import("../src");
+    expect(searchCatalog("net")[0]?.key).toBe("netflix");
+    expect(searchCatalog("apple tv")[0]?.key).toBe("appletv");
+    expect(searchCatalog("amazon prime video")[0]?.key).toBe("primevideo");
+    expect(searchCatalog("n")).toEqual([]);
+  });
+  it("ključevi su jedinstveni", async () => {
+    const { CATALOG } = await import("../src");
+    expect(new Set(CATALOG.map((e) => e.key)).size).toBe(CATALOG.length);
+  });
+});
+
+describe("Katalog: hrvatske usluge", () => {
+  it("prepoznaje operatere, režije i prijevoz", async () => {
+    const { suggestRecurring } = await import("../src");
+    expect(suggestRecurring("MAXtv")?.icon).toBe("brand:maxtv");
+    expect(suggestRecurring("A1 TV")?.icon).toBe("brand:a1tv");
+    expect(suggestRecurring("A1")?.icon).toBe("brand:a1");
+    expect(suggestRecurring("HBO Max")?.icon).toBe("brand:max");
+    expect(suggestRecurring("Struja")?.categoryKey).toBe("stan");
+    expect(suggestRecurring("HRT pristojba")?.icon).toBe("brand:hrt");
+    expect(suggestRecurring("Odvoz otpada")?.icon).toBe("trash");
+    expect(suggestRecurring("ZET mjesečna")?.icon).toBe("brand:zet");
+    expect(suggestRecurring("Kasko")?.categoryKey).toBe("auto");
+    expect(suggestRecurring("Kindle Unlimited")?.icon).toBe("brand:kindle");
+    expect(suggestRecurring("Arena Sport")?.icon).toBe("brand:arenasport");
+  });
+});
+
+describe("Planovi i cijene", () => {
+  it("svaki plan pripada stavci kataloga, cijene su u centima", async () => {
+    const { CATALOG, SERVICE_PLANS } = await import("../src");
+    const keys = new Set(CATALOG.map((e) => e.key));
+    for (const [k, v] of Object.entries(SERVICE_PLANS)) {
+      expect(keys.has(k), k).toBe(true);
+      for (const p of v.plans) expect(Number.isInteger(p.cents) && p.cents > 0).toBe(true);
+    }
+  });
+  it("nudi samo mjesečne planove u eurima", async () => {
+    const { monthlyPlans } = await import("../src");
+    expect(monthlyPlans("netflix").map((p) => p.cents)).toEqual([599, 999, 1299]);
+    expect(monthlyPlans("cursor")).toEqual([]); // cijene u USD
+    expect(monthlyPlans("nintendoswitch")).toEqual([]); // samo godišnje
+  });
+});

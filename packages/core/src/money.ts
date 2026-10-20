@@ -43,19 +43,31 @@ export function parseAmount(input: string): Cents | null {
   return Number.isSafeInteger(total) ? total : null;
 }
 
+/** Oznaka zadane valute (Postavke → Valuta); postavlja je aplikacija pri pokretanju. Zadano €. */
+let displaySymbol = "€";
+
+export function setDisplaySymbol(symbol: string): void {
+  displaySymbol = symbol;
+}
+
+export function displayCurrencySymbol(): string {
+  return displaySymbol;
+}
+
 /**
  * Formatira cente po hrvatskom standardu: "1.234,56 €" (točka za tisućice, zarez za decimale,
- * nerazdvojni razmak prije €). Negativni iznosi dobivaju pravi minus (U+2212).
+ * nerazdvojni razmak prije oznake). Negativni iznosi dobivaju pravi minus (U+2212).
  * Namjerno bez Intl: isti rezultat na svim platformama i verzijama motora.
+ * Oznaka je zadana valuta korisnika (ime ostaje `formatEur` jer je euro zadan); `symbol` je za strane iznose.
  */
-export function formatEur(cents: Cents, opts: { sign?: boolean } = {}): string {
+export function formatEur(cents: Cents, opts: { sign?: boolean; symbol?: string } = {}): string {
   const neg = cents < 0;
   const abs = Math.abs(Math.trunc(cents));
   const euros = Math.floor(abs / 100);
   const rest = String(abs % 100).padStart(2, "0");
   const grouped = String(euros).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   const sign = neg ? MINUS : opts.sign && cents > 0 ? "+" : "";
-  return `${sign}${grouped},${rest}${NBSP}€`;
+  return `${sign}${grouped},${rest}${NBSP}${opts.symbol ?? displaySymbol}`;
 }
 
 /** Cjelobrojno dijeljenje s zaokruživanjem na najbliži cent (polovina se zaokružuje od nule). */

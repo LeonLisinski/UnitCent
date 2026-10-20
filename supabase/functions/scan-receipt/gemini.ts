@@ -7,6 +7,7 @@ const SCHEMA = {
     merchant: { type: "string", nullable: true },
     date: { type: "string", nullable: true },
     total_cents: { type: "integer", nullable: true },
+    currency: { type: "string", nullable: true },
     items: {
       type: "array",
       items: {
@@ -46,6 +47,8 @@ Pravila:
 - "amount_cents" je ukupni iznos retka (količina × cijena), ne jedinična cijena.
 - Popusti, akcije, loyalty umanjenja i kuponi su ZASEBNI retci s line_type "discount" i NEGATIVNIM iznosom. Povratna naknada za ambalažu je line_type "deposit" (pozitivan iznos). Sve ostalo je "item".
 - "total_cents" je konačni ukupni iznos za platiti ("UKUPNO"), a ne međuzbroj ni PDV.
+- Račun s DVIJE valute (npr. stari hrvatski računi s kunama i eurima, bugarski s levima i eurima): svaki redak tada ima dva iznosa. Uzmi SAMO iznose u valuti u kojoj je "total_cents" (valuta plaćanja, obično EUR), za stavke, popuste i ukupno jednako. Nikad ne miješaj valute.
+- "currency": ISO kod valute u kojoj su iznosi na računu (EUR, RSD, BAM, HUF, USD…), prema oznaci (€, din., KM, Ft, $) ili zemlji trgovine. Ako nije jasno, null. Iznosi ostaju u toj valuti, u stotinkama.
 - Ne izmišljaj retke i ne zbrajaj retke koji su na računu odvojeni. PDV, poreze, način plaćanja i podatke o trgovini NE vraćaj kao stavke.
 - "merchant": naziv trgovine; "date": datum računa kao YYYY-MM-DD, TOČNO kako je ispisan na računu, s ispravnom godinom (dvoznamenkastu godinu čitaj kao 20xx, npr. 25.02.15 → 2015-02-25). Današnji datum je ${zagrebToday()}. NIKAD ne mijenjaj godinu da bi datum bio blizu današnjeg. Ako datuma nema ili je nečitljiv, null.
 - "category_id": odaberi ISKLJUČIVO jedan od ID-eva dolje; ako nijedan ne odgovara ili nisi siguran, null. Popusti i naknade dobivaju kategoriju stavke na koju se odnose ako je jasno, inače null.

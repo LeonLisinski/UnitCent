@@ -1,6 +1,6 @@
 import { divRound, type Cents } from "./money";
 import { daysLeftInclusive, yearMonthOf, type LocalDate } from "./dates";
-import { obligatoryForMonth, type RecurringItem } from "./recurring";
+import { obligatoryForMonth, occurrenceDate, type RecurringItem } from "./recurring";
 
 /**
  * Preporučeni dnevni trošak. JEDINA definicija formule (docs/APP-PLAN.md §4.2).
@@ -73,6 +73,11 @@ export interface TxLike {
 export interface MonthPlanLike {
   incomeCents: Cents;
   savingsCents: Cents;
+  /**
+   * D-13: potrošeno u tom mjesecu prije početka praćenja (npr. aplikacija instalirana 14.).
+   * Ulazi u „potrošeno prije današnjeg dana“, kao da su ti troškovi uneseni. Vrijedi samo za mjesec plana.
+   */
+  spentBeforeCents?: Cents;
 }
 
 /**
@@ -87,7 +92,7 @@ export function summarizeMonth(args: {
   today: LocalDate;
 }): LimitResult {
   const month = yearMonthOf(args.today);
-  let before = 0;
+  let before = args.plan.spentBeforeCents ?? 0;
   let todaySpent = 0;
   let extraIncome = 0;
   for (const t of args.transactions) {
@@ -110,4 +115,25 @@ export function summarizeMonth(args: {
     spentTodayCents: todaySpent,
     today: args.today,
   });
+}
+
+/**
+ * D-13: početak usred mjeseca. Iz stanja na računu procjenjuje koliko je u mjesecu već potrošeno, da se stari troškovi
+ * ne moraju unositi. Pretpostavka: primanja su sjela, plaćene pretplate su izašle s računa, a štednja još nije prebačena.
+ *
+ *  potrošeno prije = primanja − pretplate plaćene prije danas − stanje na računu   (nikad manje od 0)
+ */
+export function spentBeforeFromBalance(args: {
+  incomeCents: Cents;
+  recurring: readonly RecurringItem[];
+  balanceCents: Cents;
+  today: LocalDate;
+}): Cents {
+  const month = yearMonthOf(args.today);
+  let paid = 0;
+  for (const it of args.recurring) {
+    const d = occurrenceDate(it, month);
+    if (d !== null && d < args.today) paid += it.amountCents;
+  }
+  return Math.max(0, args.incomeCents - paid - args.balanceCents);
 }

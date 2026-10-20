@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
   if (authErr || !u.user) return json({ error: "unauthorized" }, 401);
   const uid = u.user.id;
 
-  let body: { image_base64?: string; mime?: string; images?: { data?: string; mime?: string }[]; qr_total_cents?: number; model?: string };
+  let body: { image_base64?: string; mime?: string; images?: { data?: string; mime?: string }[]; qr_total_cents?: number; model?: string; scan_id?: string };
   try {
     body = await req.json();
   } catch {
@@ -61,7 +61,14 @@ Deno.serve(async (req) => {
   const premium = !!ent?.premium_until && Date.parse(ent.premium_until) > Date.now();
   const limit = premium ? PREMIUM_LIMIT : FREE_LIMIT;
   const month = zagrebMonth();
-  const { data: used, error: qErr } = await admin.rpc("consume_scan", { p_user: uid, p_month: month, p_limit: limit });
+  // scan_id: ponovljeno čitanje istog računa (dodan dio) ne troši novo skeniranje. Bez njega: svaki poziv se broji.
+  const scanId = typeof body.scan_id === "string" && /^[0-9a-f-]{36}$/i.test(body.scan_id) ? body.scan_id : null;
+  const consume = scanId
+    ? admin.rpc("consume_scan_session", { p_user: uid, p_month: month, p_limit: limit, p_scan: scanId })
+    : admin.rpc("consume_scan", { p_user: uid, p_month: month, p_limit: limit });
+  const refund = () =>
+    scanId ? admin.rpc("refund_scan_session", { p_user: uid, p_month: month, p_scan: scanId }) : admin.rpc("refund_scan", { p_user: uid, p_month: month });
+  const { data: used, error: qErr } = await consume;
   if (qErr) return json({ error: "quota_failed" }, 500);
   if (used === null) return json({ error: "quota_exceeded", limit, premium }, 402);
 
@@ -87,7 +94,7 @@ Deno.serve(async (req) => {
       categories: cats ?? [],
     });
   } catch (e) {
-    await admin.rpc("refund_scan", { p_user: uid, p_month: month }); // neuspjeh se ne naplaćuje u kvoti
+    await refund(); // neuspjeh se ne naplaćuje u kvoti
     const msg = e instanceof Error ? e.message : String(e);
     console.error("scan failed", msg);
     // Kratka klasifikacija (npr. "gemini 404") pomaže klijentu i dijagnostici; tijelo odgovora davatelja se ne vraća.
@@ -95,6 +102,8 @@ Deno.serve(async (req) => {
   }
 
   const result = validate(raw, new Set((cats ?? []).map((c) => c.id)), body.qr_total_cents);
-  if (result.status === "unreadable") await admin.rpc("refund_scan", { p_user: uid, p_month: month });
-  return json({ ...result, usage: { used: result.status === "unreadable" ? used - 1 : used, limit, premium }, model, ms: Date.now() - started });
+  if (result.status === "unreadable") await refund();
+  // Valuta računa (npr. dinari na putu): aplikacija pretvara u zadanu valutu korisnika.
+  const currency = typeof raw.currency === "string" && /^[A-Z]{3}$/.test(raw.currency) ? raw.currency : null;
+  return json({ ...result, currency, usage: { used: result.status === "unreadable" ? used - 1 : used, limit, premium }, model, ms: Date.now() - started });
 });

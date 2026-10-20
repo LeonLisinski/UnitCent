@@ -255,3 +255,46 @@ describe("sastavljanje iz transakcija", () => {
     expect(r.availableCents).toBe(146_800 - 15_000 + 5000);
   });
 });
+
+describe("početak usred mjeseca (D-13)", () => {
+  it("potrošeno prije praćenja ulazi u potrošeno prije današnjeg dana", async () => {
+    const { summarizeMonth } = await import("../src");
+    const rec: RecurringItem[] = [
+      { id: "a", name: "Najam", amountCents: OBLIGATORY, dayOfMonth: 1, active: true, startDate: "2026-10-01" },
+    ];
+    // Primjer iz proizvoda: 207,40 € potrošeno do jutra 15. listopada → 19,96 € dnevno.
+    const r = summarizeMonth({ plan: { ...PLAN, spentBeforeCents: 20_740 }, recurring: rec, transactions: [], today: "2026-10-15" });
+    expect(r.dailyCents).toBe(1996);
+    expect(r.monthLeftCents).toBe(33_927);
+  });
+  it("procjena iz stanja na računu: primanja − plaćene pretplate − stanje", async () => {
+    const { spentBeforeFromBalance } = await import("../src");
+    const rec: RecurringItem[] = [
+      { id: "a", name: "Najam", amountCents: 50_000, dayOfMonth: 1, active: true, startDate: "2026-01-01" },
+      { id: "b", name: "Netflix", amountCents: 1_399, dayOfMonth: 20, active: true, startDate: "2026-01-01" },
+    ];
+    // 1.468 € − 500 € najam (već plaćen) − 700 € na računu = 268 € potrošeno; Netflix (20.) još nije plaćen.
+    expect(spentBeforeFromBalance({ incomeCents: 146_800, recurring: rec, balanceCents: 70_000, today: "2026-10-15" })).toBe(26_800);
+    // Više na računu nego što objašnjavaju primanja: nikad negativno.
+    expect(spentBeforeFromBalance({ incomeCents: 146_800, recurring: rec, balanceCents: 200_000, today: "2026-10-15" })).toBe(0);
+  });
+});
+
+describe("valute", () => {
+  it("pretvara u cijelim stotinkama preko eura", async () => {
+    const { convertCents } = await import("../src");
+    const r = { EUR: 1, USD: 1.16, RSD: 117.2 };
+    expect(convertCents(2000, "USD", "EUR", r)).toBe(1724); // 20 $ ≈ 17,24 €
+    expect(convertCents(117_200, "RSD", "EUR", r)).toBe(1000); // 1.172 din. = 10 €
+    expect(convertCents(1000, "EUR", "EUR", r)).toBe(1000);
+    expect(convertCents(1000, "XYZ", "EUR", r)).toBeNull();
+  });
+  it("formatira u zadanoj valuti ili sa zadanom oznakom", async () => {
+    const { formatEur, setDisplaySymbol } = await import("../src");
+    expect(formatEur(123_456, { symbol: "din." })).toBe("1.234,56 din.");
+    setDisplaySymbol("KM");
+    expect(formatEur(1000)).toBe("10,00 KM");
+    setDisplaySymbol("€");
+    expect(formatEur(1000)).toBe("10,00 €");
+  });
+});

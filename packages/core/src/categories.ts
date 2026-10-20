@@ -38,8 +38,8 @@ export const POPULAR_RECURRING: readonly PopularRecurring[] = [
   { key: "rezije", name: "Režije", suggestedCents: 0, dayOfMonth: 15, categoryKey: "stan", icon: "drop" },
   { key: "mobitel", name: "Mobitel", suggestedCents: 0, dayOfMonth: 10, categoryKey: "stan", icon: "phone" },
   { key: "internet", name: "Internet", suggestedCents: 0, dayOfMonth: 10, categoryKey: "stan", icon: "wifi" },
-  { key: "netflix", name: "Netflix", suggestedCents: 1399, dayOfMonth: 12, categoryKey: "ostalo", icon: "play" },
-  { key: "spotify", name: "Spotify", suggestedCents: 1249, dayOfMonth: 5, categoryKey: "ostalo", icon: "music" },
+  { key: "netflix", name: "Netflix", suggestedCents: 999, dayOfMonth: 12, categoryKey: "ostalo", icon: "play" },
+  { key: "spotify", name: "Spotify", suggestedCents: 699, dayOfMonth: 5, categoryKey: "ostalo", icon: "music" },
   { key: "teretana", name: "Teretana", suggestedCents: 0, dayOfMonth: 1, categoryKey: "zdravlje", icon: "dumbbell" },
   { key: "osiguranje", name: "Osiguranje", suggestedCents: 0, dayOfMonth: 20, categoryKey: "auto", icon: "shield" },
 ] as const;
