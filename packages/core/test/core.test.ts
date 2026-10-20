@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  checkAfford,
   computeDailyLimit,
   daysInMonth,
   daysLeftInclusive,
@@ -135,6 +136,22 @@ describe("dnevni limit", () => {
     spentTodayCents: 0,
     today: "2026-10-15",
   };
+
+  it("mogu li si priuštiti: 30 € na primjeru s weba", () => {
+    const a = checkAfford(computeDailyLimit(input), 3000);
+    expect(a.leftTodayCents).toBe(1996 - 3000); // danas 10,04 € preko
+    expect(a.fitsToday).toBe(false);
+    expect(a.monthLeftCents).toBe(30_927);
+    expect(a.fitsMonth).toBe(true);
+    expect(a.tomorrowDailyCents).toBe(1933); // 309,27 ÷ 16 = 19,329…
+    // isto što bi sutra izračunala sama formula
+    expect(computeDailyLimit({ ...input, spentBeforeTodayCents: 20_740 + 3000, today: "2026-10-16" }).dailyCents).toBe(1933);
+  });
+
+  it("mogu li si priuštiti: zadnji dan mjeseca nema sutrašnjeg budžeta", () => {
+    const a = checkAfford(computeDailyLimit({ ...input, today: "2026-10-31" }), 500);
+    expect(a.tomorrowDailyCents).toBeNull();
+  });
 
   it("primjer s weba: 19,96 €", () => {
     const r = computeDailyLimit(input);

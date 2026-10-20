@@ -87,6 +87,11 @@ export function kvSet(key: string, value: string): void {
   notifyDbChanged();
 }
 
+/** Kao kvSet, ali bez obavijesti o promjeni (za podatke koje ne prikazuje nijedan drugi ekran, npr. razgovor savjetnika). */
+export function kvSetQuiet(key: string, value: string): void {
+  getDb().runSync("insert into kv (key, value) values (?, ?) on conflict(key) do update set value = excluded.value", [key, value]);
+}
+
 /* ---------- kategorije ---------- */
 
 const CAT_COLS = "id, key, kind, name, icon, color_token, sort";

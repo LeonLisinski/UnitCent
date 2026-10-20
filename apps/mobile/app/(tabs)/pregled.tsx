@@ -13,12 +13,13 @@ import { AiTag, Button, CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
 import { Amount, DayBars, Ring, RoundButton, type RingState } from "../../src/fx";
 import { monthTitle, inMonth } from "../../src/format";
-import { HERO, Hero, ListRow, MonthSwitcher, minMonth, PageHeader, RowAmount, Section, SectionLink, EmptyState, TabScreen } from "../../src/layout";
+import { HERO, Hero, ListRow, MonthSwitcher, minMonth, PageHeader, RowAmount, Section, SectionLink, EmptyState, TabScreen, stepMonth, useResetMonthOnTab } from "../../src/layout";
 import { useTheme } from "../../src/theme";
 import { freeMinMonth, usePremium, premiumHref } from "../../src/premium";
 import { T } from "../../src/ui";
 import { Icon } from "../../src/icons";
 import { useInsights } from "../../src/insights";
+import { AdvisorFab } from "../../src/AdvisorSection";
 import { getMonthSummary, listBudgets, listCategories, listTransactionsInMonth, today } from "../../src/db/repo";
 
 function nextMonth(ym: YearMonth): YearMonth {
@@ -35,6 +36,7 @@ export default function Pregled() {
   const premium = usePremium();
   const thisMonth = yearMonthOf(today());
   const [month, setMonth] = useState<YearMonth>(thisMonth);
+  useResetMonthOnTab("pregled", thisMonth, setMonth as (m: string) => void);
   const earliest = minMonth();
 
   const cats = useDb(() => listCategories());
@@ -50,9 +52,17 @@ export default function Pregled() {
 
   // Isti prsten kao na Početnoj i Pretplatama: puni se kako trošiš, prema iznosu za trošenje u tom mjesecu (iz plana).
   // Žuto od 80 %, crveno preko plana. Raspodjela po kategorijama je u popisu ispod.
-  const available = useDb(() => getMonthSummary(month === thisMonth ? today() : `${month}-28`).limit.availableCents, [month]);
-  const spentRatio = available > 0 ? total / available : total > 0 ? 1 : 0;
-  const ringState: RingState = spentRatio > 1 ? "over" : spentRatio >= 0.8 ? "warn" : "ok";
+  // Prsten kreće pun i prazni se (isti jezik kao „Ostalo za danas“ na Početnoj): koliko je od plana mjeseca ostalo.
+  // Prošli mjesec: stanje na zadnji dan. Ostatak uključuje i procjenu potrošenog prije praćenja (D-13).
+  const monthLimit = useDb(() => {
+    const [yy, mm] = month.split("-").map(Number) as [number, number];
+    return getMonthSummary(month === thisMonth ? today() : `${month}-${String(new Date(yy, mm, 0).getDate()).padStart(2, "0")}`).limit;
+  }, [month]);
+  const available = monthLimit.availableCents;
+  const left = monthLimit.monthLeftCents;
+  const hasPlan = available > 0;
+  const leftRatio = hasPlan ? Math.max(0, left) / available : 0;
+  const ringState: RingState = hasPlan && left < 0 ? "over" : hasPlan && leftRatio < 0.2 ? "warn" : "ok";
 
   // Ritam po danima: potrošnja bez knjiženih pretplata; crta pokazuje prosječnu dnevnu potrošnju.
   const [py, pm] = month.split("-").map(Number) as [number, number];
@@ -66,24 +76,32 @@ export default function Pregled() {
   const maxDay = perDay.reduce((best, v, i) => (v > best.cents ? { cents: v, day: i + 1 } : best), { cents: 0, day: 0 });
   const insights = useInsights(month, variable > 0);
 
+  const nav = { month, onChange: setMonth, min: earliest, max: thisMonth, lockedBefore: premium ? undefined : freeMinMonth(), onLocked: () => router.push(premiumHref("history")) };
+
   return (
-    <TabScreen>
+    <TabScreen onSwipe={(dir) => stepMonth(dir, nav)} floating={<AdvisorFab />}>
       <Animated.View entering={enter(0)}>
         <PageHeader>
-          <MonthSwitcher month={month} onChange={setMonth} min={earliest} max={thisMonth} lockedBefore={premium ? undefined : freeMinMonth()} onLocked={() => router.push(premiumHref("history"))} />
+          <MonthSwitcher {...nav} />
         </PageHeader>
       </Animated.View>
 
       <Animated.View entering={enter(1)}>
         <Hero>
-        <Ring size={HERO} remaining={Math.min(1, spentRatio)} state={ringState}>
-          <T v="mono-label" muted>Potrošeno</T>
-          <Amount cents={total} maxWidth={170} />
-          {/* Isti jezik kao „Dnevni budžet“ na Početnoj: ispod iznosa je ono prema čemu se prsten puni. */}
-          <T v="caption" muted numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-            {available > 0 ? `od ${formatEur(available)}` : inMonth(month)}
-          </T>
-        </Ring>
+        {hasPlan ? (
+          <Ring size={HERO} remaining={left < 0 ? 1 : leftRatio} state={ringState}>
+            <T v="mono-label" muted>{left < 0 ? "Preko plana" : "Ostalo"}</T>
+            <Amount cents={Math.abs(left)} color={left < 0 ? colors.danger : colors.ink} maxWidth={170} />
+            <T v="caption" muted numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>od {formatEur(available)}</T>
+          </Ring>
+        ) : (
+          // Bez plana nema od čega računati ostatak: prikazuje se potrošeno.
+          <Ring size={HERO} remaining={0} state="ok">
+            <T v="mono-label" muted>Potrošeno</T>
+            <Amount cents={total} maxWidth={170} />
+            <T v="caption" muted numberOfLines={1}>{inMonth(month)}</T>
+          </Ring>
+        )}
         </Hero>
       </Animated.View>
 
@@ -107,7 +125,7 @@ export default function Pregled() {
                     first={i === 0}
                     left={
                       <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: it.locked ? fx.goldSoft : fx.aiSoft }}>
-                        <Icon name={it.locked ? "lock" : it.icon} size={20} color={tint} />
+                        <Icon name={it.locked ? "star" : it.icon} size={20} color={tint} />
                       </View>
                     }
                     title={it.locked ? "Uvid za Premium" : it.title ?? ""}

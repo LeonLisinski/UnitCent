@@ -4,7 +4,7 @@ import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "./icons";
-import { emitTabReselect } from "./tabReselect";
+import { emitTabEnter, emitTabReselect } from "./tabReselect";
 import { useTheme } from "./theme";
 import { T } from "./ui";
 
@@ -109,6 +109,7 @@ export function FloatingTabBar({ state, descriptors, navigation }: TabBarProps) 
               accessibilityLabel={label}
               onPress={() => {
                 void Haptics.selectionAsync();
+                emitTabEnter(route.name);
                 if (focused) emitTabReselect(route.name);
                 else navigation.navigate(route.name);
               }}

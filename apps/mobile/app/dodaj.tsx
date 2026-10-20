@@ -6,7 +6,7 @@ import { Safe, useInsets } from "../src/safe";
 import { currencyInfo, formatEur, parseAmount } from "@unitcent/core";
 import { CurrencyChips, CurrencyTag } from "../src/CurrencyPicker";
 import { useCurrency } from "../src/currency";
-import { Button, CatIcon, Keypad, QuotaBadge } from "../src/components";
+import { Button, CatIcon, Keypad, PremiumMark, QuotaBadge } from "../src/components";
 import { refreshScanUsage, useScanQuota } from "../src/scanQuota";
 import { DateChip } from "../src/DateField";
 import { track } from "../src/analytics";
@@ -86,7 +86,7 @@ export default function Dodaj() {
     const uses = Number(kvGet("tip.scanFromAdd") ?? "0") + 1;
     kvSet("tip.scanFromAdd", String(uses));
     router.replace("/skeniraj" as Href);
-    if (uses === 2) setTimeout(() => toast.show("Savjet: drži + za ravno u kameru"), 600);
+    if (uses === 2) setTimeout(() => toast.show("Brži put do kamere: zadrži prst na + u donjoj traci"), 600);
   };
 
   const save = () => {
@@ -165,7 +165,22 @@ export default function Dodaj() {
                 );
               })}
             </View>
-            <RoundButton icon="x" label="Zatvori" onPress={() => router.back()} />
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              {editing ? null : (
+                // Kamera je uvijek samo ulaz: kad besplatnih skeniranja nema, Premium se nudi tek u skeniranju (bez lokota ovdje).
+                <View>
+                  <RoundButton
+                    tone="ai"
+                    icon="camera"
+                    label={`Skeniraj račun. ${quota.premium ? "" : `Preostalo ${Math.max(0, quota.remaining)} od ${quota.limit}`}`}
+                    onPress={openCamera}
+                  />
+                  {quota.premium || quota.remaining <= 0 ? null : <QuotaBadge remaining={quota.remaining} limit={quota.limit} />}
+                  {quota.premium ? null : <PremiumMark size={18} corner />}
+                </View>
+              )}
+              <RoundButton icon="x" label="Zatvori" onPress={() => router.back()} />
+            </View>
           </View>
 
           <View style={{ alignItems: "center", gap: 2 }}>
@@ -288,25 +303,7 @@ export default function Dodaj() {
             </View>
           )}
           {noteFocus ? null : <Keypad value={value} onChange={setValue} />}
-          {/* Kamera je u zoni palca, lijevo od „Spremi“; desno je prazno mjesto iste širine, da „Spremi“ ostane u sredini. */}
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            {editing ? (
-              <View style={{ width: 52 }} />
-            ) : (
-              <View>
-                <RoundButton
-                  tone="ai"
-                  icon="camera"
-                  size={52}
-                  label={`Skeniraj račun. ${quota.premium ? "" : quota.remaining > 0 ? `Preostalo ${quota.remaining} od ${quota.limit}` : "Potrošeno"}`}
-                  onPress={openCamera}
-                />
-                {quota.premium ? null : <QuotaBadge remaining={quota.remaining} limit={quota.limit} />}
-              </View>
-            )}
-            <Button label={editing ? "Spremi izmjene" : "Spremi"} disabled={!cents || cents <= 0} onPress={save} />
-            <View style={{ width: 52 }} />
-          </View>
+          <Button label={editing ? "Spremi izmjene" : "Spremi"} disabled={!cents || cents <= 0} onPress={save} />
         </View>
       </Safe>
     </View>

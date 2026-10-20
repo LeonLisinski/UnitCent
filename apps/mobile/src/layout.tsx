@@ -2,12 +2,15 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import * as Haptics from "expo-haptics";
 import { Safe, useInsets, useKeyboardHeight } from "./safe";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Glass, Glow, RoundButton, recentlySwiped } from "./fx";
 import { Icon } from "./icons";
+import { PremiumMark } from "./components";
 import { monthShort, monthTitle } from "./format";
-import { onTabReselect } from "./tabReselect";
+import { onTabEnter, onTabReselect } from "./tabReselect";
 import { useTheme } from "./theme";
 import { T } from "./ui";
 
@@ -27,7 +30,17 @@ export function minMonth(): string {
 }
 
 /** Okvir tab ekrana: pozadina, sjaj, sigurni rub, skrolanje s donjim razmakom za plutajuću traku. */
-export function TabScreen({ children }: { children: ReactNode }) {
+export function TabScreen({
+  children,
+  onSwipe,
+  floating,
+}: {
+  children: ReactNode;
+  /** Vodoravni swipe po ekranu: −1 = prethodno (prst udesno), 1 = sljedeće (prst ulijevo). Npr. promjena mjeseca. */
+  onSwipe?: (dir: -1 | 1) => void;
+  /** Lebdeći element iznad sadržaja (npr. gumb savjetnika), izvan skrolanja. */
+  floating?: ReactNode;
+}) {
   const { colors } = useTheme();
   const scroll = useRef<ScrollView>(null);
   // Samo ekran koji je trenutno otvoren reagira na ponovni dodir svog taba.
@@ -39,19 +52,35 @@ export function TabScreen({ children }: { children: ReactNode }) {
     }, []),
   );
   useEffect(() => onTabReselect(() => focused.current && scroll.current?.scrollTo({ y: 0, animated: true })), []);
+  // Swipe: tek jasan vodoravni pokret (okomiti pokret ga poništava, pa skrolanje radi normalno);
+  // povlačenje retka (brisanje) ima niži prag i preuzima pokret prije ovoga.
+  const swipe = useRef(onSwipe);
+  swipe.current = onSwipe;
+  const pan = Gesture.Pan()
+    .enabled(!!onSwipe)
+    .runOnJS(true)
+    .activeOffsetX([-30, 30])
+    .failOffsetY([-14, 14])
+    .onEnd((e) => {
+      if (Math.abs(e.translationX) < 60 && Math.abs(e.velocityX) < 600) return;
+      swipe.current?.(e.translationX < 0 ? 1 : -1);
+    });
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-        <ScrollView
-          ref={scroll}
-          contentContainerStyle={{ paddingHorizontal: PAD, paddingTop: 12, paddingBottom: 140, gap: SECTION_GAP }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {children}
-        </ScrollView>
+        <GestureDetector gesture={pan}>
+          <ScrollView
+            ref={scroll}
+            contentContainerStyle={{ paddingHorizontal: PAD, paddingTop: 12, paddingBottom: 140, gap: SECTION_GAP }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {children}
+          </ScrollView>
+        </GestureDetector>
       </SafeAreaView>
+      {floating}
     </View>
   );
 }
@@ -225,6 +254,27 @@ export function RowAmount({ children, color }: { children: ReactNode; color?: st
   );
 }
 
+/** Dodir na tab u traci vraća ekran na tekući mjesec (npr. nakon listanja starih mjeseci na Pregledu). */
+export function useResetMonthOnTab(route: string, current: string, setMonth: (m: string) => void): void {
+  useEffect(() => onTabEnter((r) => r === route && setMonth(current)), [route, current, setMonth]);
+}
+
+/**
+ * Korak na susjedni mjesec s istim pravilima kao strelice u MonthSwitcheru (granice, zaključani stariji mjeseci).
+ * Za swipe po ekranu.
+ */
+export function stepMonth(
+  dir: -1 | 1,
+  o: { month: string; onChange: (m: string) => void; min: string; max: string; lockedBefore?: string; onLocked?: () => void },
+): void {
+  if (dir === -1) {
+    if (o.month <= o.min) return;
+    if (o.lockedBefore && o.month <= o.lockedBefore) return o.onLocked?.();
+  } else if (o.month >= o.max) return;
+  void Haptics.selectionAsync();
+  o.onChange(shiftMonth(o.month, dir));
+}
+
 function shiftMonth(ym: string, delta: number): string {
   const [y, m] = ym.split("-").map(Number) as [number, number];
   const idx = y * 12 + (m - 1) + delta;
@@ -261,13 +311,17 @@ export function MonthSwitcher({
 
   return (
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-      <RoundButton
-        tone={lockedBefore && month <= lockedBefore ? "gold" : undefined}
-        icon={lockedBefore && month <= lockedBefore ? "lock" : "back"}
-        label={lockedBefore && month <= lockedBefore ? "Stariji mjeseci su u Premiumu" : "Prethodni mjesec"}
-        disabled={month <= min}
-        onPress={() => (lockedBefore && month <= lockedBefore ? onLocked?.() : onChange(shiftMonth(month, -1)))}
-      />
+      {/* Stariji mjeseci (Premium): ista strelica, zlatna, sa zlatnom oznakom u kutu. */}
+      <View>
+        <RoundButton
+          tone={lockedBefore && month <= lockedBefore ? "gold" : undefined}
+          icon="back"
+          label={lockedBefore && month <= lockedBefore ? "Stariji mjeseci su u Premiumu" : "Prethodni mjesec"}
+          disabled={month <= min}
+          onPress={() => (lockedBefore && month <= lockedBefore ? onLocked?.() : onChange(shiftMonth(month, -1)))}
+        />
+        {lockedBefore && month <= lockedBefore && month > min ? <PremiumMark size={18} corner /> : null}
+      </View>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${monthTitle(month)}. Odaberi mjesec i godinu`}
@@ -333,7 +387,7 @@ export function MonthSwitcher({
                           <T v="headline" color={selected ? colors["on-brand"] : colors.ink} style={{ fontSize: 15, textTransform: "capitalize" }}>
                             {monthShort(ym)}
                           </T>
-                          {locked ? <Icon name="lock" size={12} color={fx.gold} /> : null}
+                          {locked ? <PremiumMark size={14} /> : null}
                         </View>
                       </Pressable>
                     </View>

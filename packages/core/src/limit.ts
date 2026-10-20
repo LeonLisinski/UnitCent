@@ -137,3 +137,35 @@ export function spentBeforeFromBalance(args: {
   }
   return Math.max(0, args.incomeCents - paid - args.balanceCents);
 }
+
+/* ---------- „Mogu li si priuštiti?“ ---------- */
+
+export interface AffordResult {
+  /** Ostalo za danas nakon kupnje (negativno = „Danas preko“). */
+  leftTodayCents: Cents;
+  /** Ostalo za ostatak mjeseca nakon kupnje (negativno = mjesec preko plana). */
+  monthLeftCents: Cents;
+  /** Dnevni budžet od sutra nakon kupnje (ista formula, za sutrašnji dan); null zadnji dan mjeseca. */
+  tomorrowDailyCents: Cents | null;
+  /** Stane li u današnji dnevni budžet. */
+  fitsToday: boolean;
+  /** Stane li u ostatak mjeseca. */
+  fitsMonth: boolean;
+}
+
+/**
+ * Što se događa ako danas potrošiš `amount`. Sutrašnji dnevni budžet je ista formula kao gore:
+ * (raspoloživo − potrošeno prije sutra) ÷ preostali dani od sutra = (ostatak mjeseca − iznos) ÷ (dani − 1).
+ */
+export function checkAfford(limit: LimitResult, amountCents: Cents): AffordResult {
+  const leftToday = limit.leftTodayCents - amountCents;
+  const monthLeft = limit.monthLeftCents - amountCents;
+  const restDays = limit.daysLeft - 1;
+  return {
+    leftTodayCents: leftToday,
+    monthLeftCents: monthLeft,
+    tomorrowDailyCents: restDays > 0 ? divRound(monthLeft, restDays) : null,
+    fitsToday: leftToday >= 0,
+    fitsMonth: monthLeft >= 0,
+  };
+}

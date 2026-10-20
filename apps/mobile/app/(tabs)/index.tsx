@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import * as Haptics from "expo-haptics";
 import { markRecapShown, takeRecap } from "../../src/recap";
+import { AdvisorFab } from "../../src/AdvisorSection";
 import { useRouter, type Href } from "expo-router";
 import { Pressable, ScrollView, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -134,7 +135,7 @@ export default function Pocetna() {
   );
 
   return (
-    <TabScreen>
+    <TabScreen floating={<AdvisorFab />}>
       <Animated.View entering={enter(0)}>
         <PageHeader right={<Avatar quiet size={44} initial={name?.trim()[0] ?? "?"} onPress={() => router.navigate("/profil" as Href)} />}>
           <T v="caption" muted>{longDate(day)}</T>

@@ -382,6 +382,25 @@ export function GoldBadge({ value, lock }: { value?: number; lock?: boolean }) {
   );
 }
 
+/**
+ * Oznaka Premium funkcije: zlatni krug sa zvjezdicom. Ista na svakom mjestu gdje free korisnik vidi Premium
+ * (savjetnik, skeniranje, stariji mjeseci, uvidi, limit kategorije). `corner`: značka u donjem desnom kutu gumba.
+ */
+export function PremiumMark({ size = 20, corner }: { size?: number; corner?: boolean }) {
+  const { colors, fx } = useTheme();
+  return (
+    <View
+      accessibilityLabel="Premium"
+      style={[
+        { width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center", backgroundColor: fx.gold },
+        corner ? { position: "absolute", bottom: -3, right: -3, borderWidth: 2, borderColor: colors.bg } : null,
+      ]}
+    >
+      <Icon name="star" size={Math.round(size * 0.5)} color="#2a1d00" stroke={2.6} />
+    </View>
+  );
+}
+
 /** Značka preostalih skeniranja na kutu gumba kamere: broj u boji stanja (vidi quotaTone), lokot kad ih nema. */
 export function QuotaBadge({ remaining, limit }: { remaining: number; limit: number }) {
   const color = quotaTone(remaining, limit);

@@ -26,7 +26,7 @@ const SOCIAL_PROOF: string | null = null;
 const PERKS: { key: PremiumFeature; icon: string; title: string; hint: string; soon?: boolean; ai?: boolean }[] = [
   { key: "scan", icon: "camera", title: "Neograničeno skeniranje", hint: "Slikaš račun, stavke se razvrstaju same", ai: true },
   { key: "history", icon: "calendar", title: "Cijela povijest", hint: "Svaki mjesec, usporedbe kroz godinu" },
-  { key: "insights", icon: "chart", title: "Uvidi i savjeti", hint: "Gdje ti curi novac i što možeš uštedjeti", ai: true },
+  { key: "insights", icon: "sparkle", title: "AI savjetnik i uvidi", hint: "Pitaj svaki dan, odgovori iz tvojih brojki", ai: true },
   { key: "budgets", icon: "tag", title: "Limiti po kategorijama", hint: "Koliko smiješ na hranu, gorivo, izlaske" },
 ];
 
@@ -39,6 +39,7 @@ const FEATURE_COPY: Record<PremiumFeature, { title: string; line?: (q: { used: n
   history: { title: "Otključaj cijelu povijest", line: () => "Svaki mjesec otkad koristiš UnitCent" },
   insights: { title: "Gdje ti curi novac" },
   budgets: { title: "Limit za svaku kategoriju", line: () => "Javimo ti na 80 % i 100 %" },
+  advisor: { title: "Pitaj savjetnika svaki dan", line: () => "Odgovori iz tvojih brojki, bez nagađanja" },
 };
 
 /** Petokraka kao poligon (za medaljon): vanjski i unutarnji polumjer, središte (0,0). */

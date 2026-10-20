@@ -67,7 +67,8 @@ Uvidi već postoje (`supabase/functions/insights`, poslužitelj računa brojke, 
 - **Pitanja na dodir, ne slobodan chat** (v1): „Gdje mi najviše ide?“, „Mogu li si priuštiti X?“, „Kako stići cilj štednje?“, „Koje pretplate da preispitam?“.
   Odgovor se gradi iz točnih brojki s poslužitelja, isto kao uvidi.
 - Zašto ne slobodan chat odmah: trošak po korisniku, rizik izmišljenih iznosa, i pravna granica „financijskog savjetovanja“. Slobodno pitanje može doći kasnije s istim zaštitama.
-- Free: jedno pitanje mjesečno (mamac). Premium: bez ograničenja (pošteno korištenje). Ograničenje na poslužitelju.
+- Savjetnik je Premium. Free: 3 AI pitanja mjesečno (zlatna zvjezdica na krugu, napomena u razgovoru, broj preostalih). Premium: 20 dnevno, najviše 300 mjesečno (trošak modela ispod ~0,15 € po korisniku mjesečno). Kvota atomarno na poslužitelju (`consume_advisor`). „Mogu li si ovo priuštiti?“ računa aplikacija i besplatno je za sve.
+- Ulaz: lebdeći krug (AI) iznad trake na Početnoj i Pregledu; odgovor u malom razgovoru.
 
 ## E. Web: blog, kalkulatori, SEO (3 do 4 dana)
 **19. Zakazani blogovi: da, moguće je bez pusha.**

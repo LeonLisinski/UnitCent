@@ -106,6 +106,6 @@ export const TRIAL_DAYS = 7;
 export const TRIAL_ENABLED = process.env.EXPO_PUBLIC_TRIAL === "1";
 
 /** Premium otvoren zbog ograničenja: ta funkcija je istaknuta (vidi app/premium.tsx), ostale pogodnosti ispod. */
-export type PremiumFeature = "scan" | "history" | "insights" | "budgets";
+export type PremiumFeature = "scan" | "history" | "insights" | "budgets" | "advisor";
 export const premiumHref = (feature?: PremiumFeature) =>
   (feature ? { pathname: "/premium", params: { feature } } : "/premium") as unknown as import("expo-router").Href;

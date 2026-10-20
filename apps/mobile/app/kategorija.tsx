@@ -185,7 +185,7 @@ function LockedLimit({ color, spent, onPress }: { color: string; spent: Cents | 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <T v="caption" muted>Mjesečni limit</T>
         <View style={{ paddingHorizontal: 7, paddingVertical: 1, borderRadius: 999, backgroundColor: fx.goldSoft, flexDirection: "row", alignItems: "center", gap: 4 }}>
-          <Icon name="lock" size={10} color={fx.gold} stroke={2.4} />
+          <Icon name="star" size={10} color={fx.gold} stroke={2.4} />
           <T v="mono-label" color={fx.gold} style={{ fontSize: 9.5, lineHeight: 14 }}>PREMIUM</T>
         </View>
       </View>

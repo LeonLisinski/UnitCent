@@ -10,7 +10,7 @@ import { Button, CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
 import { Amount, Ring, RoundButton, SwipeRow } from "../../src/fx";
 import { longDate, monthTitle, nextMonthOf } from "../../src/format";
-import { HERO, Hero, ListRow, MonthSwitcher, minMonth, PageHeader, RowAmount, Section, SectionLink, EmptyState, TabScreen } from "../../src/layout";
+import { HERO, Hero, ListRow, MonthSwitcher, minMonth, PageHeader, RowAmount, Section, SectionLink, EmptyState, TabScreen, stepMonth, useResetMonthOnTab } from "../../src/layout";
 import { useTheme } from "../../src/theme";
 import { freeMinMonth, usePremium, premiumHref } from "../../src/premium";
 import { T } from "../../src/ui";
@@ -32,6 +32,7 @@ export default function Pretplate() {
   const day = today();
   const thisMonth = yearMonthOf(day);
   const [month, setMonth] = useState<YearMonth>(thisMonth);
+  useResetMonthOnTab("pretplate", thisMonth, setMonth as (m: string) => void);
   const [sheetDay, setSheetDay] = useState<LocalDate | null>(null); // dan iz kalendara (mali list)
   const items = useDb(() => listRecurring());
   const cats = useDb(() => listCategories());
@@ -72,11 +73,13 @@ export default function Pretplate() {
     });
   };
 
+  const nav = { month, onChange: setMonth, min: earliest, max: latest, lockedBefore: premium ? undefined : freeMinMonth(), onLocked: () => router.push(premiumHref("history")) };
+
   return (
-    <TabScreen>
+    <TabScreen onSwipe={(dir) => stepMonth(dir, nav)}>
       <Animated.View entering={enter(0)}>
         <PageHeader>
-          <MonthSwitcher month={month} onChange={setMonth} min={earliest} max={latest} lockedBefore={premium ? undefined : freeMinMonth()} onLocked={() => router.push(premiumHref("history"))} />
+          <MonthSwitcher {...nav} />
         </PageHeader>
       </Animated.View>
 
