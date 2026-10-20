@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Icon } from "./icons";
 import { LogoMark, Wordmark } from "./Logo";
 import { CountUp, Equation, HeaderCta, PhoneTilt, Reveal, ScrollRing } from "./Motion";
+import { CalcNavLink } from "./NavIcons";
 import { ScanPinned } from "./ScanPinned";
 import { Stores } from "./Stores";
 import { TryIt } from "./TryIt";
@@ -100,6 +101,7 @@ export default function Home() {
             <LogoMark size={30} draw /><Wordmark />
           </Link>
           <div className="header-actions">
+            <CalcNavLink />
             <HeaderCta />
           </div>
         </div>
@@ -275,6 +277,7 @@ export default function Home() {
           <span>© {new Date().getFullYear()} UnitCent</span>
           <nav aria-label="Podnožje">
             <Link href="/blog">Blog</Link>
+            <Link href="/kalkulatori">Kalkulatori</Link>
             <Link href="/privatnost">Privatnost</Link>
             <Link href="/uvjeti">Uvjeti</Link>
             <a href={`mailto:${CONTACT_EMAIL}`}>Kontakt</a>

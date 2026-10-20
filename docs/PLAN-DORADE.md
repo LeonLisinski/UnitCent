@@ -114,12 +114,18 @@ newsletter (pretplatnici, odjave), zakazani mailovi i zakazani članci, greške 
 - **ASO:** naziv „UnitCent: Dnevni budžet“, podnaslov s ključnom riječi, 5 snimki zaslona s jednom porukom po snimci, kratki video.
 
 ## Redoslijed rada
-1. **A + B** (brzi popravci i pouzdanost), novi EAS build, tvoj test.
-2. **C** (kamera, kalendar, limit, proslava).
-3. **D** AI savjetnik.
-4. **E** web: zakazani blogovi, kalkulatori, SEO (može paralelno s 2. i 3.).
-5. **F + G** mailovi i admin.
+1. **A + B** (brzi popravci i pouzdanost). ✔ 20. 10. (commit 2981ba8)
+2. **C** (kamera, kalendar, limit, proslava). ✔ 20. 10. (f6998c7)
+3. **D** AI savjetnik. ✔ 20. 10. (5944743); funkcija `advisor` i migracija objavljene na dev Supabase.
+4. **E** web: zakazani blogovi (20 članaka, tjedno 27. 10. 2026. do 9. 3. 2027.), vizualni blokovi u člancima, 5 kalkulatora (`/kalkulatori`). ✔ 20. 10.
+5. **F + G** mailovi (Brevo) i admin aplikacija (`apps/admin`). Sljedeće.
 6. **H** sigurnosni prolaz, trgovine, beta, objava.
+
+## Stanje 20. 10. 2026. (za sljedeću sesiju)
+- **Aplikacija:** sve iz A do D je u kodu, na uređaju isprobano samo djelomično (EAS build s vlasnikovim testom). Za `expo-quick-actions` treba novi EAS build.
+- **Savjetnik:** lebdeći krug na Početnoj i Pregledu; free 3 pitanja mjesečno (broji aplikacija i poslužitelj, `consume_advisor`), Premium 20 dnevno; povijest razgovora za danas lokalno. „Mogu li si nešto priuštiti?“ računa `checkAfford` u core i broji se kao pitanje.
+- **Ostalo za kasnije:** traženje ocjene u trgovini u trenutku zadovoljstva (`expo-store-review`), niz dana s unosom, poruka 7. dan uz tjedni sažetak (dio F), App Attest / Play Integrity (gosti mogu reinstalacijom dobiti nova besplatna pitanja i skeniranja).
+- **Web lokalno:** `.claude/launch.json` (port 3123, zaseban build dir); `BLOG_TODAY=YYYY-MM-DD` u razvoju prikazuje zakazane članke.
 
 ## Odluke (vlasnik, 20. 10. 2026.)
 1. **Premium se nudi na okidačima**, ne na ulazu (mijenja odluku iz ROADMAP-a od 19. 10.): potrošena 3 skeniranja, stariji mjesec, limit kategorije,

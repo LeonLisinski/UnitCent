@@ -440,6 +440,9 @@ body { transition: background-color 250ms ease, color 250ms ease; }
 
 /* --- zaglavlje: tema + CTA --- */
 .header-actions { display: flex; align-items: center; gap: 8px; }
+.nav-icon { width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; color: var(--ink-muted); text-decoration: none; transition: color 150ms, background 150ms; }
+.nav-icon:hover { color: var(--ink); background: var(--surface-2); }
+@media (prefers-reduced-motion: reduce) { .nav-icon { transition: none; } }
 .theme-toggle { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; border: 1px solid var(--border); background: transparent; color: var(--ink); cursor: pointer; transition: background 150ms, border-color 150ms; }
 .theme-toggle:hover { background: var(--surface-2); border-color: var(--border-strong); }
 @media (max-width: 420px) { .header-actions .btn.sm { padding: 0 12px; font-size: 14px; } }

@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { posts, readingMinutes } from "../../content/blog";
+import { publishedPosts, readingMinutes } from "../../content/blog";
 import { SITE_NAME, SITE_URL } from "../site";
 import { formatDate } from "./format";
+import { Icon } from "../icons";
+
+/** Ikona po kategoriji: brže skeniranje popisa okom (prepoznavanje prije čitanja). */
+const CATEGORY_ICON: Record<string, string> = { Budžet: "chart", Štednja: "target", Troškovi: "cart", Odnosi: "house", Alati: "calc" };
 
 const title = "Blog o osobnim financijama";
 const description =
@@ -16,7 +20,11 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: `${title} | ${SITE_NAME}`, description },
 };
 
+// Osvježava se svakih sat vremena: zakazani članak se pojavi na svoj dan bez novog deploya.
+export const revalidate = 3600;
+
 export default function BlogIndex() {
+  const posts = publishedPosts();
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -61,7 +69,10 @@ export default function BlogIndex() {
         {posts.map((p) => (
           <li key={p.slug}>
             <Link href={`/blog/${p.slug}`} className="post-row">
-              <span className="post-meta">{p.category} · {readingMinutes(p)} min</span>
+              <span className="post-meta post-meta-icon">
+                <Icon name={CATEGORY_ICON[p.category] ?? "file"} size={14} stroke={2} />
+                {p.category} · {readingMinutes(p)} min
+              </span>
               <h2>{p.title}</h2>
               <p>{p.description}</p>
             </Link>

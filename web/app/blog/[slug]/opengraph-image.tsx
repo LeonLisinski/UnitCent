@@ -1,12 +1,14 @@
 import { ImageResponse } from "next/og";
-import { getPost, posts } from "../../../content/blog";
+import { getPost, publishedPosts } from "../../../content/blog";
 
 export const alt = "UnitCent blog";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+export const revalidate = 3600;
+
 export function generateStaticParams() {
-  return posts.map((p) => ({ slug: p.slug }));
+  return publishedPosts().map((p) => ({ slug: p.slug }));
 }
 
 /* Isti jezik kao app/opengraph-image.tsx: tamna podloga, prsten, naslov članka. */

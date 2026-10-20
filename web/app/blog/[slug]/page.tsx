@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getPost, posts, readingMinutes } from "../../../content/blog";
+import { getPost, publishedPosts, readingMinutes } from "../../../content/blog";
 import { SITE_NAME, SITE_URL } from "../../site";
 import { formatDate } from "../format";
 import { Markdown } from "../Markdown";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export const dynamicParams = false;
+// Zakazani članci nisu u buildu; na svoj dan se iscrtaju na zahtjev (dynamicParams) i keširaju (revalidate).
+// Prije datuma getPost vraća ništa, pa je odgovor 404.
+export const dynamicParams = true;
+export const revalidate = 3600;
 
 export function generateStaticParams() {
-  return posts.map((p) => ({ slug: p.slug }));
+  return publishedPosts().map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

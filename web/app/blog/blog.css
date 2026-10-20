@@ -13,6 +13,8 @@
 .post-row:hover h2, .post-row:hover h3 { color: var(--brand-ink); }
 .post-meta, .crumbs { font-family: var(--font-mono), ui-monospace, Consolas, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); }
 .blog-updated { margin-top: 20px; font-size: 14px; }
+.post-meta-icon { display: inline-flex; align-items: center; gap: 6px; }
+.post-meta-icon svg { color: var(--brand); }
 
 /* članak */
 .crumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
@@ -61,11 +63,48 @@
 .post-related h2 { font-size: 12px; letter-spacing: 0.08em; }
 .post-related .post-list { margin-top: 12px; }
 
+/* vizualni blokovi u članku (Markdown „::“): ravne površine s tankim rubom, bez sjena i gradijenata */
+.md-stats { display: grid; gap: 12px; margin-top: 22px; }
+.md-stats.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.md-stats.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.md-stat { padding: 18px 18px 16px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); }
+.md-stat-value { font-size: clamp(26px, 4vw, 34px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; }
+.md-stat-label { margin-top: 6px; font-family: var(--font-mono), ui-monospace, Consolas, monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); }
+.md-stat-note { margin-top: 6px; font-size: 14px; line-height: 1.45; color: var(--ink-muted); }
+
+.md-callout { display: flex; gap: 12px; align-items: flex-start; margin-top: 22px; padding: 16px 18px; border-radius: 16px; border: 1px solid var(--border); background: var(--surface); }
+.md-callout p { margin: 0; color: var(--ink); }
+.md-callout-icon { flex: none; display: inline-flex; margin-top: 2px; }
+.md-tip .md-callout-icon { color: var(--brand); }
+.md-warn { border-color: color-mix(in srgb, var(--warning) 45%, var(--border)); }
+.md-warn .md-callout-icon { color: var(--warning); }
+
+.md-bars { margin: 26px 0 0; padding: 18px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); }
+.md-bars figcaption { font-family: var(--font-mono), ui-monospace, Consolas, monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); }
+.md-bars ul { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.md-bars li { display: grid; grid-template-columns: minmax(84px, 30%) 1fr auto; align-items: center; gap: 12px; font-size: 15px; }
+.md-bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.md-bar-track { height: 10px; background: var(--surface-2); overflow: hidden; }
+.md-bar-fill { display: block; height: 100%; background: var(--brand); }
+.md-bar-value { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+
+.md-calc { display: flex; align-items: center; gap: 14px; margin-top: 22px; padding: 16px 18px; min-height: 48px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); text-decoration: none; transition: border-color 150ms; }
+.md-calc:hover { border-color: var(--brand); }
+.md-calc-icon { flex: none; width: 44px; height: 44px; border-radius: 22px; display: inline-flex; align-items: center; justify-content: center; background: var(--brand-soft); color: var(--brand-ink); }
+.md-calc-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.md-calc-label { font-family: var(--font-mono), ui-monospace, Consolas, monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); }
+.md-calc-title { font-weight: 700; color: var(--ink); }
+.md-calc-line { font-size: 14px; color: var(--ink-muted); }
+.md-calc-arrow { flex: none; color: var(--brand-ink); display: inline-flex; }
+.post-body .md-calc, .post-body .md-calc * { text-decoration: none; }
+
 @media (max-width: 640px) {
   .blog { padding-block: 36px 64px; }
   .post-summary { padding: 18px; border-radius: 16px; }
   .post-body { font-size: 16.5px; }
+  .md-stats.n2, .md-stats.n3 { grid-template-columns: minmax(0, 1fr); }
+  .md-bars li { grid-template-columns: minmax(72px, 32%) 1fr auto; gap: 8px; font-size: 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .post-row h2, .post-row h3 { transition: none; }
+  .post-row h2, .post-row h3, .md-calc { transition: none; }
 }
