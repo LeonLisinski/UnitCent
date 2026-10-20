@@ -7,6 +7,7 @@ import { Stores } from "./Stores";
 import { TryIt } from "./TryIt";
 import { Words } from "./Words";
 import { Waitlist } from "./Waitlist";
+import { PriceToggle } from "./PriceToggle";
 import { CONTACT_EMAIL, FAQ, PRICES, PRICE_ANCHOR, SITE_NAME, SITE_URL } from "./site";
 
 /*
@@ -179,7 +180,7 @@ export default function Home() {
                   <tr>
                     <th scope="col"><span className="sr-only">Funkcija</span></th>
                     <th scope="col">Besplatno<small>0 €</small></th>
-                    <th scope="col" className="vs-pro">Premium<small>{PRICES.monthly} / mj. · {PRICES.yearly} / god.</small></th>
+                    <th scope="col" className="vs-pro">Premium<PriceToggle /></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -232,7 +233,7 @@ export default function Home() {
                   <s className="num" style={{ opacity: 0.6 }}>{PRICES.monthly}</s> <b className="num">{PRICES.yearlyPerMonth}</b> mjesečno
                 </p>
                 <small className="muted">
-                  Mjesečno {PRICES.monthly}. Plaćanje kroz App Store ili Google Play, otkazivanje kad god želiš. Cijene s PDV-om.
+                  Mjesečno {PRICES.monthly}. Plaćanje kroz App Store ili Google Play, otkazivanje kad god želiš.
                   {PRICE_ANCHOR ? ` Sidrena cijena (${PRICE_ANCHOR.date}): ${PRICE_ANCHOR.monthly} mjesečno, ${PRICE_ANCHOR.yearly} godišnje.` : ""}
                 </small>
               </div>
