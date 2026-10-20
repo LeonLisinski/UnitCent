@@ -3,8 +3,10 @@ import { Keyboard, Platform, Pressable, ScrollView, TextInput, View } from "reac
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { Safe, useInsets } from "../src/safe";
-import { parseAmount } from "@unitcent/core";
-import { Button, CatIcon, GoldBadge, Keypad } from "../src/components";
+import { currencyInfo, formatEur, parseAmount } from "@unitcent/core";
+import { CurrencyChips, CurrencyTag } from "../src/CurrencyPicker";
+import { useCurrency } from "../src/currency";
+import { Button, CatIcon, Keypad, QuotaBadge } from "../src/components";
 import { refreshScanUsage, useScanQuota } from "../src/scanQuota";
 import { DateChip } from "../src/DateField";
 import { track } from "../src/analytics";
@@ -15,7 +17,7 @@ import { fitFontSize } from "../src/format";
 import { textStyle, useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
-import { addTransaction, categorySpent, deleteTransaction, getBudget, getTransaction, listCategoriesByUsage, today, updateTransaction } from "../src/db/repo";
+import { addTransaction, categorySpent, defaultExpenseCategoryId, deleteTransaction, getBudget, getTransaction, listCategoriesByUsage, today, updateTransaction } from "../src/db/repo";
 
 type Kind = "expense" | "income";
 
@@ -37,7 +39,7 @@ export default function Dodaj() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const editing = id ? getTransaction(id) : null;
   const [value, setValue] = useState(editing ? centsToInput(editing.amountCents) : "");
-  const [note, setNote] = useState(editing?.note ?? "");
+  const [noteText, setNote] = useState(editing?.note ?? "");
   const [showNote, setShowNote] = useState(!!editing?.note);
   const [noteFocus, setNoteFocus] = useState(false); // tipkovnica telefona otvorena: sakrij našu numeričku, da „Spremi“ ostane vidljiv
   const [type, setType] = useState<Kind>(editing?.type ?? "expense");
@@ -55,17 +57,28 @@ export default function Dodaj() {
   const quota = useScanQuota();
   useEffect(() => void refreshScanUsage(), []);
   const [date, setDate] = useState(editing?.localDate ?? today());
-  const [selected, setSelected] = useState<string | null>(editing?.categoryId ?? null);
+  // Novi trošak kreće s „Ostalo“ (zadnje u mreži), pa se uvijek sprema s kategorijom; dodir na drugu je mijenja.
+  const [selected, setSelected] = useState<string | null>(editing ? editing.categoryId : defaultExpenseCategoryId());
   const cats = useDb(() => listCategoriesByUsage(type), [type]);
 
-  const cents = value ? parseAmount(value) : null;
+  // Valuta unosa: zadana, ili strana (npr. račun u dinarima) koja se pri spremanju pretvara po tečaju.
+  const { home, toHome } = useCurrency();
+  const [cur, setCur] = useState(home);
+  const [curOpen, setCurOpen] = useState(false);
+  const typed = value ? parseAmount(value) : null;
+  const foreign = cur !== home;
+  const cents = typed !== null && foreign ? toHome(typed, cur) : typed;
 
   const save = () => {
-    const categoryId = selected;
+    let note = noteText;
+    const categoryId = selected ?? (type === "expense" ? defaultExpenseCategoryId() : null);
     if (!cents || cents <= 0) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
+    // Strani iznos ostaje zapisan u bilješci („1.200,00 din.“), a sprema se pretvoren u zadanu valutu.
+    const original = foreign && typed !== null ? formatEur(typed, { symbol: currencyInfo(cur).symbol }) : null;
+    if (original) note = note.trim() ? `${note.trim()} · ${original}` : original;
     if (editing) {
       updateTransaction(editing.id, { amountCents: cents, type, categoryId, note, localDate: date });
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -74,7 +87,7 @@ export default function Dodaj() {
       return;
     }
     const tx = addTransaction({ amountCents: cents, type, categoryId, note, localDate: date });
-    track("tx_added", { type, source: "manual", hasNote: note.trim().length > 0 });
+    track("tx_added", { type, source: "manual", hasNote: noteText.trim().length > 0 });
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.back();
     // Budžet kategorije (Premium): obavijest kad trošak prijeđe 80 % ili 100 % mjesečnog limita.
@@ -111,7 +124,7 @@ export default function Dodaj() {
                     accessibilityRole="button"
                     accessibilityState={{ selected: on }}
                     onPress={() => {
-                      if (k !== type) setSelected(null);
+                      if (k !== type) setSelected(k === "expense" ? defaultExpenseCategoryId() : null);
                       setType(k);
                     }}
                     style={{
@@ -133,8 +146,13 @@ export default function Dodaj() {
             <View style={{ flexDirection: "row", gap: 10 }}>
               {editing ? null : (
                 <View>
-                  <RoundButton tone="ai" icon="camera" label={`Skeniraj račun. ${quota.premium ? "" : quota.remaining > 0 ? `Preostalo ${quota.remaining}` : "Zaključano"}`} onPress={() => router.replace("/skeniraj" as Href)} />
-                  {quota.premium ? null : <GoldBadge value={quota.remaining} lock={quota.remaining === 0} />}
+                  <RoundButton
+                    tone="ai"
+                    icon="camera"
+                    label={`Skeniraj račun. ${quota.premium ? "" : quota.remaining > 0 ? `Preostalo ${quota.remaining} od ${quota.limit}` : "Potrošeno"}`}
+                    onPress={() => router.replace("/skeniraj" as Href)} // i bez preostalih skeniranja kamera se otvara; Premium se nudi tek na okidaču
+                  />
+                  {quota.premium ? null : <QuotaBadge remaining={quota.remaining} limit={quota.limit} />}
                 </View>
               )}
               <RoundButton icon="x" label="Zatvori" onPress={() => router.back()} />
@@ -153,10 +171,29 @@ export default function Dodaj() {
               >
                 {value || "0"}
               </T>
-              <T v="title-1" muted style={{ fontSize: 34, marginLeft: 6 }}>€</T>
+              <View style={{ marginLeft: 8, alignSelf: "center" }}>
+                <CurrencyTag code={cur} size={22} onPress={() => setCurOpen(!curOpen)} />
+              </View>
             </View>
+            {curOpen ? (
+              <CurrencyChips
+                value={cur}
+                onChange={(c) => {
+                  setCur(c);
+                  setCurOpen(false);
+                }}
+              />
+            ) : null}
             <T v="caption" muted>
-              {cents ? "Odaberi kategoriju i spremi" : "Upiši iznos"}
+              {foreign && typed
+                ? cents === null
+                  ? "Nema tečaja za ovu valutu"
+                  : `≈ ${formatEur(cents)} · sprema se u ${home}`
+                : !cents
+                ? "Upiši iznos"
+                : type === "expense" && (selected === null || selected === defaultExpenseCategoryId())
+                  ? "Odaberi kategoriju ili spremi pod Ostalo"
+                  : (cats.find((c) => c.id === selected)?.name ?? "Odaberi kategoriju i spremi")}
             </T>
           </View>
 
@@ -204,7 +241,7 @@ export default function Dodaj() {
               onFocus={() => setNoteFocus(true)}
               onBlur={() => setNoteFocus(false)}
               returnKeyType="done"
-              value={note}
+              value={noteText}
               onChangeText={setNote}
               placeholder="Bilješka (npr. Konzum)"
               placeholderTextColor={colors["ink-muted"]}

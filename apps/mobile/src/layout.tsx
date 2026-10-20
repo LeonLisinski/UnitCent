@@ -1,11 +1,13 @@
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 import { Safe, useInsets, useKeyboardHeight } from "./safe";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Glass, Glow, RoundButton, recentlySwiped } from "./fx";
 import { Icon } from "./icons";
 import { monthShort, monthTitle } from "./format";
+import { onTabReselect } from "./tabReselect";
 import { useTheme } from "./theme";
 import { T } from "./ui";
 
@@ -16,6 +18,7 @@ import { T } from "./ui";
 export const PAD = 20; // vodoravni rub ekrana
 export const SECTION_GAP = 28; // razmak između sekcija
 export const HERO = 262; // veličina glavnog grafa (prsten / krug)
+const SECTION_HEAD = 20; // visina retka s oznakom sekcije
 
 /** Najraniji mjesec koji se može otvoriti (5 godina unatrag): da se mogu unijeti i pregledati stari računi. */
 export function minMonth(): string {
@@ -26,11 +29,22 @@ export function minMonth(): string {
 /** Okvir tab ekrana: pozadina, sjaj, sigurni rub, skrolanje s donjim razmakom za plutajuću traku. */
 export function TabScreen({ children }: { children: ReactNode }) {
   const { colors } = useTheme();
+  const scroll = useRef<ScrollView>(null);
+  // Samo ekran koji je trenutno otvoren reagira na ponovni dodir svog taba.
+  const focused = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      focused.current = true;
+      return () => void (focused.current = false);
+    }, []),
+  );
+  useEffect(() => onTabReselect(() => focused.current && scroll.current?.scrollTo({ y: 0, animated: true })), []);
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <ScrollView
+          ref={scroll}
           contentContainerStyle={{ paddingHorizontal: PAD, paddingTop: 12, paddingBottom: 140, gap: SECTION_GAP }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -104,10 +118,13 @@ export function ModalScreen({
   );
 }
 
-/** Zaglavlje ekrana: kontekst lijevo (pozdrav, mjesec) i najviše jedna radnja desno. Uvijek iste visine. */
+/** Visina zaglavlja tab ekrana: TOČNA (ne najmanja), da glavni graf i prva sekcija budu na istoj visini na svim tabovima. */
+export const HEADER_H = 60;
+
+/** Zaglavlje ekrana: kontekst lijevo (pozdrav, mjesec) i najviše jedna radnja desno. Uvijek točno iste visine. */
 export function PageHeader({ children, right }: { children: ReactNode; right?: ReactNode }) {
   return (
-    <View style={{ minHeight: 52, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+    <View style={{ height: HEADER_H, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, overflow: "visible" }}>
       <View style={{ flex: 1, minWidth: 0 }}>{children}</View>
       {right}
     </View>
@@ -119,11 +136,14 @@ export function Hero({ children }: { children: ReactNode }) {
   return <View style={{ height: HERO, alignItems: "center", justifyContent: "center" }}>{children}</View>;
 }
 
-/** Sekcija: mala oznaka (uz opcionalan podatak ili radnju desno) i sadržaj. */
+/**
+ * Sekcija: mala oznaka (uz opcionalan podatak ili radnju desno) i sadržaj. Redak oznake je uvijek iste visine,
+ * pa radnja desno (npr. „+ Dodaj“) ne pomiče oznaku: naslovi sekcija su na istoj visini na svim tabovima.
+ */
 export function Section({ title, right, children }: { title: string; right?: ReactNode; children: ReactNode }) {
   return (
     <View style={{ gap: 12 }}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
+      <View style={{ height: SECTION_HEAD, flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
         <T v="mono-label" muted style={{ fontSize: 11, opacity: 0.8 }}>{title}</T>
         {typeof right === "string" ? <T v="caption" muted>{right}</T> : right}
       </View>
@@ -327,6 +347,29 @@ export function MonthSwitcher({
           </Pressable>
         </Pressable>
       </Modal>
+    </View>
+  );
+}
+
+/**
+ * Radnja u retku sekcije (desno od oznake): tekst u brand boji, npr. „Svi troškovi“ ili „+ Dodaj“. Vizualno nizak
+ * (ne pomiče oznaku), a dodirni cilj je ≥ 48 px zahvaljujući hitSlop.
+ */
+export function SectionLink({ label, onPress, accessibilityLabel }: { label: string; onPress: () => void; accessibilityLabel?: string }) {
+  const { colors } = useTheme();
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} hitSlop={{ top: 14, bottom: 14, left: 12, right: 12 }} onPress={onPress}>
+      {({ pressed }) => <T v="caption" color={colors.brand} style={{ fontWeight: "700", opacity: pressed ? 0.6 : 1 }}>{label}</T>}
+    </Pressable>
+  );
+}
+
+/** Prazan popis: jedna kratka rečenica i radnja koja ga popunjava (npr. „Dodaj trošak“). */
+export function EmptyState({ text, action }: { text: string; action?: ReactNode }) {
+  return (
+    <View style={{ alignItems: "center", gap: 14, paddingVertical: 8 }}>
+      <T muted style={{ textAlign: "center" }}>{text}</T>
+      {action}
     </View>
   );
 }

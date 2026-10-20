@@ -1,13 +1,15 @@
-import { useMemo, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Modal, Pressable, ScrollView, View } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { Safe } from "../src/safe";
-import { formatEur } from "@unitcent/core";
-import { Button, CatIcon, Chip } from "../src/components";
+import { Safe, useInsets, useKeyboardHeight } from "../src/safe";
+import { currencyInfo, formatEur, type Cents } from "@unitcent/core";
+import { ConvertedHint, CurrencyChips, CurrencyTag } from "../src/CurrencyPicker";
+import { useCurrency } from "../src/currency";
+import { AmountField, Button, CatIcon, Chip, TextField } from "../src/components";
 import { DateField } from "../src/DateField";
 import { useDb } from "../src/data";
-import { Glow, RoundButton } from "../src/fx";
+import { Glass, Glow, RoundButton, SwipeRow, recentlySwiped } from "../src/fx";
 import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
@@ -27,10 +29,22 @@ export default function Pregledaj() {
   const cats = useDb(() => listCategories("expense"));
   const catById = useMemo(() => new Map(cats.map((c) => [c.id, c])), [cats]);
 
-  const [items, setItems] = useState<ScanItem[]>(scan?.result.items ?? []);
+  // Svaka stavka dobiva stalni ključ, pa brisanje ili uređivanje ne „premješta“ retke (ni pokaznu gestu).
+  const [items, setItems] = useState<(ScanItem & { key: string })[]>(() => (scan?.result.items ?? []).map((it, k) => ({ ...it, key: `i${k}` })));
+  const hintKey = useMemo(() => items[0]?.key, []); // pokazna gesta samo na prvoj stavci, jednom po otvaranju
   const [open, setOpen] = useState<number | null>(null);
+  const [editing, setEditing] = useState<number | null>(null); // stavka koja se uređuje (povlačenje udesno)
   // QR je izvor istine za datum, zatim AI; bez njih danas. Korisnik uvijek može promijeniti.
   const [date, setDate] = useState<string>(scan?.qr?.date ?? scan?.result.date ?? today());
+  // Valuta računa (npr. dinari na putu): prepoznata pri čitanju ili zadana; pri spremanju se pretvara u zadanu.
+  const { home, toHome } = useCurrency();
+  const [cur, setCur] = useState<string>(scan?.result.currency ?? home);
+  const [curOpen, setCurOpen] = useState(false);
+  const sym = currencyInfo(cur).symbol;
+  const money = (c: Cents) => formatEur(c, { symbol: sym });
+  // Bez tečaja (rijetka valuta, a još nije bilo interneta) ne spremamo krivi iznos: korisnik bira valutu ili čeka tečaj.
+  const noRate = cur !== home && toHome(100, cur) === null;
+  const conv = (c: Cents) => (cur === home ? c : (toHome(c, cur) ?? c));
 
   if (!scan) {
     return (
@@ -60,6 +74,18 @@ export default function Pregledaj() {
   })();
   const total = groups.reduce((s, [, v]) => s + v, 0);
 
+  // Brisanje stavke (povlačenje ulijevo) s „Poništi“: stavka se vraća na isto mjesto.
+  const removeItem = (index: number) => {
+    const removed = items[index];
+    if (!removed) return;
+    setItems((prev) => prev.filter((_, i) => i !== index));
+    setOpen(null);
+    toast.show("Stavka uklonjena", {
+      label: "Poništi",
+      run: () => setItems((prev) => [...prev.slice(0, index), removed, ...prev.slice(index)]),
+    });
+  };
+
   const setCat = (index: number, id: string | null) => {
     setItems((prev) => prev.map((it, i) => (i === index ? { ...it, category_id: id } : it)));
     setOpen(null);
@@ -67,17 +93,31 @@ export default function Pregledaj() {
   };
 
   const save = () => {
-    const receiptId = saveReceipt({ merchant: result.merchant, totalCents: result.total_cents ?? total, date, items });
+    // Sve se sprema u zadanoj valuti; izvorni iznos stranog računa ostaje u bilješci.
+    const original = cur === home ? null : money(result.total_cents ?? total);
+    const note = [result.merchant, original].filter(Boolean).join(" · ") || undefined;
+    const receiptId = saveReceipt({
+      merchant: result.merchant,
+      totalCents: conv(result.total_cents ?? total),
+      date,
+      items: items.map((i) => ({ ...i, amount_cents: conv(i.amount_cents) })),
+    });
     for (const [categoryId, cents] of groups) {
-      addTransaction({ amountCents: cents, categoryId, note: result.merchant ?? undefined, merchant: result.merchant, localDate: date, source: "scan", receiptId });
+      addTransaction({ amountCents: conv(cents), categoryId, note, merchant: result.merchant, localDate: date, source: "scan", receiptId });
     }
     clearLastScan();
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.dismissAll();
-    toast.show(`Spremljeno · ${formatEur(total)}`);
+    toast.show(`Spremljeno · ${formatEur(conv(total))}`);
   };
 
-  const warn = result.status === "review" ? result.reasons.filter((r) => !r.startsWith("Neke stavke")) : [];
+  // Upozorenje s brojkama: korisnik odmah vidi što se ne slaže (a „Spremi“ sprema zbroj stavki).
+  // Zbroj se provjerava uživo: kad korisnik ispravi ili ukloni stavku, upozorenje nestaje čim se zbroj složi.
+  const itemsSum = items.reduce((s, i) => s + i.amount_cents, 0);
+  const mismatch = result.total_cents !== null && Math.abs(itemsSum - result.total_cents) > 2;
+  const warn = (result.status === "review" ? result.reasons.filter((r) => !r.startsWith("Neke stavke") && !r.startsWith("Zbroj stavki")) : []);
+  if (mismatch) warn.unshift(`Zbroj stavki je ${money(itemsSum)}, a na računu piše ${money(result.total_cents!)}`);
+  if (noRate) warn.push(`Nema tečaja za ${cur}. Spoji se na internet ili odaberi valutu`);
   const unassigned = items.filter((i) => i.category_id === null && i.line_type === "item").length;
 
   return (
@@ -92,9 +132,22 @@ export default function Pregledaj() {
 
           <View style={{ gap: 2 }}>
             <T v="caption" muted numberOfLines={1}>{result.merchant ?? "Račun"}</T>
-            <T v="amount-hero" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={{ fontSize: 44, lineHeight: 50, letterSpacing: -1.6 }}>
-              {formatEur(result.total_cents ?? total)}
-            </T>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <T v="amount-hero" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={{ flexShrink: 1, fontSize: 44, lineHeight: 50, letterSpacing: -1.6 }}>
+                {money(result.total_cents ?? total)}
+              </T>
+              <CurrencyTag code={cur} onPress={() => setCurOpen(!curOpen)} />
+            </View>
+            {curOpen ? (
+              <CurrencyChips
+                value={cur}
+                onChange={(c) => {
+                  setCur(c);
+                  setCurOpen(false);
+                }}
+              />
+            ) : null}
+            <ConvertedHint cents={result.total_cents ?? total} from={cur} />
           </View>
 
           <DateField label="Datum računa" value={date} onChange={setDate} />
@@ -111,11 +164,13 @@ export default function Pregledaj() {
               const c = it.category_id ? catById.get(it.category_id) : undefined;
               const isOpen = open === i;
               return (
-                <View key={i} style={{ borderTopWidth: i === 0 ? 0 : 1, borderTopColor: fx.line }}>
+                <View key={it.key} style={{ borderTopWidth: i === 0 ? 0 : 1, borderTopColor: fx.line }}>
+                  <SwipeRow onDelete={() => removeItem(i)} onEdit={() => setEditing(i)} hint={it.key === hintKey}>
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={`${it.name}, ${formatEur(it.amount_cents)}. Dodirni za promjenu kategorije`}
-                    onPress={() => setOpen(isOpen ? null : i)}
+                    accessibilityLabel={`${it.name}, ${money(it.amount_cents)}. Dodirni za promjenu kategorije`}
+                    accessibilityHint="Povuci ulijevo za brisanje, udesno za uređivanje"
+                    onPress={() => !recentlySwiped() && setOpen(isOpen ? null : i)}
                     style={{ minHeight: 56, flexDirection: "row", alignItems: "center", gap: 12 }}
                   >
                     {c ? (
@@ -131,9 +186,10 @@ export default function Pregledaj() {
                       </T>
                     </View>
                     <T v="amount" color={it.amount_cents < 0 ? colors.brand : colors.ink} style={{ fontWeight: "800" }}>
-                      {formatEur(it.amount_cents)}
+                      {money(it.amount_cents)}
                     </T>
                   </Pressable>
+                  </SwipeRow>
                   {isOpen ? (
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, paddingBottom: 12 }}>
                       {cats.map((cat) => (
@@ -151,6 +207,16 @@ export default function Pregledaj() {
               );
             })}
           </ScrollView>
+          <ItemEditor
+            item={editing !== null ? (items[editing] ?? null) : null}
+            symbol={sym}
+            onClose={() => setEditing(null)}
+            onSave={(patch) => {
+              setItems((prev) => prev.map((it, k) => (k === editing ? { ...it, ...patch } : it)));
+              setEditing(null);
+              void Haptics.selectionAsync();
+            }}
+          />
 
           <View style={{ gap: 6 }}>
             {unassigned > 0 ? (
@@ -158,10 +224,77 @@ export default function Pregledaj() {
                 {unassigned} {unassigned === 1 ? "stavka je" : "stavki je"} bez kategorije, spremit će se kao „Bez kategorije“
               </T>
             ) : null}
-            <Button label={`Spremi · ${formatEur(total)}`} disabled={groups.length === 0} onPress={save} />
+            <Button label={noRate ? "Spremi" : `Spremi · ${formatEur(conv(total))}`} disabled={groups.length === 0 || noRate} onPress={save} />
           </View>
         </View>
       </Safe>
     </View>
+  );
+}
+
+/** Iznos za polje unosa: „12,99“ (bez predznaka; popust ostaje popust). */
+const toInput = (cents: Cents) => (Math.abs(cents) / 100).toFixed(2).replace(".", ",");
+
+/**
+ * Uređivanje stavke računa (povlačenje udesno): naziv i iznos. Kartica je pri dnu i podiže se iznad tipkovnice,
+ * pa su polja i „Spremi“ uvijek vidljivi.
+ */
+function ItemEditor({
+  item,
+  symbol,
+  onSave,
+  onClose,
+}: {
+  item: ScanItem | null;
+  symbol: string;
+  onSave: (patch: { name: string; amount_cents: Cents }) => void;
+  onClose: () => void;
+}) {
+  const { colors } = useTheme();
+  const insets = useInsets();
+  const kb = useKeyboardHeight();
+  const [name, setName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [cents, setCents] = useState<Cents | null>(null);
+  useEffect(() => {
+    if (!item) return;
+    setName(item.name);
+    setAmount(toInput(item.amount_cents));
+    setCents(Math.abs(item.amount_cents));
+  }, [item]);
+
+  const negative = item ? item.amount_cents < 0 : false;
+  const valid = name.trim().length > 0 && cents !== null && cents > 0;
+
+  return (
+    <Modal visible={!!item} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+      <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" }} onPress={onClose}>
+        <Pressable onPress={() => undefined} style={{ paddingHorizontal: 12, paddingBottom: (kb > 0 ? kb : insets.bottom) + 12 }}>
+          <Glass radius={28} style={{ padding: 20, gap: 14, backgroundColor: colors.surface }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <T v="title-2">{negative ? "Uredi popust" : "Uredi stavku"}</T>
+              <RoundButton icon="x" label="Zatvori" onPress={onClose} />
+            </View>
+            <TextField label="Naziv" value={name} onChangeText={setName} maxLength={60} />
+            <AmountField
+              label={negative ? "Iznos popusta" : "Iznos"}
+              value={amount}
+              onChange={(t, c) => {
+                setAmount(t);
+                setCents(c);
+              }}
+              currency={<T v="headline" muted>{symbol}</T>}
+            />
+            <View style={{ alignItems: "center", paddingTop: 4 }}>
+              <Button
+                label="Spremi"
+                disabled={!valid}
+                onPress={() => valid && onSave({ name: name.trim(), amount_cents: negative ? -cents! : cents! })}
+              />
+            </View>
+          </Glass>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }

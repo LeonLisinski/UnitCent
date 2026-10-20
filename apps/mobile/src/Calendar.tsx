@@ -1,5 +1,6 @@
 import { View } from "react-native";
 import { daysInMonth, occurrenceDate, parseYearMonth, toLocalDate, type LocalDate, type YearMonth } from "@unitcent/core";
+import { recurringIcon } from "./BrandIcon";
 import { CatIcon } from "./components";
 import { firstWeekdayMondayIndex } from "./format";
 import { useTheme } from "./theme";
@@ -81,14 +82,17 @@ export function Calendar({
                     {c.label}
                   </T>
                 </View>
-                {subs.slice(0, 2).map((s) => {
+                {subs.slice(0, subs.length > 2 ? 1 : 2).map((s) => {
                   const cat = catById.get(s.categoryId ?? "");
                   return (
                     <View key={s.id} style={{ opacity: past ? 0.55 : 1 }}>
-                      <CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={s.iconKey ?? cat?.icon ?? "repeat"} size={24} />
+                      <CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={recurringIcon(s, cat?.icon)} size={24} />
                     </View>
                   );
                 })}
+                {subs.length > 2 ? (
+                  <T v="caption" muted style={{ fontSize: 10, fontWeight: "800", opacity: past ? 0.55 : 1 }}>+{subs.length - 1}</T>
+                ) : null}
               </View>
             );
           })}

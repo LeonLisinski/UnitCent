@@ -18,6 +18,7 @@ import { InstrumentSerif_400Regular_Italic } from "@expo-google-fonts/instrument
 import { JetBrainsMono_500Medium } from "@expo-google-fonts/jetbrains-mono";
 import { ThemeProvider, useTheme } from "../src/theme";
 import { ToastProvider } from "../src/toast";
+import { LockScreen } from "../src/LockScreen";
 import { getDb } from "../src/db/client";
 import { bookDueRecurring, ensureCategories } from "../src/db/repo";
 import { applyProfileName } from "../src/account";
@@ -26,6 +27,7 @@ import { initMonitoring, wrapRoot } from "../src/monitoring";
 import { startSync } from "../src/sync";
 import { supabase } from "../src/supabase";
 import { rescheduleReminders } from "../src/notifications";
+import { initCurrency, refreshRates } from "../src/currency";
 
 initMonitoring(); // greške se prate od prvog trenutka
 
@@ -38,6 +40,7 @@ function initLocalData(): true {
   initAnalytics();
   ensureCategories();
   bookDueRecurring();
+  initCurrency();
   return true;
 }
 
@@ -62,7 +65,9 @@ function Shell() {
         <Stack.Screen name="racun" options={{ presentation: "modal" }} />
         <Stack.Screen name="stednja" options={{ presentation: "modal" }} />
         <Stack.Screen name="stednja-unos" options={{ presentation: "modal" }} />
+        <Stack.Screen name="valuta" options={{ presentation: "modal" }} />
       </Stack>
+      <LockScreen />
     </>
   );
 }
@@ -99,6 +104,7 @@ function RootLayout() {
     void applyProfileName();
     const auth = supabase?.auth.onAuthStateChange(() => void applyProfileName());
     void rescheduleReminders();
+    void refreshRates();
     return () => {
       stopSync();
       auth?.data.subscription.unsubscribe();

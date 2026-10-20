@@ -1,5 +1,6 @@
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
+import { homeCurrency } from "./currency";
 import { getDb } from "./db/client";
 import { notifyDbChanged } from "./db/events";
 import { ensureCategories, today } from "./db/repo";
@@ -12,8 +13,8 @@ export async function exportData(): Promise<boolean> {
   const payload = {
     app: "UnitCent",
     exportedAt: new Date().toISOString(),
-    currency: "EUR",
-    note: "Iznosi (amount_cents, *_cents) su u centima.",
+    currency: homeCurrency(),
+    note: "Iznosi (amount_cents, *_cents) su u stotinkama navedene valute.",
     categories: all("categories"),
     transactions: all("transactions"),
     recurring_items: all("recurring_items"),

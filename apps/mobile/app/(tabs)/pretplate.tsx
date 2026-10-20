@@ -1,18 +1,20 @@
 import { useState } from "react";
-import { Alert, View } from "react-native";
+import { View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { formatEur, occurrenceDate, previousMonth, yearMonthOf, type YearMonth } from "@unitcent/core";
 import { Calendar } from "../../src/Calendar";
-import { CatIcon } from "../../src/components";
+import { recurringIcon } from "../../src/BrandIcon";
+import { Button, CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
-import { Amount, Ring, RoundButton } from "../../src/fx";
+import { Amount, Ring, RoundButton, SwipeRow } from "../../src/fx";
 import { monthTitle, nextMonthOf } from "../../src/format";
-import { HERO, Hero, ListRow, MonthSwitcher, minMonth, PageHeader, RowAmount, Section, TabScreen } from "../../src/layout";
+import { HERO, Hero, ListRow, MonthSwitcher, minMonth, PageHeader, RowAmount, Section, SectionLink, EmptyState, TabScreen } from "../../src/layout";
 import { useTheme } from "../../src/theme";
-import { freeMinMonth, usePremium } from "../../src/premium";
+import { freeMinMonth, usePremium, premiumHref } from "../../src/premium";
 import { T } from "../../src/ui";
-import { deleteRecurring, listCategories, listRecurring, today } from "../../src/db/repo";
+import { deleteRecurring, listCategories, listRecurring, restoreRecurring, today } from "../../src/db/repo";
+import { useToast } from "../../src/toast";
 import { rescheduleReminders } from "../../src/notifications";
 
 const enter = (i: number) => FadeInDown.delay(i * 70).duration(420);
@@ -25,6 +27,7 @@ export default function Pretplate() {
   const router = useRouter();
   const premium = usePremium();
   const { colors } = useTheme();
+  const toast = useToast();
   const day = today();
   const thisMonth = yearMonthOf(day);
   const [month, setMonth] = useState<YearMonth>(thisMonth);
@@ -54,28 +57,24 @@ export default function Pretplate() {
   let latest = thisMonth;
   for (let i = 0; i < 12; i++) latest = nextMonthOf(latest);
 
-  const confirmDelete = (id: string, name: string) =>
-    Alert.alert(
-      `Obrisati „${name}“?`,
-      "Briše se iz svih mjeseci. Već knjiženi troškovi ostaju. Ako si je samo otkazao, bolje otvori stavku i postavi kraj, pa ostaje u povijesti.",
-      [
-        { text: "Odustani", style: "cancel" },
-        {
-          text: "Obriši",
-          style: "destructive",
-          onPress: () => {
-            deleteRecurring(id);
-            void rescheduleReminders();
-          },
-        },
-      ],
-    );
+  // Brisanje povlačenjem ulijevo, kao na Početnoj; već knjiženi troškovi ostaju.
+  const remove = (id: string) => {
+    deleteRecurring(id);
+    void rescheduleReminders();
+    toast.show("Obrisano", {
+      label: "Poništi",
+      run: () => {
+        restoreRecurring(id);
+        void rescheduleReminders();
+      },
+    });
+  };
 
   return (
     <TabScreen>
       <Animated.View entering={enter(0)}>
         <PageHeader>
-          <MonthSwitcher month={month} onChange={setMonth} min={earliest} max={latest} lockedBefore={premium ? undefined : freeMinMonth()} onLocked={() => router.push("/premium" as Href)} />
+          <MonthSwitcher month={month} onChange={setMonth} min={earliest} max={latest} lockedBefore={premium ? undefined : freeMinMonth()} onLocked={() => router.push(premiumHref("history"))} />
         </PageHeader>
       </Animated.View>
 
@@ -89,22 +88,30 @@ export default function Pretplate() {
         </Hero>
       </Animated.View>
 
+      {/* Kalendar je uvijek vidljiv (i prazan), pa je prva sekcija na istoj visini kao na ostalim tabovima. */}
       <Animated.View entering={enter(2)}>
+        <Section title="Kalendar">
+          <Calendar month={month} items={inMonth} categories={cats} todayDate={day} />
+        </Section>
+      </Animated.View>
+
+      <Animated.View entering={enter(3)}>
         <Section
           title="Stavke"
           right={
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-              <T v="caption" muted>{count}</T>
-              <RoundButton icon="plus" label="Dodaj pretplatu" onPress={() => router.push("/pretplata")} />
-            </View>
+            inMonth.length > 0 ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+                <T v="caption" muted>{count}</T>
+                <SectionLink label="+ Dodaj" accessibilityLabel="Dodaj pretplatu" onPress={() => router.push("/pretplata")} />
+              </View>
+            ) : undefined
           }
         >
           {inMonth.length === 0 ? (
-            <T muted>
-              {items.length === 0
-                ? "Upišeš jednom, knjiže se same. Dodaj prvu pretplatu ili fiksni trošak s +."
-                : "U ovom mjesecu nema pretplata."}
-            </T>
+            <EmptyState
+              text={items.length === 0 ? "Upišeš jednom, knjiže se same." : "U ovom mjesecu nema pretplata."}
+              action={<Button icon="plus" label="Dodaj pretplatu" onPress={() => router.push("/pretplata")} />}
+            />
           ) : (
             <View>
               {[...inMonth]
@@ -128,17 +135,17 @@ export default function Pretplate() {
                   const settled = isPast || (diff !== null && diff < 0);
                   const ends = it.endDate ? `${sub} · do ${it.endDate.split("-").reverse().join(". ")}.` : sub;
                   return (
-                    <ListRow
-                      key={it.id}
-                      first={i === 0}
-                      left={<CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={it.iconKey ?? cat?.icon ?? "repeat"} size={40} />}
-                      title={it.name}
-                      subtitle={ends}
-                      right={<RowAmount color={settled ? colors["ink-muted"] : undefined}>{formatEur(it.amountCents)}</RowAmount>}
-                      hint="Dodirni za uređivanje, dugo pritisni za brisanje"
-                      onPress={() => router.push({ pathname: "/pretplata", params: { id: it.id } })}
-                      onLongPress={() => confirmDelete(it.id, it.name)}
-                    />
+                    <SwipeRow key={it.id} onDelete={() => remove(it.id)}>
+                      <ListRow
+                        first={i === 0}
+                        left={<CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={recurringIcon(it, cat?.icon)} size={40} />}
+                        title={it.name}
+                        subtitle={ends}
+                        right={<RowAmount color={settled ? colors["ink-muted"] : undefined}>{formatEur(it.amountCents)}</RowAmount>}
+                        hint="Dodirni za uređivanje, povuci ulijevo za brisanje"
+                        onPress={() => router.push({ pathname: "/pretplata", params: { id: it.id } })}
+                      />
+                    </SwipeRow>
                   );
                 })}
             </View>
@@ -146,13 +153,6 @@ export default function Pretplate() {
         </Section>
       </Animated.View>
 
-      {inMonth.length > 0 ? (
-        <Animated.View entering={enter(3)}>
-          <Section title="Kalendar">
-            <Calendar month={month} items={inMonth} categories={cats} todayDate={day} />
-          </Section>
-        </Animated.View>
-      ) : null}
     </TabScreen>
   );
 }

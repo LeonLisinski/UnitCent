@@ -9,7 +9,8 @@ import { track } from "../src/analytics";
 import { AiTag, Button } from "../src/components";
 import { Icon } from "../src/icons";
 import { ModalScreen } from "../src/layout";
-import { PLANS, TRIAL_DAYS, TRIAL_ENABLED, YEARLY_SAVING_PCT, setDevPremium, usePremium, type PlanKey } from "../src/premium";
+import { FREE_SCANS, PLANS, type PremiumFeature, TRIAL_DAYS, TRIAL_ENABLED, YEARLY_SAVING_PCT, setDevPremium, usePremium, type PlanKey } from "../src/premium";
+import { useScanQuota } from "../src/scanQuota";
 import { purchasePlan, type PurchaseResult } from "../src/purchases";
 import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
@@ -22,11 +23,23 @@ import { T } from "../src/ui";
 const SOCIAL_PROOF: string | null = null;
 
 /** Što Premium otključava: zlatna medaljica s ikonom + kratak naziv. */
-const PERKS: { icon: string; title: string; hint: string; soon?: boolean; ai?: boolean }[] = [
-  { icon: "calendar", title: "Cijela povijest", hint: "Svi mjeseci, ne samo zadnjih šest" },
-  { icon: "camera", title: "Neograničeno skeniranje", hint: "Slikaš račun, stavke se razvrstaju same", ai: true },
-  { icon: "chart", title: "Uvidi i savjeti", hint: "Gdje ti curi novac i što možeš uštedjeti", ai: true },
+const PERKS: { key: PremiumFeature; icon: string; title: string; hint: string; soon?: boolean; ai?: boolean }[] = [
+  { key: "scan", icon: "camera", title: "Neograničeno skeniranje", hint: "Slikaš račun, stavke se razvrstaju same", ai: true },
+  { key: "history", icon: "calendar", title: "Cijela povijest", hint: "Svi mjeseci, ne samo zadnjih šest" },
+  { key: "insights", icon: "chart", title: "Uvidi i savjeti", hint: "Gdje ti curi novac i što možeš uštedjeti", ai: true },
+  { key: "budgets", icon: "tag", title: "Limiti po kategorijama", hint: "Koliko smiješ na hranu, gorivo, izlaske" },
 ];
+
+/**
+ * Kad korisnik naiđe na ograničenje (npr. potrošena skeniranja), Premium se otvara s tom funkcijom u prvom planu:
+ * naslov kaže što dobiva, rečenica ispod zašto je ovdje, a ostale pogodnosti su ispod kao „Uz to dobivaš“.
+ */
+const FEATURE_COPY: Record<PremiumFeature, { title: string; line?: (q: { used: number; limit: number }) => string | null }> = {
+  scan: { title: "Bezbrižno skeniranje računa", line: (q) => (q.used >= q.limit ? `Sva ${q.limit} besplatna skeniranja su iskorištena` : null) },
+  history: { title: "Cijela tvoja povijest", line: () => "Besplatno vidiš zadnjih 6 mjeseci" },
+  insights: { title: "Gdje ti curi novac" },
+  budgets: { title: "Limit za svaku kategoriju" },
+};
 
 /** Petokraka kao poligon (za medaljon): vanjski i unutarnji polumjer, središte (0,0). */
 function starPath(R: number, r: number): string {
@@ -108,7 +121,7 @@ function PlanToggle({ value, onChange }: { value: PlanKey; onChange: (p: PlanKey
           borderColor: on ? fx.gold : "transparent",
         }}
       >
-        <T v="headline" muted={!on} style={{ fontSize: 15 }}>{label}</T>
+        <T v="headline" muted={!on} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ fontSize: 15, flexShrink: 1 }}>{label}</T>
         {key === "yearly" ? (
           <LinearGradient colors={[fx.goldFillHi, fx.goldFillMid, fx.goldFillLo]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 }}>
             <T v="caption" color="#2a1d00" style={{ fontSize: 11, fontWeight: "800", lineHeight: 15 }}>−{YEARLY_SAVING_PCT} %</T>
@@ -120,7 +133,7 @@ function PlanToggle({ value, onChange }: { value: PlanKey; onChange: (p: PlanKey
   return (
     <View style={{ flexDirection: "row", backgroundColor: fx.track, borderRadius: 26, padding: 3 }}>
       {opt("monthly", "Mjesečno")}
-      {opt("yearly", "Godišnje")}
+      {opt("yearly", `Godišnje ${PLANS.yearly.priceLabel}`)}
     </View>
   );
 }
@@ -131,10 +144,13 @@ export default function Premium() {
   const router = useRouter();
   const toast = useToast();
   const premium = usePremium();
-  const { first } = useLocalSearchParams<{ first?: string }>(); // prikaz odmah nakon početka: uz „Nastavi besplatno“
+  const { first, feature: featureParam } = useLocalSearchParams<{ first?: string; feature?: string }>(); // first: prikaz odmah nakon početka
+  const feature = featureParam && featureParam in FEATURE_COPY ? (featureParam as PremiumFeature) : null;
+  const quota = useScanQuota();
+  const contextual = !!feature && !premium; // otvoreno zbog ograničenja: manje teksta, istaknuta funkcija
   const [plan, setPlan] = useState<PlanKey>("yearly");
   const [busy, setBusy] = useState(false);
-  useEffect(() => track("paywall_viewed"), []);
+  useEffect(() => track("paywall_viewed", { feature: feature ?? "none" }), []);
   const { height } = useWindowDimensions();
   const compact = height < 780; // manji ekrani: manji znak i razmaci da sve stane bez skrolanja
   const p = PLANS[plan];
@@ -173,7 +189,7 @@ export default function Premium() {
         ) : (
           <>
             <Button
-              label={TRIAL_ENABLED ? `Isprobaj ${TRIAL_DAYS} dana besplatno` : `Nastavi · ${p.priceLabel} ${p.per}`}
+              label={TRIAL_ENABLED ? `Isprobaj ${TRIAL_DAYS} dana besplatno` : "Nastavi"} // cijena je odmah iznad gumba (ne ponavlja se)
               disabled={busy}
               onPress={() => void buy()}
             />
@@ -192,25 +208,40 @@ export default function Premium() {
         )
       }
     >
-      <View style={{ alignItems: "center" }}>
-        <Medallion hi={fx.goldFillHi} base={fx.goldFillMid} lo={fx.goldFillLo} scale={compact ? 0.7 : 0.88} />
-        <Pressable
-          accessibilityRole="header"
-          disabled={!__DEV__}
-          onLongPress={() => setDevPremium(!premium)}
-          style={{ alignItems: "center", marginTop: compact ? -14 : -18 }}
-        >
-          <T v="mono-label" muted style={{ fontSize: 11, letterSpacing: 4 }}>UNITCENT</T>
-          <T v="serif-accent" color={fx.gold} style={{ fontSize: compact ? 38 : 44, lineHeight: compact ? 46 : 52 }}>{premium ? "Premium je aktivan" : "Premium"}</T>
-        </Pressable>
-        {SOCIAL_PROOF ? (
-          <T muted style={{ textAlign: "center", maxWidth: 300, marginTop: 8 }}>{SOCIAL_PROOF}</T>
-        ) : null}
-      </View>
+      {contextual ? (
+        <View style={{ alignItems: "center", gap: 8 }}>
+          <Medallion hi={fx.goldFillHi} base={fx.goldFillMid} lo={fx.goldFillLo} scale={compact ? 0.55 : 0.7} />
+          <T v="mono-label" color={fx.gold} style={{ fontSize: 11, letterSpacing: 4, marginTop: compact ? -16 : -20 }}>PREMIUM</T>
+          <T v="serif-accent" color={fx.gold} style={{ fontSize: compact ? 32 : 36, lineHeight: compact ? 38 : 42, textAlign: "center" }}>
+            {FEATURE_COPY[feature].title}
+          </T>
+          {(() => {
+            const line = FEATURE_COPY[feature].line?.({ used: quota.used, limit: FREE_SCANS });
+            return line ? <T muted style={{ textAlign: "center" }}>{line}</T> : null;
+          })()}
+        </View>
+      ) : (
+        <View style={{ alignItems: "center" }}>
+          <Medallion hi={fx.goldFillHi} base={fx.goldFillMid} lo={fx.goldFillLo} scale={compact ? 0.7 : 0.88} />
+          <Pressable
+            accessibilityRole="header"
+            disabled={!__DEV__}
+            onLongPress={() => void setDevPremium(!premium)}
+            style={{ alignItems: "center", marginTop: compact ? -14 : -18 }}
+          >
+            <T v="mono-label" muted style={{ fontSize: 11, letterSpacing: 4 }}>UNITCENT</T>
+            <T v="serif-accent" color={fx.gold} style={{ fontSize: compact ? 38 : 44, lineHeight: compact ? 46 : 52 }}>{premium ? "Premium je aktivan" : "Premium"}</T>
+          </Pressable>
+          {SOCIAL_PROOF ? (
+            <T muted style={{ textAlign: "center", maxWidth: 300, marginTop: 8 }}>{SOCIAL_PROOF}</T>
+          ) : null}
+        </View>
+      )}
 
-      <View style={{ gap: compact ? 16 : 22 }}>
-        {PERKS.map((perk) => (
-          <View key={perk.title} style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+      <View style={{ gap: compact ? 14 : 20 }}>
+        {contextual ? <T v="mono-label" muted>Uz to dobivaš</T> : null}
+        {PERKS.filter((perk) => premium || perk.key !== feature).map((perk) => (
+          <View key={perk.key} style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
             <LinearGradient
               colors={[fx.goldFillHi, fx.goldFillMid, fx.goldFillLo]}
               locations={[0, 0.5, 1]}
@@ -225,7 +256,7 @@ export default function Premium() {
                 <T v="headline" style={{ fontWeight: "700", fontSize: 17, flexShrink: 1 }}>{perk.title}</T>
                 {perk.ai ? <AiTag /> : null}
               </View>
-              <T v="caption" muted style={{ fontSize: 13 }}>{perk.hint}</T>
+              {contextual ? null : <T v="caption" muted style={{ fontSize: 13 }}>{perk.hint}</T>}
             </View>
           </View>
         ))}
@@ -234,9 +265,27 @@ export default function Premium() {
       {premium ? null : (
         <View style={{ gap: 10 }}>
           <PlanToggle value={plan} onChange={setPlan} />
-          <T v="caption" muted style={{ textAlign: "center" }}>
-            {perMonth ? `To je samo ${perMonth} mjesečno` : "Otkaži kad god želiš"}
-          </T>
+          {/* Cijena odabranog plana. Godišnji: mjesečna cijena prekrižena, a ispod jasno koliko se i kada plaća
+              (usporedba s mjesečnim planom, ne „sniženje“). */}
+          <View style={{ alignItems: "center", gap: 2, minHeight: 44, justifyContent: "center" }}>
+            {perMonth ? (
+              <>
+                <View style={{ flexDirection: "row", alignItems: "baseline", gap: 8 }}>
+                  <T v="headline" muted style={{ textDecorationLine: "line-through" }}>{PLANS.monthly.priceLabel}</T>
+                  <T v="title-2" style={{ fontWeight: "800" }}>{perMonth}</T>
+                  <T v="caption" muted>mjesečno</T>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={{ flexDirection: "row", alignItems: "baseline", gap: 8 }}>
+                  <T v="title-2" style={{ fontWeight: "800" }}>{PLANS.monthly.priceLabel}</T>
+                  <T v="caption" muted>mjesečno</T>
+                </View>
+                <T v="caption" muted>Otkaži kad god želiš</T>
+              </>
+            )}
+          </View>
         </View>
       )}
 

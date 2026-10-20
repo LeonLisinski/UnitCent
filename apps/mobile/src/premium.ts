@@ -19,10 +19,15 @@ export const PLANS: Record<PlanKey, { cents: number; priceLabel: string; per: st
 export const YEARLY_SAVING_PCT = Math.round((1 - PLANS.yearly.cents / (PLANS.monthly.cents * 12)) * 100);
 export const FREE_HISTORY_MONTHS = 6;
 
-let devPremium = false; // samo za razvoj i samo do ponovnog pokretanja (ne ostaje spremljeno)
+/**
+ * Alati za testiranje (prekidač Premiuma u Profilu): u razvoju i u internim buildovima (EAS „preview“ postavlja
+ * EXPO_PUBLIC_DEV_TOOLS=1). U produkciji ih nema. Prekidač mijenja samo prikaz u aplikaciji; poslužitelj i dalje
+ * provodi svoja ograničenja (npr. broj skeniranja).
+ */
+export const DEV_TOOLS = __DEV__ || process.env.EXPO_PUBLIC_DEV_TOOLS === "1";
 
 export function isPremiumNow(): boolean {
-  if (devPremium) return true;
+  if (DEV_TOOLS && kvGet("dev.premium") === "1") return true;
   const until = kvGet("premium.until");
   return !!until && Date.parse(until) > Date.now();
 }
@@ -49,6 +54,11 @@ export async function refreshEntitlement(): Promise<void> {
   try {
     const { data } = await supabase.from("entitlements").select("premium_until").maybeSingle();
     const next = (data?.premium_until as string | null) ?? "";
+    // Testni prekidač uključen prije nego je postojala funkcija `dev-premium`: jednom ga upiši i na poslužitelj.
+    if (!next && isDevPremium() && kvGet("dev.premium.server") !== "1") {
+      setKv("dev.premium.server", "1");
+      void setDevPremium(true);
+    }
     if (next !== (kvGet("premium.until") ?? "")) {
       setKv("premium.until", next);
       notifyDbChanged();
@@ -58,10 +68,29 @@ export async function refreshEntitlement(): Promise<void> {
   }
 }
 
-/** Samo za razvoj: ručno uključi/isključi Premium dok kupnja nije povezana. */
-export function setDevPremium(on: boolean): void {
-  devPremium = on;
+/**
+ * Samo za testiranje: ručno uključi/isključi Premium dok kupnja nije povezana. Pamti se na uređaju i (na dev
+ * projektu) upisuje i na poslužitelj (funkcija `dev-premium`), da i poslužiteljska ograničenja (npr. 100 skeniranja)
+ * vrijede kao za Premium. Vraća false ako poslužitelj nije potvrdio (npr. bez interneta): tada vrijedi samo u aplikaciji.
+ */
+export async function setDevPremium(on: boolean): Promise<boolean> {
+  if (!DEV_TOOLS) return false;
+  setKv("dev.premium", on ? "1" : "0");
   notifyDbChanged();
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.functions.invoke("dev-premium", { body: { on } });
+    if (error) return false;
+    await refreshEntitlement();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Je li Premium uključen ručnim prekidačem za testiranje. */
+export function isDevPremium(): boolean {
+  return DEV_TOOLS && kvGet("dev.premium") === "1";
 }
 
 /** Broj skeniranja mjesečno: besplatno 3, Premium 100 (pošteno korištenje). Mora odgovarati poslužitelju (scan-receipt). */
@@ -75,3 +104,8 @@ export const PREMIUM_SCANS = 100;
  */
 export const TRIAL_DAYS = 7;
 export const TRIAL_ENABLED = process.env.EXPO_PUBLIC_TRIAL === "1";
+
+/** Premium otvoren zbog ograničenja: ta funkcija je istaknuta (vidi app/premium.tsx), ostale pogodnosti ispod. */
+export type PremiumFeature = "scan" | "history" | "insights" | "budgets";
+export const premiumHref = (feature?: PremiumFeature) =>
+  (feature ? { pathname: "/premium", params: { feature } } : "/premium") as unknown as import("expo-router").Href;

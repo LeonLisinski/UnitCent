@@ -6,7 +6,7 @@ import { useTheme } from "./theme";
 import { today, type Category, type Transaction } from "./db/repo";
 
 /**
- * Redak troška. Naziv je bilješka (ili kategorija); kategorija se u podnaslovu ponavlja samo kad naziv nije ona.
+ * Redak troška. Naziv je bilješka, trgovina ili kategorija; podnaslov kategorija (ako nije naslov), izvor i vrijeme.
  * Na početnom je omotan u SwipeRow (povuci ulijevo za brisanje), dodir uređuje.
  */
 export function TxRow({
@@ -25,9 +25,19 @@ export function TxRow({
   first?: boolean;
 }) {
   const { colors } = useTheme();
-  const title = tx.note ?? category?.name ?? "Trošak";
+  // Naslov: bilješka, pa trgovina (skenirani račun), pa kategorija. Podnaslov nikad ne ponavlja naslov.
+  const title = tx.note ?? tx.merchant ?? category?.name ?? "Trošak";
   const source = tx.source === "recurring" ? "Pretplata" : tx.source === "scan" ? "Račun" : null;
-  const sub = [hideDate ? null : relativeDay(tx.localDate, today()), tx.note ? category?.name : null, source].filter(Boolean).join(" · ");
+  // Vrijeme unosa (kad se datum ne prikazuje, npr. pod „Danas“); knjižene pretplate nemaju pravo vrijeme.
+  const time = hideDate && tx.source !== "recurring" ? timeOf(tx.occurredAt) : null;
+  const sub = [
+    hideDate ? null : relativeDay(tx.localDate, today()),
+    title !== category?.name ? category?.name : null,
+    source,
+    time,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const income = tx.type === "income";
   return (
     <ListRow
@@ -41,4 +51,11 @@ export function TxRow({
       hint="Dodirni za uređivanje, povuci ulijevo za brisanje"
     />
   );
+}
+
+/** „12:30“ po lokalnom vremenu uređaja. */
+function timeOf(iso: string): string | null {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }

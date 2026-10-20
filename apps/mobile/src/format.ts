@@ -27,6 +27,13 @@ export function monthTitle(ym: string): string {
   return `${MONTHS_LONG[m - 1]} ${y}.`;
 }
 
+/** „u listopadu“ (lokativ mjeseca); s godinom kad nije tekuća: „u listopadu 2025.“ */
+export function inMonth(ym: string, currentYear = new Date().getFullYear()): string {
+  const [y, m] = ym.split("-").map(Number) as [number, number];
+  const loc = ["siječnju", "veljači", "ožujku", "travnju", "svibnju", "lipnju", "srpnju", "kolovozu", "rujnu", "listopadu", "studenome", "prosincu"][m - 1]!;
+  return y === currentYear ? `u ${loc}` : `u ${loc} ${y}.`;
+}
+
 /** "Četvrtak, 15. listopada" za pozdrav na početnom ekranu. */
 export function longDate(date: LocalDate): string {
   const p = parts(date);

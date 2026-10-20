@@ -2,8 +2,11 @@ import { useState, type ReactNode } from "react";
 import { Pressable, TextInput, View, type StyleProp, type ViewStyle } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
-import { parseAmount, type Cents } from "@unitcent/core";
+import { displayCurrencySymbol, parseAmount, type Cents } from "@unitcent/core";
+import { useAiGradient } from "./ai";
+import { BrandIcon } from "./BrandIcon";
 import { Icon } from "./icons";
+import { quotaTone } from "./scanQuota";
 import { textStyle, useTheme } from "./theme";
 import { T } from "./ui";
 
@@ -13,9 +16,10 @@ export function tint(hex: string, alpha: number): string {
   return `${hex}${a.toString(16).padStart(2, "0")}`;
 }
 
-/** Krug s ikonom kategorije, obojen bojom kategorije (12 % pozadina). */
+/** Krug s ikonom kategorije, obojen bojom kategorije (12 % pozadina). Ikona `brand:<key>` prikazuje logo marke. */
 export function CatIcon({ colorToken, icon, size = 40 }: { colorToken: string; icon: string; size?: number }) {
   const { colors } = useTheme();
+  if (icon.startsWith("brand:")) return <BrandIcon brandKey={icon.slice(6)} size={size} />;
   const c = colors[colorToken as keyof typeof colors] ?? colors["ink-muted"];
   return (
     <View
@@ -173,11 +177,17 @@ export function AmountField({
   value,
   onChange,
   placeholder = "0,00",
+  currency,
+  below,
 }: {
   label: string;
   value: string;
   onChange: (text: string, cents: Cents | null) => void;
   placeholder?: string;
+  /** Umjesto oznake zadane valute (npr. dodirljiva oznaka za izbor valute). */
+  currency?: ReactNode;
+  /** Ispod polja (npr. izbor valute ili „≈ iznos u zadanoj valuti“). */
+  below?: ReactNode;
 }) {
   const { colors, radius, fx } = useTheme();
   const [focus, setFocus] = useState(false);
@@ -208,8 +218,9 @@ export function AmountField({
           accessibilityLabel={label}
           style={[textStyle("amount"), { flex: 1, color: colors.ink, fontSize: 20, paddingVertical: 12 }]}
         />
-        <T v="headline" muted>€</T>
+        {currency ?? <T v="headline" muted>{displayCurrencySymbol()}</T>}
       </View>
+      {below}
     </View>
   );
 }
@@ -255,12 +266,19 @@ export function Keypad({ value, onChange }: { value: string; onChange: (v: strin
   );
 }
 
-/** Krug s inicijalom: isti prikaz na Početnoj i u Profilu (brand gradijent, tamno slovo). */
-export function Avatar({ initial, size = 44, onPress }: { initial: string; size?: number; onPress?: () => void }) {
+/**
+ * Krug s inicijalom. U Profilu brand gradijent; na Početnoj `quiet` (staklo s rubom, obično slovo), da se ne natječe
+ * sa zelenim prstenom.
+ */
+export function Avatar({ initial, size = 44, onPress, quiet }: { initial: string; size?: number; onPress?: () => void; quiet?: boolean }) {
   const { colors, fx } = useTheme();
-  const body = (
+  const body = quiet ? (
+    <View style={{ width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center", backgroundColor: fx.glass, borderWidth: 1, borderColor: fx.glassBorder }}>
+      <T v="headline" style={{ fontWeight: "700", fontSize: Math.round(size * 0.4), lineHeight: Math.round(size * 0.5) }}>{initial.toUpperCase()}</T>
+    </View>
+  ) : (
     <LinearGradient
-      colors={[colors.brand, fx.accent2]}
+      colors={[fx.graphBrand, fx.accent2]}
       start={{ x: 0, y: 1 }}
       end={{ x: 1, y: 0 }}
       style={{ width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center" }}
@@ -286,6 +304,10 @@ export function TextField({
   placeholder,
   maxLength,
   autoFocus,
+  numeric,
+  center,
+  onFocus,
+  onBlur,
 }: {
   label: string;
   value: string;
@@ -293,6 +315,12 @@ export function TextField({
   placeholder?: string;
   maxLength?: number;
   autoFocus?: boolean;
+  /** Brojčana tipkovnica (npr. dan u mjesecu). */
+  numeric?: boolean;
+  /** Tekst centriran u polju (kratke vrijednosti). */
+  center?: boolean;
+  onFocus?: () => void;
+  onBlur?: () => void;
 }) {
   const { colors, fx } = useTheme();
   const [focus, setFocus] = useState(false);
@@ -302,12 +330,20 @@ export function TextField({
       <TextInput
         value={value}
         onChangeText={onChangeText}
-        onFocus={() => setFocus(true)}
-        onBlur={() => setFocus(false)}
+        onFocus={() => {
+          setFocus(true);
+          onFocus?.();
+        }}
+        onBlur={() => {
+          setFocus(false);
+          onBlur?.();
+        }}
         placeholder={placeholder}
         placeholderTextColor={colors["ink-muted"]}
         maxLength={maxLength}
         autoFocus={autoFocus}
+        keyboardType={numeric ? "number-pad" : undefined}
+        selectTextOnFocus={numeric}
         accessibilityLabel={label}
         style={[
           textStyle("body"),
@@ -319,6 +355,7 @@ export function TextField({
             backgroundColor: fx.glass,
             color: colors.ink,
             paddingHorizontal: 16,
+            textAlign: center ? "center" : "left",
           },
         ]}
       />
@@ -338,6 +375,16 @@ export function GoldBadge({ value, lock }: { value?: number; lock?: boolean }) {
     >
       {lock ? <Icon name="lock" size={11} color="#2a1d00" stroke={2.4} /> : <T v="caption" color="#2a1d00" style={{ fontSize: 11, fontWeight: "800", lineHeight: 14 }}>{value}</T>}
     </LinearGradient>
+  );
+}
+
+/** Značka preostalih skeniranja na kutu gumba kamere: broj u boji stanja (vidi quotaTone), lokot kad ih nema. */
+export function QuotaBadge({ remaining, limit }: { remaining: number; limit: number }) {
+  const color = quotaTone(remaining, limit);
+  return (
+    <View style={{ position: "absolute", top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, alignItems: "center", justifyContent: "center", paddingHorizontal: 5, backgroundColor: color }}>
+      {remaining <= 0 ? <Icon name="lock" size={11} color="#1a0b08" stroke={2.4} /> : <T v="caption" color="#0b1a14" style={{ fontSize: 11, fontWeight: "800", lineHeight: 14 }}>{remaining}</T>}
+    </View>
   );
 }
 
@@ -368,25 +415,28 @@ export function GoldButton({ label, onPress }: { label: string; onPress: () => v
   );
 }
 
-/** Oznaka AI funkcije: ljubičasta pilula s iskrom. Zlatna je isključivo Premium, zelena je novac. */
+/** Oznaka AI funkcije: pilula s iskrom (zlatno-ljubičasta bez Premiuma, ljubičasta s njim). Zelena je novac. */
 export function AiTag() {
   const { fx } = useTheme();
+  const ai = useAiGradient();
   return (
     <LinearGradient
-      colors={[fx.aiHi, fx.aiLo]}
+      colors={ai.colors}
+      locations={ai.locations}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={{ flexDirection: "row", alignItems: "center", gap: 3, height: 20, paddingHorizontal: 7, borderRadius: 10, borderWidth: 1, borderColor: fx.goldFillMid }}
+      style={{ flexDirection: "row", alignItems: "center", gap: 3, height: 20, paddingHorizontal: 7, borderRadius: 10 }}
     >
-      <Icon name="sparkle" size={11} color={fx.goldFillHi} stroke={2.2} />
+      <Icon name="sparkle" size={11} color={fx.onAi} stroke={2.2} />
       <T v="caption" color={fx.onAi} style={{ fontSize: 10.5, fontWeight: "800", lineHeight: 14 }}>AI</T>
     </LinearGradient>
   );
 }
 
-/** Glavni gumb AI radnje (npr. „Pročitaj“): ljubičasti gradijent, zlatni rub i iskra. Širina prema sadržaju. */
+/** Glavni gumb AI radnje (npr. „Pročitaj“): AI prijelaz (vidi useAiGradient) i iskra. Širina prema sadržaju. */
 export function AiButton({ label, onPress }: { label: string; onPress: () => void }) {
   const { fx } = useTheme();
+  const ai = useAiGradient();
   return (
     <Pressable
       accessibilityRole="button"
@@ -398,12 +448,13 @@ export function AiButton({ label, onPress }: { label: string; onPress: () => voi
       style={({ pressed }) => ({ alignSelf: "center", transform: [{ scale: pressed ? 0.97 : 1 }], shadowColor: fx.ai, shadowOpacity: 0.4, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 })}
     >
       <LinearGradient
-        colors={[fx.aiHi, fx.aiLo]}
+        colors={ai.colors}
+        locations={ai.locations}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ minHeight: 52, minWidth: 200, borderRadius: 999, paddingHorizontal: 32, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1.5, borderColor: fx.goldFillMid }}
+        style={{ minHeight: 52, minWidth: 200, borderRadius: 999, paddingHorizontal: 32, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}
       >
-        <Icon name="sparkle" size={18} color={fx.goldFillHi} stroke={2.1} />
+        <Icon name="sparkle" size={18} color={fx.onAi} stroke={2.1} />
         <T v="headline" color={fx.onAi}>{label}</T>
       </LinearGradient>
     </Pressable>

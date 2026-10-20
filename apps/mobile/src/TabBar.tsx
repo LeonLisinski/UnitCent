@@ -4,6 +4,7 @@ import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "./icons";
+import { emitTabReselect } from "./tabReselect";
 import { useTheme } from "./theme";
 import { T } from "./ui";
 
@@ -77,7 +78,7 @@ export function FloatingTabBar({ state, descriptors, navigation }: TabBarProps) 
                   }}
                 >
                   <LinearGradient
-                    colors={[colors.brand, fx.accent2]}
+                    colors={[fx.graphBrand, fx.accent2]}
                     start={{ x: 0, y: 1 }}
                     end={{ x: 1, y: 0 }}
                     style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
@@ -90,7 +91,7 @@ export function FloatingTabBar({ state, descriptors, navigation }: TabBarProps) 
           }
           const focused = state.index === i;
           const label = descriptors[route.key]?.options.title ?? route.name;
-          const color = focused ? colors.brand : colors["ink-muted"];
+          const color = focused ? fx.tabInk : fx.tabInkMuted;
           return (
             <Pressable
               key={route.key}
@@ -99,7 +100,8 @@ export function FloatingTabBar({ state, descriptors, navigation }: TabBarProps) 
               accessibilityLabel={label}
               onPress={() => {
                 void Haptics.selectionAsync();
-                navigation.navigate(route.name);
+                if (focused) emitTabReselect(route.name);
+                else navigation.navigate(route.name);
               }}
               style={{ width: 66, alignItems: "center", gap: 2, minHeight: 52, justifyContent: "center" }}
             >
@@ -110,7 +112,7 @@ export function FloatingTabBar({ state, descriptors, navigation }: TabBarProps) 
                   borderRadius: 15,
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: focused ? "rgba(61,214,163,0.16)" : "transparent",
+                  backgroundColor: focused ? fx.tabActiveBg : "transparent",
                 }}
               >
                 <Icon name={ICONS[route.name] ?? "dots"} size={23} color={color} stroke={focused ? 2 : 1.7} />

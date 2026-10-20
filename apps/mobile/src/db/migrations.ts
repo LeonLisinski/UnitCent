@@ -147,4 +147,12 @@ create table receipt_items (
 create index receipt_items_receipt_idx on receipt_items (receipt_id) where deleted_at is null;
 `,
   },
+  {
+    version: 6,
+    sql: `
+-- D-13: potrošeno prije početka praćenja (u mjesecu plana) i stanje štednje na početku mjeseca.
+alter table month_plans add column spent_before_cents integer not null default 0;
+alter table savings_entries add column opening_cents integer;
+`,
+  },
 ];

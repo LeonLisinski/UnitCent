@@ -8,7 +8,7 @@ import { useTheme } from "../src/theme";
 import { useToast } from "../src/toast";
 import { T } from "../src/ui";
 import { addCategory, deleteCategory, getBudget, getCategory, setBudget, updateCategory } from "../src/db/repo";
-import { usePremium } from "../src/premium";
+import { usePremium, premiumHref } from "../src/premium";
 import { AmountField } from "../src/components";
 import { parseAmount, type Cents } from "@unitcent/core";
 import type { Href } from "expo-router";
@@ -89,7 +89,7 @@ export default function Kategorija() {
       ) : (
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.push("/premium" as Href)}
+          onPress={() => router.push(premiumHref("budgets"))}
           style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 56, paddingHorizontal: 16, borderRadius: 16, borderWidth: 1, borderColor: fx.gold, backgroundColor: fx.goldSoft, opacity: pressed ? 0.7 : 1 })}
         >
           <Icon name="lock" size={20} color={fx.gold} />

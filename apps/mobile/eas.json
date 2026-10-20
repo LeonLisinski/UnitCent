@@ -7,7 +7,7 @@
       "autoIncrement": true,
       "environment": "preview",
       "ios": { "simulator": false },
-      "env": { "SENTRY_DISABLE_AUTO_UPLOAD": "true" }
+      "env": { "SENTRY_DISABLE_AUTO_UPLOAD": "true", "EXPO_PUBLIC_DEV_TOOLS": "1" }
     },
     "production": {
       "channel": "production",

@@ -15,9 +15,15 @@ export interface Fx {
   glassBorder: string;
   track: string;
   tabBg: string;
+  /** Ikona i oznaka u tab traci (aktivno / neaktivno) i podloga aktivnog taba. */
+  tabInk: string;
+  tabInkMuted: string;
+  tabActiveBg: string;
   glowColor: string;
   glowOpacity: number;
   accent2: string;
+  /** Početak zelenog prijelaza u grafovima (prsten, traka): življi od brand boje teksta, jer graf nije tekst. */
+  graphBrand: string;
   line: string;
   /** Dubina: gradijent pozadine, drugi sjaj, sjaj površine, svijetli rub, sjena. */
   bgTop: string;
@@ -42,6 +48,8 @@ export interface Fx {
   aiSoft: string;
   aiHi: string;
   aiLo: string;
+  /** Zlatni početak AI prijelaza dok korisnik nema Premium (vidi src/ai.ts). */
+  aiGold: string;
   /** Tekst/ikona na AI gradijentu. */
   onAi: string;
 }
@@ -52,9 +60,13 @@ const FX: Record<Scheme, Fx> = {
     glassBorder: "rgba(255,255,255,0.09)",
     track: "rgba(255,255,255,0.07)",
     tabBg: "rgba(18,26,25,0.95)",
+    tabInk: "#3dd6a3",
+    tabInkMuted: "#a3b0ab",
+    tabActiveBg: "rgba(61,214,163,0.16)",
     glowColor: "#3dd6a3",
     glowOpacity: 0.26,
     accent2: "#c8f169",
+    graphBrand: "#3dd6a3",
     line: "rgba(255,255,255,0.08)",
     bgTop: "#0c1615",
     bgBottom: "#050808",
@@ -74,24 +86,30 @@ const FX: Record<Scheme, Fx> = {
     aiSoft: "rgba(167,139,250,0.16)",
     aiHi: "#8f6df5",
     aiLo: "#5a33c8",
+    aiGold: "#c9a35c",
     onAi: "#ffffff",
   },
+  // Svijetla: topli porcelan + duboka smaragdna. Kartice i tab traka su čisto bijele s tankim rubom (bez sjene).
   light: {
-    glass: "rgba(255,255,255,0.86)",
-    glassBorder: "rgba(15,21,21,0.06)",
-    track: "rgba(15,21,21,0.07)",
-    tabBg: "rgba(255,255,255,0.96)",
-    glowColor: "#0e7a5f",
-    glowOpacity: 0.16,
-    accent2: "#7cb518",
-    line: "rgba(15,21,21,0.08)",
-    bgTop: "#f8fbf9",
-    bgBottom: "#eaf1ed",
-    glow2: "#3aa0d8",
-    sheenTop: "rgba(255,255,255,0.98)",
-    sheenBottom: "rgba(255,255,255,0.78)",
-    edge: "rgba(255,255,255,1)",
-    shadowOpacity: 0.08,
+    glass: "#ffffff",
+    glassBorder: "rgba(12,23,20,0.07)",
+    track: "rgba(12,23,20,0.07)",
+    tabBg: "#ffffff",
+    tabInk: "#07775a",
+    tabInkMuted: "#535e59",
+    tabActiveBg: "#d5ede2",
+    glowColor: "#12a27a",
+    glowOpacity: 0.2,
+    accent2: "#8cc63f",
+    graphBrand: "#0e9f76",
+    line: "rgba(12,23,20,0.07)",
+    bgTop: "#fbfaf7",
+    bgBottom: "#ebe7de",
+    glow2: "#d9b77a",
+    sheenTop: "#ffffff",
+    sheenBottom: "#fcfbf8",
+    edge: "#ffffff",
+    shadowOpacity: 0,
     gold: "#9a7430",
     goldSoft: "rgba(154,116,48,0.13)",
     goldHi: "#cfae6a",
@@ -103,6 +121,7 @@ const FX: Record<Scheme, Fx> = {
     aiSoft: "rgba(109,70,217,0.12)",
     aiHi: "#8561f0",
     aiLo: "#5a33c8",
+    aiGold: "#c9a35c",
     onAi: "#ffffff",
   },
 };

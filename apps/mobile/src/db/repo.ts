@@ -69,6 +69,8 @@ export interface MonthPlan {
   month: YearMonth;
   incomeCents: Cents;
   savingsCents: Cents;
+  /** D-13: potrošeno u tom mjesecu prije početka praćenja (ne nasljeđuje se u novi mjesec). */
+  spentBeforeCents?: Cents;
 }
 
 /* ---------- kv (postavke) ---------- */
@@ -125,13 +127,13 @@ export function ensureCategories(): void {
 export function listCategories(kind?: CategoryKind): Category[] {
   return getDb()
     .getAllSync<CatRow>(
-      `select ${CAT_COLS} from categories where deleted_at is null and archived = 0 ${kind ? "and kind = ?" : ""} order by sort, name`,
+      `select ${CAT_COLS} from categories where deleted_at is null and archived = 0 ${kind ? "and kind = ?" : ""} order by coalesce(key = 'ostalo', 0), sort, name`,
       kind ? [kind] : [],
     )
     .map(mapCat);
 }
 
-/** Kategorije jedne vrste poredane po učestalosti korištenja (najčešće prve), za brzi unos. */
+/** Kategorije jedne vrste poredane po učestalosti korištenja (najčešće prve), za brzi unos. „Ostalo“ je uvijek zadnje. */
 export function listCategoriesByUsage(kind: CategoryKind = "expense"): Category[] {
   return getDb()
     .getAllSync<CatRow>(
@@ -140,10 +142,15 @@ export function listCategoriesByUsage(kind: CategoryKind = "expense"): Category[
          left join (select category_id, count(*) n from transactions where deleted_at is null and type = ? group by category_id) u
            on u.category_id = c.id
         where c.deleted_at is null and c.archived = 0 and c.kind = ?
-        order by coalesce(u.n, 0) desc, c.sort`,
+        order by coalesce(c.key = 'ostalo', 0), coalesce(u.n, 0) desc, c.sort`,
       [kind, kind],
     )
     .map(mapCat);
+}
+
+/** Zadana kategorija troška („Ostalo“): koristi se kad korisnik ništa ne odabere. */
+export function defaultExpenseCategoryId(): string | null {
+  return getDb().getFirstSync<{ id: string }>("select id from categories where key = 'ostalo' and deleted_at is null and archived = 0")?.id ?? null;
 }
 
 export function getCategory(id: string): Category | null {
@@ -303,14 +310,17 @@ export function listRecentTransactions(limit = 8): Transaction[] {
     .map(mapTx);
 }
 
-/** Pretraga i filtriranje troškova: po mjesecu, kategoriji i tekstu (bilješka, trgovina, kategorija ili iznos). */
+/**
+ * Pretraga i filtriranje troškova: po mjesecu, kategoriji i tekstu (bilješka, trgovina, kategorija ili iznos).
+ * Knjižene pretplate nisu „trošak“ (žive na kartici Pretplate i već su u „obavezno“), pa se ne prikazuju.
+ */
 export function searchTransactions(opts: {
   month?: YearMonth | null;
   categoryId?: string | "none" | null;
   query?: string;
   limit?: number;
 }): Transaction[] {
-  const where = ["t.deleted_at is null"];
+  const where = ["t.deleted_at is null", "t.source != 'recurring'"];
   const args: (string | number)[] = [];
   if (opts.month) {
     where.push("t.local_date >= ? and t.local_date <= ?");
@@ -368,40 +378,56 @@ export function updateTransaction(
 
 /* ---------- plan mjeseca ---------- */
 
+type PlanRow = { month: string; income_cents: number; savings_cents: number; spent_before_cents: number };
+const mapPlan = (r: PlanRow): MonthPlan => ({
+  month: r.month, incomeCents: r.income_cents, savingsCents: r.savings_cents, spentBeforeCents: r.spent_before_cents,
+});
+
 export function getPlan(month: YearMonth): MonthPlan | null {
-  const r = getDb().getFirstSync<{ month: string; income_cents: number; savings_cents: number }>(
-    "select month, income_cents, savings_cents from month_plans where month = ? and deleted_at is null",
+  const r = getDb().getFirstSync<PlanRow>(
+    "select month, income_cents, savings_cents, spent_before_cents from month_plans where month = ? and deleted_at is null",
     [month],
   );
-  return r ? { month: r.month, incomeCents: r.income_cents, savingsCents: r.savings_cents } : null;
+  return r ? mapPlan(r) : null;
 }
 
 /** Najnoviji plan prije zadanog mjeseca (novi mjesec nasljeđuje primanja i štednju). */
 export function getLatestPlanBefore(month: YearMonth): MonthPlan | null {
-  const r = getDb().getFirstSync<{ month: string; income_cents: number; savings_cents: number }>(
-    "select month, income_cents, savings_cents from month_plans where month < ? and deleted_at is null order by month desc limit 1",
+  const r = getDb().getFirstSync<PlanRow>(
+    "select month, income_cents, savings_cents, spent_before_cents from month_plans where month < ? and deleted_at is null order by month desc limit 1",
     [month],
   );
-  return r ? { month: r.month, incomeCents: r.income_cents, savingsCents: r.savings_cents } : null;
+  return r ? mapPlan(r) : null;
 }
 
+/** Sprema plan mjeseca. `spentBeforeCents` se mijenja samo kad je zadan (inače ostaje što je bilo). */
 export function upsertPlan(plan: MonthPlan): void {
   const db = getDb();
   const id = uuidV5(`plan:${plan.month}`, PLAN_NAMESPACE);
   const t = nowIso();
+  const spentBefore = plan.spentBeforeCents ?? getPlan(plan.month)?.spentBeforeCents ?? 0;
   db.withTransactionSync(() => {
     db.runSync(
-      `insert into month_plans (id, month, income_cents, savings_cents, created_at, client_updated_at)
-       values (?, ?, ?, ?, ?, ?)
+      `insert into month_plans (id, month, income_cents, savings_cents, spent_before_cents, created_at, client_updated_at)
+       values (?, ?, ?, ?, ?, ?, ?)
        on conflict(month) do update set income_cents = excluded.income_cents, savings_cents = excluded.savings_cents,
+         spent_before_cents = excluded.spent_before_cents,
          client_updated_at = excluded.client_updated_at, rev = rev + 1, deleted_at = null`,
-      [id, plan.month, plan.incomeCents, plan.savingsCents, t, t],
+      [id, plan.month, plan.incomeCents, plan.savingsCents, spentBefore, t, t],
     );
-    enqueue("month_plans", id, "upsert", {
-      id, month: plan.month, income_cents: plan.incomeCents, savings_cents: plan.savingsCents, client_updated_at: t,
-    });
+    // Cijeli redak, da poslužitelj ne prepiše stupce koji nisu poslani.
+    const r = db.getFirstSync<Record<string, unknown>>("select * from month_plans where month = ?", [plan.month]);
+    if (r) enqueue("month_plans", id, "upsert", r);
   });
   notifyDbChanged();
+}
+
+/** Mijenja samo mjesečnu štednju u planu tekućeg mjeseca (primanja ostaju, ili se preuzimaju iz zadnjeg plana). */
+export function setMonthlySavings(month: YearMonth, savingsCents: Cents): void {
+  const base = getPlan(month) ?? getLatestPlanBefore(month);
+  upsertPlan({ month, incomeCents: base?.incomeCents ?? 0, savingsCents });
+  // Nepotvrđeni mjesec prati novi plan, da pitanje „Prebaci X €?“ pokazuje novi iznos.
+  if (getSavings(month)) writeSavings(month, { plannedCents: savingsCents });
 }
 
 /* ---------- pretplate i fiksni troškovi ---------- */
@@ -561,6 +587,17 @@ export function deleteRecurring(id: string): void {
   notifyDbChanged();
 }
 
+/** „Poništi“ nakon brisanja pretplate. */
+export function restoreRecurring(id: string): void {
+  const db = getDb();
+  const t = nowIso();
+  db.withTransactionSync(() => {
+    db.runSync("update recurring_items set deleted_at = null, client_updated_at = ?, rev = rev + 1 where id = ?", [t, id]);
+    enqueue("recurring_items", id, "upsert", { id });
+  });
+  notifyDbChanged();
+}
+
 /**
  * Knjiži dospjele pretplate za mjesec od `fromMonth` do mjeseca današnjeg dana.
  * Idempotentno: ID knjiženja je deterministički (stavka + dan), pa se ništa ne udvostruči,
@@ -621,7 +658,12 @@ export function getMonthSummary(todayDate: LocalDate = today()): { limit: LimitR
     amountCents: t.amountCents, type: t.type, source: t.source, localDate: t.localDate,
   }));
   const limit = summarizeMonth({
-    plan: { incomeCents: plan?.incomeCents ?? 0, savingsCents: plan?.savingsCents ?? 0 },
+    // Potrošeno prije praćenja vrijedi samo za mjesec u kojem je upisano, ne za naslijeđeni plan.
+    plan: {
+      incomeCents: plan?.incomeCents ?? 0,
+      savingsCents: plan?.savingsCents ?? 0,
+      spentBeforeCents: plan?.month === month ? plan.spentBeforeCents : 0,
+    },
     recurring,
     transactions: txs,
     today: todayDate,
@@ -644,20 +686,34 @@ export interface SavingsEntry {
   plannedCents: Cents;
   /** null = još nepotvrđeno. */
   actualCents: Cents | null;
+  /** Stanje štednje na početku mjeseca (null = nije postavljeno). */
+  openingCents: Cents | null;
 }
 
-type SavingsRow = { month: string; planned_cents: number; actual_cents: number | null };
-const mapSavings = (r: SavingsRow): SavingsEntry => ({ month: r.month, plannedCents: r.planned_cents, actualCents: r.actual_cents });
+type SavingsRow = { month: string; planned_cents: number; actual_cents: number | null; opening_cents: number | null };
+const SAVINGS_COLS = "month, planned_cents, actual_cents, opening_cents";
+const mapSavings = (r: SavingsRow): SavingsEntry => ({
+  month: r.month, plannedCents: r.planned_cents, actualCents: r.actual_cents, openingCents: r.opening_cents,
+});
 
 export function getSavings(month: YearMonth): SavingsEntry | null {
-  const r = getDb().getFirstSync<SavingsRow>("select month, planned_cents, actual_cents from savings_entries where month = ? and deleted_at is null", [month]);
+  const r = getDb().getFirstSync<SavingsRow>(`select ${SAVINGS_COLS} from savings_entries where month = ? and deleted_at is null`, [month]);
   return r ? mapSavings(r) : null;
 }
 
 export function listSavings(): SavingsEntry[] {
   return getDb()
-    .getAllSync<SavingsRow>("select month, planned_cents, actual_cents from savings_entries where deleted_at is null order by month desc")
+    .getAllSync<SavingsRow>(`select ${SAVINGS_COLS} from savings_entries where deleted_at is null order by month desc`)
     .map(mapSavings);
+}
+
+/**
+ * Stanje štednje: postavlja se u onboardingu („koliko već imaš“) ili ispravkom na ekranu Štednja.
+ * Sprema se kao stanje na početku tekućeg mjeseca; potvrđena štednja ovog mjeseca dodaje se na njega.
+ */
+export function setSavingsBalance(month: YearMonth, totalNowCents: Cents): void {
+  const thisMonth = getSavings(month)?.actualCents ?? 0;
+  writeSavings(month, { openingCents: Math.max(0, totalNowCents - thisMonth) });
 }
 
 /** Mjeseci u kojima je štednja bila planirana (iz plana), da se prošli nepotvrđeni mjeseci mogu naknadno potvrditi. */
@@ -669,22 +725,56 @@ export function listPlannedSavings(): { month: YearMonth; plannedCents: Cents }[
 
 /** Potvrda štednje za mjesec (stvara ili mijenja). `plannedCents` se pri prvom upisu uzima iz plana tog mjeseca. */
 export function setSavings(month: YearMonth, actualCents: Cents | null, plannedCents?: Cents): void {
+  const planned = plannedCents ?? getPlan(month)?.savingsCents ?? getLatestPlanBefore(month)?.savingsCents ?? getSavings(month)?.plannedCents ?? 0;
+  writeSavings(month, { actualCents, plannedCents: planned });
+}
+
+/** Upis retka štednje za mjesec; polja koja nisu zadana ostaju kakva su bila. */
+function writeSavings(month: YearMonth, patch: { actualCents?: Cents | null; plannedCents?: Cents; openingCents?: Cents | null }): void {
   const db = getDb();
   const id = uuidV5(`saving:${month}`, PLAN_NAMESPACE);
   const t = nowIso();
-  const planned = plannedCents ?? getPlan(month)?.savingsCents ?? getSavings(month)?.plannedCents ?? 0;
+  const cur = getSavings(month);
+  const planned = patch.plannedCents ?? cur?.plannedCents ?? getPlan(month)?.savingsCents ?? 0;
+  const actual = patch.actualCents !== undefined ? patch.actualCents : (cur?.actualCents ?? null);
+  const opening = patch.openingCents !== undefined ? patch.openingCents : (cur?.openingCents ?? null);
   db.withTransactionSync(() => {
     db.runSync(
-      `insert into savings_entries (id, month, planned_cents, actual_cents, created_at, client_updated_at)
-       values (?, ?, ?, ?, ?, ?)
+      `insert into savings_entries (id, month, planned_cents, actual_cents, opening_cents, created_at, client_updated_at)
+       values (?, ?, ?, ?, ?, ?, ?)
        on conflict(month) do update set planned_cents = excluded.planned_cents, actual_cents = excluded.actual_cents,
+         opening_cents = excluded.opening_cents,
          client_updated_at = excluded.client_updated_at, rev = rev + 1, deleted_at = null`,
-      [id, month, planned, actualCents, t, t],
+      [id, month, planned, actual, opening, t, t],
     );
     const r = db.getFirstSync<Record<string, unknown>>("select * from savings_entries where month = ?", [month]);
     if (r) enqueue("savings_entries", id, "upsert", r);
   });
   notifyDbChanged();
+}
+
+/** Plan koji vrijedi za mjesec: njegov ili naslijeđen od zadnjeg prethodnog. */
+export function effectivePlan(month: YearMonth): MonthPlan | null {
+  return getPlan(month) ?? getLatestPlanBefore(month);
+}
+
+/** Koliko je od raspoloživog ostalo nepotrošeno u završenom mjesecu (ništa ako je mjesec otišao u minus). */
+export function monthLeftover(month: YearMonth): Cents {
+  const plan = effectivePlan(month);
+  if (!plan) return 0;
+  const [y, m] = month.split("-").map(Number) as [number, number];
+  const lastDay = `${month}-${String(new Date(y, m, 0).getDate()).padStart(2, "0")}`;
+  const r = summarizeMonth({
+    plan: {
+      incomeCents: plan.incomeCents,
+      savingsCents: plan.savingsCents,
+      spentBeforeCents: plan.month === month ? plan.spentBeforeCents : 0,
+    },
+    recurring: listRecurring(),
+    transactions: listTransactionsInMonth(month).map((t) => ({ amountCents: t.amountCents, type: t.type, source: t.source, localDate: t.localDate })),
+    today: lastDay,
+  });
+  return Math.max(0, r.monthLeftCents);
 }
 
 export interface SavingsStats {
@@ -698,8 +788,12 @@ export interface SavingsStats {
 }
 
 export function savingsStats(todayDate: LocalDate = today()): SavingsStats {
-  const entries = listSavings().filter((e) => e.actualCents !== null);
-  const totalCents = entries.reduce((s, e) => s + (e.actualCents ?? 0), 0);
+  const all = listSavings();
+  const entries = all.filter((e) => e.actualCents !== null);
+  // Ukupno = zadnje postavljeno stanje (na početku svog mjeseca) + potvrđena štednja od tog mjeseca nadalje.
+  const base = all.find((e) => e.openingCents !== null); // lista je od najnovijeg
+  const from = base?.month ?? "";
+  const totalCents = (base?.openingCents ?? 0) + entries.filter((e) => e.month >= from).reduce((s, e) => s + (e.actualCents ?? 0), 0);
   const thisMonth = yearMonthOf(todayDate);
   // Niz: od tekućeg (ako je potvrđen) ili prošlog mjeseca unatrag dok je ostvareno ≥ planirano.
   const byMonth = new Map(entries.map((e) => [e.month, e]));
@@ -761,7 +855,7 @@ export function setBudget(categoryId: string, limitCents: Cents | null): void {
 export function categorySpent(categoryId: string, month: YearMonth): Cents {
   return (
     getDb().getFirstSync<{ s: number | null }>(
-      "select sum(amount_cents) as s from transactions where deleted_at is null and type = 'expense' and category_id = ? and local_date >= ? and local_date <= ?",
+      "select sum(amount_cents) as s from transactions where deleted_at is null and type = 'expense' and source != 'recurring' and category_id = ? and local_date >= ? and local_date <= ?",
       [categoryId, `${month}-01`, `${month}-31`],
     )?.s ?? 0
   );
@@ -830,4 +924,39 @@ export function getReceipt(id: string): Receipt | null {
     )
     .map((i) => ({ id: i.id, name: i.name, rawName: i.raw_name, amountCents: i.amount_cents, categoryId: i.category_id, lineType: i.line_type }));
   return { id: r.id, merchant: r.merchant, totalCents: r.total_cents, date: r.issued_at ? r.issued_at.slice(0, 10) : null, items };
+}
+
+/* ---------- promjena valute ---------- */
+
+/** Svi stupci s iznosom (u stotinkama zadane valute). */
+const AMOUNT_COLUMNS: Record<string, string[]> = {
+  transactions: ["amount_cents"],
+  recurring_items: ["amount_cents"],
+  month_plans: ["income_cents", "savings_cents", "spent_before_cents"],
+  savings_entries: ["planned_cents", "actual_cents", "opening_cents"],
+  budgets: ["limit_cents"],
+  receipts: ["total_cents"],
+  receipt_items: ["amount_cents"],
+};
+
+/**
+ * Pretvara SVE spremljene iznose faktorom (nova valuta za 1 staru) u jednoj transakciji i šalje ih na sinkronizaciju.
+ * Zaokružuje se na cijelu stotinku po retku, pa zbroj stavki računa može odstupiti od ukupnog za stotinku.
+ */
+export function convertAllAmounts(factor: number): void {
+  if (!(factor > 0) || factor === 1) return;
+  const db = getDb();
+  const t = nowIso();
+  db.withTransactionSync(() => {
+    for (const [table, cols] of Object.entries(AMOUNT_COLUMNS)) {
+      const set = cols.map((c) => `${c} = cast(round(${c} * ?) as integer)`).join(", ");
+      db.runSync(`update ${table} set ${set}, client_updated_at = ?, rev = rev + 1`, [...cols.map(() => factor), t]);
+      db.runSync(
+        `insert into outbox (table_name, row_id, op, payload, created_at) select ?, id, 'upsert', '{}', ? from ${table}`,
+        [table, t],
+      );
+    }
+  });
+  requestSync();
+  notifyDbChanged();
 }

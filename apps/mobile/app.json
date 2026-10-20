@@ -10,7 +10,10 @@
     "backgroundColor": "#070b0b",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.unitcent.app"
+      "bundleIdentifier": "com.unitcent.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.unitcent.app",
@@ -41,6 +44,13 @@
           "photosPermission": "UnitCent čita sliku računa koju odabereš."
         }
       ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "UnitCent koristi Face ID za otključavanje aplikacije."
+        }
+      ],
+      "expo-secure-store",
       [
         "@sentry/react-native/expo",
         {

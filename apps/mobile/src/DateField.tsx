@@ -40,7 +40,7 @@ export function DateField({
     : future
     ? "Datum je u budućnosti. Provjeri je li ispravan."
     : otherMonth
-      ? "Iz drugog mjeseca: ne ulazi u današnji limit."
+      ? "Iz drugog mjeseca: ne ulazi u današnji budžet."
       : value !== now
         ? "Ulazi u potrošnju tog dana, a ne današnjeg."
         : null;

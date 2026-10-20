@@ -1,6 +1,6 @@
 import * as Notifications from "expo-notifications";
 import { occurrenceDate, yearMonthOf, formatEur } from "@unitcent/core";
-import { getPlan, getSavings, kvGet, kvSet, listRecurring, today } from "./db/repo";
+import { getLatestPlanBefore, getPlan, getSavings, kvGet, kvSet, listRecurring, today } from "./db/repo";
 
 const KEY = "reminders.enabled";
 
@@ -48,15 +48,15 @@ export async function rescheduleReminders(): Promise<void> {
   months.add(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`);
 
   let scheduled = 0;
-  // Kraj mjeseca u 18:00: „Jesi li uštedio?“ (samo ako je štednja planirana i još nije potvrđena).
+  // Kraj mjeseca u 18:00: „Prebaci X € na štednju?“ (samo ako je štednja planirana i još nije potvrđena).
   for (const month of months) {
-    const plan = getPlan(month);
+    const plan = getPlan(month) ?? getLatestPlanBefore(month);
     if (!plan || plan.savingsCents <= 0 || getSavings(month)?.actualCents != null) continue;
     const [y, m] = month.split("-").map(Number) as [number, number];
     const last = new Date(y, m, 0, 18, 0, 0); // zadnji dan u mjesecu
     if (last.getTime() <= now.getTime() || last.getTime() > horizon) continue;
     await Notifications.scheduleNotificationAsync({
-      content: { title: "Štednja za ovaj mjesec", body: `Jesi li ušteđio ${formatEur(plan.savingsCents)}? Potvrdi u Profilu.` },
+      content: { title: "Kraj mjeseca", body: `Prebaci ${formatEur(plan.savingsCents)} na štednju? Potvrdi u Profilu → Štednja.` },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: last },
     });
     scheduled += 1;

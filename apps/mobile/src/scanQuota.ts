@@ -58,3 +58,13 @@ export function useScanQuota(): ScanQuota {
 export function scansWord(n: number): string {
   return `${n} ${n === 1 ? "skeniranje" : "skeniranja"}`;
 }
+
+/**
+ * Boja preostalih besplatnih skeniranja: sve = zeleno, više od pola = žuto, zadnje = narančasto, nijedno = crveno
+ * (3/3, 2/3, 1/3, 0/3). Iste boje u obje teme jer se prikazuju na tamnoj podlozi (kamera, značka).
+ */
+export function quotaTone(remaining: number, limit: number): string {
+  if (remaining <= 0) return "#f97066";
+  if (remaining >= limit) return "#3dd6a3";
+  return remaining / limit > 0.5 ? "#f5c542" : "#f59a3c";
+}

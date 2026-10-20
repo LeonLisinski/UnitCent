@@ -17,6 +17,8 @@ export interface ScanResult {
   merchant: string | null;
   date: LocalDate | null;
   total_cents: Cents | null;
+  /** ISO kod valute računa ako ga je model prepoznao (npr. "RSD"); inače zadana valuta korisnika. */
+  currency?: string | null;
   sum_cents: Cents;
   items: ScanItem[];
   reasons: string[];
@@ -77,13 +79,18 @@ export async function prepareImage(uri: string): Promise<string> {
 }
 
 /** `images`: jedan ili više dijelova istog računa (do 4), od vrha prema dnu; broji se kao JEDNO skeniranje. */
-export async function scanReceipt(images: string[], qrTotalCents?: Cents | null): Promise<ScanResult> {
+/** `scanId`: isti za sva čitanja jednog računa (npr. kad se doda dio), pa poslužitelj kvotu broji jednom. */
+export async function scanReceipt(images: string[], qrTotalCents?: Cents | null, scanId?: string): Promise<ScanResult> {
   if (!supabase) throw new ScanFailure("no-session");
   const { data: s } = await supabase.auth.getSession();
   if (!s.session) throw new ScanFailure("no-session");
 
   const { data, error } = await supabase.functions.invoke("scan-receipt", {
-    body: { images: images.map((data) => ({ data, mime: "image/jpeg" })), ...(qrTotalCents ? { qr_total_cents: qrTotalCents } : {}) },
+    body: {
+      images: images.map((data) => ({ data, mime: "image/jpeg" })),
+      ...(qrTotalCents ? { qr_total_cents: qrTotalCents } : {}),
+      ...(scanId ? { scan_id: scanId } : {}),
+    },
   });
   if (error) {
     const res = (error as { context?: Response }).context;

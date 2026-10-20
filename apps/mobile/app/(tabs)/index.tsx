@@ -2,11 +2,12 @@ import { useRouter, type Href } from "expo-router";
 import { Pressable, ScrollView, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { daysInMonth, formatEur, parseYearMonth, upcomingInMonth, yearMonthOf } from "@unitcent/core";
-import { Avatar, CatIcon } from "../../src/components";
+import { recurringIcon } from "../../src/BrandIcon";
+import { Avatar, Button, CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
 import { Amount, Glass, MonthBar, Ring, SwipeRow, type RingState } from "../../src/fx";
 import { longDate, relativeDay } from "../../src/format";
-import { HERO, Hero, PAD, PageHeader, Section, TabScreen } from "../../src/layout";
+import { EmptyState, HERO, Hero, PAD, PageHeader, Section, SectionLink, TabScreen } from "../../src/layout";
 import { useTheme } from "../../src/theme";
 import { useToast } from "../../src/toast";
 import { TxRow } from "../../src/TxRow";
@@ -24,7 +25,7 @@ import {
 
 const enter = (i: number) => FadeInDown.delay(i * 70).duration(420);
 
-/** Početna: pozdrav → današnji limit (prsten) → mjesec (traka) → što dolazi → što je zadnje. */
+/** Početna: pozdrav → ostalo za danas (prsten, jedini par brojeva) → mjesec (stanje + traka) → što dolazi → što je zadnje. Avatar je tih (neutralan krug), vodi na Profil. */
 export default function Pocetna() {
   const { colors } = useTheme();
   const router = useRouter();
@@ -71,7 +72,7 @@ export default function Pocetna() {
   return (
     <TabScreen>
       <Animated.View entering={enter(0)}>
-        <PageHeader right={<Avatar initial={(name?.trim()[0] ?? "U")} onPress={() => router.navigate("/profil" as Href)} />}>
+        <PageHeader right={<Avatar quiet size={44} initial={name?.trim()[0] ?? "?"} onPress={() => router.navigate("/profil" as Href)} />}>
           <T v="caption" muted>{longDate(day)}</T>
           <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6 }}>
             <T v="title-1" style={{ fontSize: 24, lineHeight: 32 }}>Bok</T>
@@ -83,32 +84,33 @@ export default function Pocetna() {
       <Animated.View entering={enter(1)}>
         <Hero>
         <Ring size={HERO} remaining={remaining} state={state}>
-          <T v="mono-label" muted>{limit.isOver ? "Danas si preko" : "Danas još smiješ"}</T>
+          <T v="mono-label" muted>{limit.isOver ? "Danas preko" : "Ostalo za danas"}</T>
           <Amount cents={limit.isOver ? limit.overByCents : limit.leftTodayCents} color={limit.isOver ? colors.danger : colors.ink} maxWidth={170} />
-          <T v="caption" muted>od {formatEur(limit.dailyCents)}</T>
+          <T v="caption" muted numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>od {formatEur(limit.dailyCents)} danas</T>
         </Ring>
         </Hero>
       </Animated.View>
 
       <Animated.View entering={enter(2)}>
-        <Section title="Ovaj mjesec">
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" }}>
-            <View style={{ gap: 2 }}>
-              <T v="caption" muted>Potrošeno</T>
-              <T v="amount" color={colors["ink-muted"]} style={{ fontSize: 22, lineHeight: 28, fontWeight: "800" }}>{formatEur(variableSpent)}</T>
+        {/* Mjesec bez brojeva (jedini par brojeva na ekranu je u prstenu): stanje desno od oznake i traka.
+            Dodir vodi na Pregled, gdje su iznosi mjeseca. */}
+        <Section
+          title="Ovaj mjesec"
+          right={
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+              <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: monthOver ? colors.danger : pace === "fast" ? colors.warning : colors.brand }} />
+              <T v="caption" muted>{monthOver ? "Preko plana" : paceLabel}</T>
             </View>
-            <View style={{ gap: 2, alignItems: "flex-end" }}>
-              <T v="caption" muted>{monthOver ? "Preko plana" : "Ostalo"}</T>
-              <T v="amount" color={monthOver ? colors.danger : colors.ink} style={{ fontSize: 22, lineHeight: 28, fontWeight: "800" }}>
-                {formatEur(monthOver ? -limit.monthLeftCents : limit.monthLeftCents)}
-              </T>
-            </View>
-          </View>
-          <MonthBar spent={variableSpent} available={limit.availableCents} expected={dayNo / dim} />
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
-            <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: pace === "fast" ? colors.warning : colors.brand }} />
-            <T v="caption" muted>{paceLabel} · još {limit.daysLeft} {limit.daysLeft === 1 ? "dan" : "dana"}</T>
-          </View>
+          }
+        >
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Ovaj mjesec: ${monthOver ? "preko plana" : paceLabel.toLowerCase()}, potrošeno ${formatEur(variableSpent)} od ${formatEur(limit.availableCents)}. Otvori Pregled`}
+            hitSlop={{ top: 12, bottom: 12 }}
+            onPress={() => router.navigate("/pregled" as Href)}
+          >
+            <MonthBar spent={variableSpent} available={limit.availableCents} expected={dayNo / dim} />
+          </Pressable>
         </Section>
       </Animated.View>
 
@@ -123,7 +125,7 @@ export default function Pocetna() {
                 const when = diff === 0 ? "danas" : diff === 1 ? "sutra" : `za ${diff} dana`;
                 return (
                   <Glass key={item.id} style={{ width: 136, padding: 12, gap: 8 }}>
-                    <CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={rec?.iconKey ?? cat?.icon ?? "repeat"} size={34} />
+                    <CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={rec ? recurringIcon(rec, cat?.icon) : (cat?.icon ?? "repeat")} size={34} />
                     <View style={{ gap: 2 }}>
                       <T v="headline" numberOfLines={1}>{item.name}</T>
                       <T v="caption" muted>{when}</T>
@@ -141,20 +143,21 @@ export default function Pocetna() {
         <Section
           title="Zadnje"
           right={
-            recent.length > 0 ? (
-              <Pressable accessibilityRole="button" hitSlop={10} onPress={() => router.push("/transakcije" as Href)}>
-                <T v="caption" color={colors.brand} style={{ fontWeight: "700" }}>Svi troškovi</T>
-              </Pressable>
-            ) : undefined
+            recent.length > 0 ? <SectionLink label="Svi troškovi" onPress={() => router.push("/transakcije" as Href)} /> : undefined
           }
         >
           {recent.length === 0 ? (
-            <T muted>Još nema troškova. Dodaj prvi s +.</T>
+            <EmptyState
+              text="Još nema troškova."
+              action={<Button icon="plus" label="Dodaj trošak" onPress={() => router.push("/dodaj")} />}
+            />
           ) : (
             <View>
               {sections.map(([date, list], si) => (
                 <View key={date}>
-                  <T v="caption" muted style={{ marginTop: si === 0 ? 0 : 16, fontWeight: "600" }}>{relativeDay(date, day)}</T>
+                  {sections.length > 1 ? (
+                    <T v="caption" muted style={{ marginTop: si === 0 ? 0 : 16, fontWeight: "600" }}>{relativeDay(date, day)}</T>
+                  ) : null}
                   {list.map((t, i) => (
                     <SwipeRow
                       key={t.id}
