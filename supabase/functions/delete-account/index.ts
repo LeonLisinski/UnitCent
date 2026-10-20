@@ -1,7 +1,8 @@
 // Brisanje računa i svih podataka korisnika (zahtjev Apple/Google storea i GDPR-a).
 // Poziva ga prijavljeni korisnik (i anonimni): briše slike računa iz Storagea i korisnika iz Authenticationa;
-// sve tablice se brišu kaskadno (on delete cascade na auth.users).
+// sve tablice se brišu kaskadno (on delete cascade na auth.users). Kontakt se briše i iz Brevoa (e-mailovi, newsletter).
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { brevoConfigured, deleteContact } from "../_shared/brevo.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -32,6 +33,12 @@ Deno.serve(async (req) => {
     const { error: rmErr } = await admin.storage.from("receipts").remove(files.map((f) => `${uid}/${f.name}`));
     if (rmErr) return json({ error: "storage_failed" }, 500);
     if (files.length < 1000) break;
+  }
+
+  // Brevo: bez kontakta nema ni mailova ni newslettera. Neuspjeh ne blokira brisanje (zapisuje se u log).
+  if (data.user.email && !data.user.is_anonymous && brevoConfigured()) {
+    const ok = await deleteContact(data.user.email);
+    if (!ok) console.error("brevo contact delete failed", uid);
   }
 
   const { error: delErr } = await admin.auth.admin.deleteUser(uid);

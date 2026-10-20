@@ -74,7 +74,7 @@ Svaku uštedu odmah preusmjeri u štednju. Ako otkažeš pretplatu od 10 €, po
 
 ## Korak 5: iskoristi iznenadne prihode
 
-Povrat poreza, regres, božićnica, poklon, prodaja stvari koje ne koristiš. Dogovor sa samim sobom: barem pola svakog iznenadnog prihoda ide u štednju. Druga polovica je za uživanje, bez krivnje.
+Povrat poreza, regres, božićnica, poklon, prodaja stvari koje ne koristiš. Dogovor sa samim sobom: barem pola svakog iznenadnog prihoda ide u štednju. Druga polovica je za uživanje.
 
 ## Korak 6: povećavaj postupno
 

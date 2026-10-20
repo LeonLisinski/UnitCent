@@ -1,0 +1,12 @@
+{
+  "cli": { "version": ">= 20.0.0", "appVersionSource": "remote" },
+  "build": {
+    "admin": {
+      "distribution": "internal",
+      "channel": "admin",
+      "autoIncrement": true,
+      "environment": "production",
+      "ios": { "simulator": false }
+    }
+  }
+}

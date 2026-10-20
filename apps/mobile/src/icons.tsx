@@ -66,6 +66,7 @@ const P: Record<string, string> = {
   sun: "M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M12 2v2 M12 20v2 M4.9 4.9l1.4 1.4 M17.7 17.7l1.4 1.4 M2 12h2 M20 12h2 M4.9 19.1l1.4-1.4 M17.7 6.3l1.4-1.4",
   download: "M12 4v11 M7 11l5 5 5-5 M5 20h14",
   file: "M7 3h7l4 4v14H7z M14 3v4h4",
+  mail: "M3.5 6h17v12h-17z M4 6.5l8 6.5 8-6.5",
   info: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 11v5 M12 8h.01",
   external: "M14 4h6v6 M20 4l-9 9 M18 14v6H4V6h6",
   wallet: "M4 7h15a1 1 0 0 1 1 1v11H5a1 1 0 0 1-1-1z M4 7V6a2 2 0 0 1 2-2h11 M16 13.5h.01",

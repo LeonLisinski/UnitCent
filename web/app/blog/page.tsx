@@ -62,7 +62,7 @@ export default function BlogIndex() {
       <div className="blog-head">
         <div className="label">Blog</div>
         <h1>Novac, <em className="serif">jednostavno.</em></h1>
-        <p className="blog-lead">Kratki i točni vodiči o budžetu, štednji i praćenju troškova. Bez žargona i bez osude.</p>
+        <p className="blog-lead">Kratki i točni vodiči o budžetu, štednji i praćenju troškova. Jasno i bez žargona.</p>
       </div>
 
       <ul className="post-list">

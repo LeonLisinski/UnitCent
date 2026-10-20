@@ -98,9 +98,9 @@ export const CALCULATORS: CalcInfo[] = [
     slug: "sitni-troskovi",
     name: "Sitni trošak",
     title: "Koliko godišnje košta kava ili drugi sitni trošak? Kalkulator",
-    description: "Kava, grickalice, dostava: upiši koliko košta i koliko puta tjedno, pa vidi koliko to izađe mjesečno, godišnje i kroz deset godina. Bez osude, samo brojke.",
+    description: "Kava, grickalice, dostava: upiši koliko košta i koliko puta tjedno, pa vidi koliko to izađe mjesečno, godišnje i kroz deset godina.",
     icon: "cup",
-    lead: "Bez osude, samo brojke: koliko izađe nešto sitno kroz godinu.",
+    lead: "Koliko izađe nešto sitno kroz godinu.",
     how: [
       "Godišnje = cijena × puta tjedno × 52 tjedna.",
       "Mjesečno = godišnje ÷ 12; deset godina = godišnje × 10 (bez poskupljenja).",

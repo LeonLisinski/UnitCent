@@ -168,6 +168,7 @@ export default function Profil() {
           right={<Switch value={lock} onValueChange={(v) => void toggleLock(v)} trackColor={{ false: colors["border-strong"], true: colors.brand }} thumbColor="#ffffff" ios_backgroundColor={colors["border-strong"]} />}
         />
         ) : null}
+        {!guest && account.email ? <Row icon="mail" title="E-mailovi" onPress={() => router.push("/email" as Href)} /> : null}
         <Row icon="sun" title="Izgled" right={<ThemeSwitch value={preference} onChange={setPreference} />} />
       </Group>
 

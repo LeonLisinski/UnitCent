@@ -13,7 +13,7 @@ export const post: Post = {
     "Rezultat su dvije ili tri konkretne promjene za iduću godinu, ne dugačak popis.",
   ],
   body: `
-Mjesečni pregled pokazuje jesi li u planu. Godišnji pokazuje kamo ti stvarno ide novac. Između blagdana, kad je tempo sporiji, uzmi pola sata i pogledaj godinu iza sebe. Ne radi se o osudi, nego o brojkama.
+Mjesečni pregled pokazuje jesi li u planu. Godišnji pokazuje kamo ti stvarno ide novac. Između blagdana, kad je tempo sporiji, uzmi pola sata i pogledaj godinu iza sebe.
 
 ## Što ti treba
 

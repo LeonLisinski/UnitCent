@@ -93,7 +93,7 @@ Depoziti u bankama u Hrvatskoj osigurani su do 100.000 € po deponentu u jednoj
 
 To je upravo ono za što služi. Nakon hitnog slučaja:
 
-1. Ne osjećaj krivnju. Fond je obavio posao.
+1. Fond je obavio posao, za to i postoji.
 2. Privremeno povećaj iznos koji odvajaš dok ga ne vratiš na cilj.
 3. Razmisli je li slučaj bio stvarno neplaniran. Ako se ponavlja (na primjer servis auta), pretvori ga u planirani trošak u budžetu.
 

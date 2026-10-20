@@ -14,7 +14,7 @@ export type Recap = { text: string; good: boolean };
 /**
  * Kratak „kraj“ prošlog razdoblja pri prvom otvaranju dana (pravilo vrhunca i kraja), najviše jednom dnevno:
  *  - 1. u mjesecu: prošli mjesec, činjenično („Listopad: 48,00 € ispod plana“ ili „… preko plana“);
- *  - inače: jučer, samo kad je dan završio unutar dnevnog budžeta (bez poruka krivnje).
+ *  - inače: jučer, samo kad je dan završio unutar dnevnog budžeta.
  * Traži plan i barem jedan unos u tom razdoblju, da poruka ne dolazi korisniku koji nije ništa pratio.
  */
 export function takeRecap(todayDate: LocalDate): Recap | null {

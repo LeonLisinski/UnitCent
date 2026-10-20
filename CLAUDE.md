@@ -22,7 +22,7 @@ Free jezgra + Premium (cijela povijest, AI skeniranje bez ograničenja, uvidi) p
 - Bez reklama. Podaci se ne prodaju. Brisanje računa i podataka mora biti u aplikaciji.
 - AI ključevi nikad u aplikaciji. AI pozivi samo preko Edge Functiona.
 - Plaćanja isključivo preko Apple/Google in-app sustava (RevenueCat).
-- Ton teksta: na „ti“, kratko, činjenice bez osude („Hrana: 32 € preko plana“, ne „Previše trošiš“).
+- Ton teksta: na „ti“, kratko, činjenice („Hrana: 32 € preko plana“, ne „Previše trošiš“). **Nikad ne pisati „bez osude“, „bez krivnje“, „bez srama“ i slične ograde** (ni na webu, ni u aplikaciji, ni u mailovima): tek uvode ideju da bi netko osuđivao.
 
 ## Jedan plan, isti brojevi svugdje
 Primjer koji se koristi u webu, prototipu i dokumentaciji (ne mijenjati bez razloga):
@@ -68,4 +68,5 @@ Nazivi (jednako u aplikaciji, webu i dokumentaciji): iznos za cijeli dan je „D
 - Supabase projekt: postoji (waitlist). Za aplikaciju treba zasebno okruženje (dev/staging/prod), vidi plan.
 - Aplikacija: Faza 0 gotova osim računa; Faza 1 (lokalni MVP) napisana, čeka prvo pokretanje na uređaju. (Faza 0 detalji:) Gotovo lokalno: workspace, `packages/core` (testovi), `packages/tokens` (testovi kontrasta), `apps/mobile` (Expo ljuska), migracija, CI. Čeka vlasnika: Supabase dev/staging, developer računi, Sentry/EAS. Odluke D-01…D-10: docs/APP-PLAN.md §11.
 - Faza 2: sinkronizacija (core pravila + `sync_push` na dev bazi + klijent `apps/mobile/src/sync.ts`) napisana i provjerena na dev bazi; čeka test na uređaju. Server koristi složene ključeve `(user_id, id)`.
+- Faza F + G (mailovi preko Brevoa, admin aplikacija `apps/admin`): napisano i objavljeno na dev Supabase 20. 10.; Brevo račun otvoren, postavke (domena, ključ, tajne) dovršavamo 21. 10. (docs/PLAN-DORADE.md, „F + G: što treba vlasnik“).
 - Komande: `npx pnpm@9.15.0 install`, `… test`, `… typecheck`, `… mobile`. Web: u `web/` npm.

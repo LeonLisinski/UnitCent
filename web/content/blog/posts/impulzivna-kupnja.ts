@@ -44,7 +44,7 @@ Najjednostavniji i najučinkovitiji alat je **odgoda**.
 - **Za manje kupnje:** ako nešto nisi planirao kupiti, pričekaj 24 sata. Ako to i sutra želiš, kupi.
 - **Za veće kupnje:** stavi proizvod na popis želja i pričekaj 30 dana.
 
-Odgoda radi jer impulzivna želja brzo slabi. Ono što ti se u petak navečer činilo nužnim, u nedjelju često više nije zanimljivo. A ako i dalje želiš, kupit ćeš s mirnom glavom i bez osjećaja krivnje.
+Odgoda radi jer impulzivna želja brzo slabi. Ono što ti se u petak navečer činilo nužnim, u nedjelju često više nije zanimljivo. A ako i dalje želiš, kupit ćeš s mirnom glavom.
 
 ## Popis želja
 
@@ -94,9 +94,9 @@ Kod kupnje na internetu, telefonom ili izvan poslovnih prostorija, kao potroša�
 
 Za kupnje u trgovini zakonsko pravo na povrat robe bez nedostatka ne postoji, ali mnoge trgovine dobrovoljno omogućuju povrat ili zamjenu u određenom roku. Pitaj na blagajni i sačuvaj račun.
 
-### Bez krivnje
+### Kad se ipak dogodi
 
-Jedna impulzivna kupnja ne ruši budžet. Upiši je, prilagodi plan za sljedeće dane i nastavi. Osjećaj krivnje često vodi u još jednu kupnju „za utjehu“.
+Jedna impulzivna kupnja ne ruši budžet. Upiši je, prilagodi plan za sljedeće dane i nastavi.
 
 ## Zamjenske navike
 

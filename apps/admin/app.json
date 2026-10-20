@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "UnitCent Admin",
+    "slug": "unitcent-admin",
+    "scheme": "unitcent-admin",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#070b0b",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.unitcent.admin",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.unitcent.admin"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "owner": "leonlis",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5c9d9873-235d-4779-a07d-16f6d0f0f216"
+      }
+    }
+  }
+}

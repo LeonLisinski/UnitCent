@@ -54,7 +54,7 @@ export function eur(cents: number): string {
 
 const WEEKDAY_INSTR = ["nedjeljom", "ponedjeljkom", "utorkom", "srijedom", "četvrtkom", "petkom", "subotom"];
 
-function daysIn(month: string): number {
+export function daysIn(month: string): number {
   const [y, m] = month.split("-").map(Number) as [number, number];
   return new Date(y, m, 0).getDate();
 }
@@ -67,7 +67,7 @@ function prevMonth(m: string): string {
 }
 
 /** Zbroj mjesečnih fiksnih troškova koji vrijede u mjesecu (isto pravilo kao packages/core occurrenceDate). */
-function obligatoryFor(items: Recurring[], month: string): number {
+export function obligatoryFor(items: Recurring[], month: string): number {
   const dim = daysIn(month);
   let total = 0;
   for (const it of items) {
@@ -82,7 +82,7 @@ function obligatoryFor(items: Recurring[], month: string): number {
 }
 
 /** Varijabilni troškovi (bez knjiženih pretplata) po kategoriji u mjesecu, do `untilDay` (uključivo). */
-function variableByCategory(txs: Tx[], month: string, untilDay = 31): Map<string | null, number> {
+export function variableByCategory(txs: Tx[], month: string, untilDay = 31): Map<string | null, number> {
   const map = new Map<string | null, number>();
   for (const t of txs) {
     if (t.type !== "expense" || t.source === "recurring" || monthOf(t.local_date) !== month) continue;

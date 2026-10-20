@@ -16,7 +16,7 @@ const CHIPS: { n: string; a: number; icon: string }[] = [
 
 /**
  * „Isprobaj”: dodaj trošak i gledaj koliko ti ostaje za danas. Ton je isti kao u aplikaciji:
- * činjenice, bez osude. Prsten je isti oblik kao logotip i puni se kako trošiš.
+ * kratke činjenice. Prsten je isti oblik kao logotip i puni se kako trošiš.
  */
 export function TryIt() {
   const [spent, setSpent] = useState(0);

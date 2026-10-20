@@ -60,7 +60,7 @@ tog dana (swipe za uređivanje / brisanje, isti uzorak kao popis) i „+ Nova pr
 Korisnik vidi kako bi izgledalo s njegovim podacima, pa je vrijednost jasna. Zlatna boja: suzdržanija, kao oznaka, ne kao pozadina.
 
 **Proslava i navika (moj prijedlog):** kraj dana ispod plana → nježan pomak prstena i jedna riječ; kraj mjeseca → kartica „Listopad: 48 € ispod plana“.
-Niz dana s unosom bez krivnje (ne „izgubio si niz“, nego „7 dana zaredom“). Zahtjev za ocjenu u trgovini **samo** u takvom trenutku zadovoljstva.
+Niz dana s unosom („7 dana zaredom“, nikad „izgubio si niz“). Zahtjev za ocjenu u trgovini **samo** u takvom trenutku zadovoljstva.
 
 ## D. AI savjetnik (nakon odluke 2)
 Uvidi već postoje (`supabase/functions/insights`, poslužitelj računa brojke, model samo preformulira). Prijedlog za „savjetnika“:
@@ -118,7 +118,7 @@ newsletter (pretplatnici, odjave), zakazani mailovi i zakazani članci, greške 
 2. **C** (kamera, kalendar, limit, proslava). ✔ 20. 10. (f6998c7)
 3. **D** AI savjetnik. ✔ 20. 10. (5944743); funkcija `advisor` i migracija objavljene na dev Supabase.
 4. **E** web: zakazani blogovi (20 članaka, tjedno 27. 10. 2026. do 9. 3. 2027.), vizualni blokovi u člancima, 5 kalkulatora (`/kalkulatori`). ✔ 20. 10.
-5. **F + G** mailovi (Brevo) i admin aplikacija (`apps/admin`). Sljedeće.
+5. **F + G** mailovi (Brevo) i admin aplikacija (`apps/admin`). ✔ u kodu i na dev Supabase 20. 10.; Brevo (ključ, domena, popis, webhook) i prvi pravi mail 21. 10. Vidi „F + G: što treba vlasnik“.
 6. **H** sigurnosni prolaz, trgovine, beta, objava.
 
 ## Stanje 20. 10. 2026. (za sljedeću sesiju)
@@ -126,6 +126,22 @@ newsletter (pretplatnici, odjave), zakazani mailovi i zakazani članci, greške 
 - **Savjetnik:** lebdeći krug na Početnoj i Pregledu; free 3 pitanja mjesečno (broji aplikacija i poslužitelj, `consume_advisor`), Premium 20 dnevno; povijest razgovora za danas lokalno. „Mogu li si nešto priuštiti?“ računa `checkAfford` u core i broji se kao pitanje.
 - **Ostalo za kasnije:** traženje ocjene u trgovini u trenutku zadovoljstva (`expo-store-review`), niz dana s unosom, poruka 7. dan uz tjedni sažetak (dio F), App Attest / Play Integrity (gosti mogu reinstalacijom dobiti nova besplatna pitanja i skeniranja).
 - **Web lokalno:** `.claude/launch.json` (port 3123, zaseban build dir); `BLOG_TODAY=YYYY-MM-DD` u razvoju prikazuje zakazane članke.
+
+## F + G: kako radi (20. 10. 2026.)
+- **Baza:** `email_prefs` (sažeci zadano uključeni, newsletter zaseban i neoznačen, token za odjavu), `email_log` (jedan redak po korisniku, vrsti i razdoblju: isti mail nikad dvaput), `email_candidates()`, raspored u pg_cron (migracija `20261025000000_email.sql`). Admin: `admin_stats()` (`20261026000000_admin_stats.sql`), samo zbrojevi.
+- **Funkcije:** `email-send` (poziva pg_cron s tajnom; dobrodošlica, 3. dan, tjedni sažetak ponedjeljkom, mjesečni 1. u mjesecu, povratak nakon 10 dana; najviše 280 dnevno), `email-prefs` (aplikacija i web stranica za odjavu; usklađuje Brevo popis), `brevo-webhook` (odjave i prijave spama iz Brevoa), `admin-stats` (samo ADMIN_EMAILS). `delete-account` briše i Brevo kontakt. Zajedničko: `supabase/functions/_shared/brevo.ts`.
+- **Predlošci:** `email-send/templates.ts` (svijetli i tamni način, broj je junak, odjava jednim klikom + zaglavlja List-Unsubscribe), brojke u `email-send/digest.ts`; testovi u `packages/core/test/email.test.ts`. Premium se spominje uz prvi tjedni sažetak i zatim u svakom 4. (samo free).
+- **Web:** `/odjava?t=…` (stanje i odjava bez prijave) i `/api/odjava` (POST jednim klikom iz programa za poštu). Privatnost: dodan Brevo i odjeljak E-mailovi.
+- **Aplikacija:** Profil → Aplikacija → „E-mailovi“ (samo prijavljeni s e-adresom): Sažeci, Newsletter.
+- **Admin (`apps/admin`):** jedan ekran: aktivni ovaj tjedan (glavni broj), novi korisnici (14 dana), zadržavanje, Premium i prihod (RevenueCat), AI skeniranja i procjena troška, e-mailovi (newsletter, odjave, sljedeće slanje), zakazani članci (čita `web/content/blog` iz repoa), poveznica na Sentry.
+
+## F + G: što treba vlasnik
+**Brevo račun je otvoren 20. 10. (naziv „UnitCent“, besplatni plan 300 mailova dnevno). Ostatak (potvrda telefona, domena, ključ, popis, webhook, tajne) dovršavamo 21. 10. 2026.**
+1. **Brevo:** račun, autentificirati domenu `unitcent.com` (DKIM, DMARC u DNS-u), pošiljatelj npr. `pozdrav@unitcent.com`, popis „Newsletter“ (zapiši ID). Webhook (Transactional i Marketing: unsubscribe, spam, hard bounce) na `https://<ref>.supabase.co/functions/v1/brevo-webhook?key=<BREVO_WEBHOOK_SECRET>`.
+2. **Supabase Secrets:** `BREVO_API_KEY`, `BREVO_NEWSLETTER_LIST_ID`, `EMAIL_FROM`, `EMAIL_CRON_SECRET`, `BREVO_WEBHOOK_SECRET`, `ADMIN_EMAILS`; po želji `REVENUECAT_SECRET_KEY` + `REVENUECAT_PROJECT_ID`, `SENTRY_ISSUES_URL`, `AI_COST_PER_SCAN_EUR`, `EMAIL_DAILY_CAP`.
+3. **Vault (za pg_cron):** `project_url` i `email_cron_secret` (ista vrijednost kao `EMAIL_CRON_SECRET`), vidi komentar u migraciji.
+4. **Objava:** ✔ 20. 10. na dev Supabase (ekdcfznglsioobnskqnu): migracije `email`, `admin_stats`, `pg_net_extensions_schema`; funkcije `email-send` i `brevo-webhook` (bez JWT), `email-prefs`, `admin-stats`, `delete-account`. Raspored (pg_cron) je postavljen, ali ne šalje ništa dok u Vaultu nema `project_url` i `email_cron_secret`, a u Secrets `BREVO_API_KEY`. Vercel: ništa novo.
+5. **Admin aplikacija:** `.env.local` je postavljen (isti URL i anon ključ kao aplikacija). Za Expo Go: u Supabase Auth → Redirect URLs dodati `exp://**` i postaviti Secret `ADMIN_EMAILS`; zatim `npx pnpm@9.15.0 --filter @unitcent/admin start`. Za trajnu aplikaciju: `eas init`, `eas build --profile admin` i Redirect URL `unitcent-admin://auth-callback`.
 
 ## Odluke (vlasnik, 20. 10. 2026.)
 1. **Premium se nudi na okidačima**, ne na ulazu (mijenja odluku iz ROADMAP-a od 19. 10.): potrošena 3 skeniranja, stariji mjesec, limit kategorije,
