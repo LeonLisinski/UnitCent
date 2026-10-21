@@ -28,6 +28,7 @@ import { useToast } from "../src/toast";
 import { syncNow } from "../src/sync";
 import { addRecurring, bookDueRecurring, getLatestPlanBefore, getPlan, kvGet, kvSet, listCategories, setSavingsBalance, today, upsertPlan } from "../src/db/repo";
 import { rescheduleReminders } from "../src/notifications";
+import { TRIAL_ENABLED, isPremiumNow } from "../src/premium";
 
 interface Pick {
   amountText: string;
@@ -116,8 +117,13 @@ export default function Onboarding() {
     kvSet("onboarded", "1");
     void rescheduleReminders();
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    // Premium se ne nudi na ulazu (odluka 20. 10.): tek na okidačima, kad korisnik već vidi vrijednost.
     router.replace("/");
+    // Odluka 21. 10.: nakon postavljenog plana (korisnik je upravo vidio svoj dnevni budžet) jednom se nudi
+    // 7 dana Premiuma besplatno, preko Početne, pa zatvaranje vodi na Početnu. Samo kad trgovine imaju probno razdoblje.
+    if (TRIAL_ENABLED && !isPremiumNow() && kvGet("trial_offered") !== "1") {
+      kvSet("trial_offered", "1");
+      router.push({ pathname: "/premium", params: { first: "1" } });
+    }
   };
 
   const togglePick = (key: string, suggested: Cents, day: number) => {

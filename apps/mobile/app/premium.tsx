@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Linking, Pressable, View, useWindowDimensions } from "react-native";
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Path, RadialGradient, Rect, Stop } from "react-native-svg";
@@ -151,7 +151,7 @@ export default function Premium() {
   const contextual = !!feature && !premium; // otvoreno zbog ograničenja: manje teksta, istaknuta funkcija
   const [plan, setPlan] = useState<PlanKey>("yearly");
   const [busy, setBusy] = useState(false);
-  useEffect(() => track("paywall_viewed", { feature: feature ?? "none" }), []);
+  useEffect(() => track("paywall_viewed", { feature: first ? "onboarding" : feature ?? "none" }), []);
   const { height } = useWindowDimensions();
   const compact = height < 780; // manji ekrani: manji znak i razmaci da sve stane bez skrolanja
   const p = PLANS[plan];
@@ -199,7 +199,7 @@ export default function Premium() {
                 Zatim {p.priceLabel} {p.per}. Otkaži kad god, prije kraja probnog razdoblja.
               </T>
             ) : null}
-            {first ? <Button variant="text" size="sm" label="Nastavi s besplatnom verzijom" onPress={() => router.replace("/" as Href)} /> : null}
+            {first ? <Button variant="text" size="sm" label="Nastavi s besplatnom verzijom" onPress={() => router.back()} /> : null}
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               {quiet("Uvjeti", () => void Linking.openURL("https://unitcent.com/uvjeti"))}
               <T v="caption" muted>·</T>
@@ -233,6 +233,9 @@ export default function Premium() {
             <T v="mono-label" muted style={{ fontSize: 11, letterSpacing: 4 }}>UNITCENT</T>
             <T v="serif-accent" color={fx.gold} style={{ fontSize: compact ? 38 : 44, lineHeight: compact ? 46 : 52 }}>{premium ? "Premium je aktivan" : "Premium"}</T>
           </Pressable>
+          {first && TRIAL_ENABLED && !premium ? (
+            <T muted style={{ textAlign: "center", maxWidth: 300, marginTop: 6 }}>Prvih {TRIAL_DAYS} dana besplatno. Bez naplate ako otkažeš prije kraja.</T>
+          ) : null}
           {SOCIAL_PROOF ? (
             <T muted style={{ textAlign: "center", maxWidth: 300, marginTop: 8 }}>{SOCIAL_PROOF}</T>
           ) : null}

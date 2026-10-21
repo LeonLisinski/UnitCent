@@ -136,7 +136,7 @@ newsletter (pretplatnici, odjave), zakazani mailovi i zakazani članci, greške 
 - **Admin (`apps/admin`), v2 21. 10.:** pet tabova: Pregled (aktivni ovaj tjedan + 6 kartica), Lista čekanja (tko, kada, odakle; pretraga i izvoz), Korisnici (lijevak, gosti/registrirani, aktivni i novi po danu, zadržavanje), Prihod i AI (plaćeni, konverzija, RevenueCat, skeniranja, trošak AI-ja), Sadržaj (mailovi, sljedeće slanje, blog). Izgled bez prijave: `EXPO_PUBLIC_ADMIN_MOCK=1` (samo razvoj, probne brojke). Prije: aktivni ovaj tjedan (glavni broj), novi korisnici (14 dana), zadržavanje, Premium i prihod (RevenueCat), AI skeniranja i procjena troška, e-mailovi (newsletter, odjave, sljedeće slanje), zakazani članci (čita `web/content/blog` iz repoa), poveznica na Sentry.
 
 ## F + G: što treba vlasnik
-**Brevo račun je otvoren 20. 10. (naziv „UnitCent“, besplatni plan 300 mailova dnevno). Ostatak (potvrda telefona, domena, ključ, popis, webhook, tajne) dovršavamo 21. 10. 2026.**
+**Brevo postavljen 21. 10.:** domena `unitcent.com` potvrđena (DKIM, DMARC, branding `mail.`), pošiljatelj `UnitCent <support@unitcent.com>`, popis Newsletter = ID 3, API ključ ograničen na Transactional email + Contacts, tajne u Supabaseu i Vaultu, prva dobrodošlica poslana. Ostaje: Brevo webhook (odjave, spam) i besplatno prosljeđivanje pošte (npr. ImprovMX) jer `unitcent.com` nema MX.
 1. **Brevo:** račun, autentificirati domenu `unitcent.com` (DKIM, DMARC u DNS-u), pošiljatelj npr. `pozdrav@unitcent.com`, popis „Newsletter“ (zapiši ID). Webhook (Transactional i Marketing: unsubscribe, spam, hard bounce) na `https://<ref>.supabase.co/functions/v1/brevo-webhook?key=<BREVO_WEBHOOK_SECRET>`.
 2. **Supabase Secrets:** `BREVO_API_KEY`, `BREVO_NEWSLETTER_LIST_ID`, `EMAIL_FROM`, `EMAIL_CRON_SECRET`, `BREVO_WEBHOOK_SECRET`, `ADMIN_EMAILS`; po želji `REVENUECAT_SECRET_KEY` + `REVENUECAT_PROJECT_ID`, `SENTRY_ISSUES_URL`, `AI_COST_PER_SCAN_EUR`, `EMAIL_DAILY_CAP`.
 3. **Vault (za pg_cron):** `project_url` i `email_cron_secret` (ista vrijednost kao `EMAIL_CRON_SECRET`), vidi komentar u migraciji.
@@ -144,8 +144,9 @@ newsletter (pretplatnici, odjave), zakazani mailovi i zakazani članci, greške 
 5. **Admin aplikacija:** `.env.local` je postavljen (isti URL i anon ključ kao aplikacija). Za Expo Go: u Supabase Auth → Redirect URLs dodati `exp://**` i postaviti Secret `ADMIN_EMAILS`; zatim `npx pnpm@9.15.0 --filter @unitcent/admin start`. Za trajnu aplikaciju: `eas init`, `eas build --profile admin` i Redirect URL `unitcent-admin://auth-callback`.
 
 ## Odluke (vlasnik, 20. 10. 2026.)
-1. **Premium se nudi na okidačima**, ne na ulazu (mijenja odluku iz ROADMAP-a od 19. 10.): potrošena 3 skeniranja, stariji mjesec, limit kategorije,
-   AI pitanje, i jednom 7. dan uz tjedni sažetak. Probno razdoblje 7 dana nudi se na tim mjestima.
+1. **Premium se nudi na okidačima**: potrošena 3 skeniranja, stariji mjesec, limit kategorije, AI pitanje, i jednom 7. dan uz tjedni sažetak.
+   **Dopuna 21. 10.:** jednom i na kraju onboardinga, odmah nakon što korisnik vidi svoj dnevni budžet: „Prvih 7 dana besplatno“
+   (preko Početne, „Nastavi s besplatnom verzijom“ vraća na Početnu). Prikazuje se samo uz `EXPO_PUBLIC_TRIAL=1`, tj. kad trgovine imaju probno razdoblje.
 2. **AI savjetnik = pitanja na dodir** (odgovori iz brojki s poslužitelja), slobodan chat možda kasnije.
 3. **Admin = zasebna Expo aplikacija** (`apps/admin` u istom repou, samo EAS build za vlasnika, ne ide u trgovine).
    Podaci samo preko Edge Functiona `admin-stats` koja provjerava da je prijavljeni korisnik vlasnik; service ključ nikad u aplikaciji.
