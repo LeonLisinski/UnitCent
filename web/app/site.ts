@@ -1,7 +1,7 @@
 // Jedan izvor istine za adresu, imena i FAQ (koristi se i u prikazu i u JSON-LD).
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://unitcent.com";
 export const SITE_NAME = "UnitCent";
-export const CONTACT_EMAIL = "podrska@unitcent.com";
+export const CONTACT_EMAIL = "support@unitcent.com";
 
 // Ponuda uz prijavu na listu čekanja. Mijenjati samo uz odluku o stvarnoj ponudi:
 // ovo je javno obećanje. Zasad namjerno bez konkretnog iznosa i roka.

@@ -274,7 +274,7 @@ Svaka faza završava demonstracijom, ažuriranjem ovog dokumenta (§12) i odluko
 | D-05 | Nazivi paketa / identifikatori u storeovima (bundle ID, npr. com.unitcent.app) | Rezervirati što prije |
 | D-06 | Apple Developer i Google Play račun (tko je vlasnik, obrt/privatno) | Obrt ako postoji (porezni tretman, knjigovođa). Napomena: u storeu se kao prodavatelj prikazuje pravni naziv računa. Apple organizacijski račun traži pravnu osobu i D-U-N-S broj; obrt (jedan vlasnik) se vjerojatno upisuje kao fizička osoba. Provjeriti prije registracije. |
 | D-07 | Analitika (PostHog EU vs. samo Vercel/Plausible na webu) | PostHog EU, bez osobnih podataka |
-| D-08 | Podrška i e-adresa (podrska@unitcent.com još nema sandučić) | Napraviti prije bete |
+| D-08 | Podrška i e-adresa: jedna adresa support@unitcent.com (web, aplikacija, App Store), prosljeđivanje preko ImprovMX | Postaviti prije objave |
 | D-09 | Neplanirani prihodi ulaze u dnevni budžet? | Da, dodaju se raspoloživom za mjesec |
 | D-10 | Prijava u postojeći račun s lokalnim podacima: spojiti ili zamijeniti | Spojiti, uz lokalnu kopiju prije spajanja |
 | D-13 | Mjesec od 1. ili od dana plaće; početak usred mjeseca | **Odlučeno 2026-10-19:** kalendarski mjesec; usred mjeseca se potrošeno procjenjuje iz stanja na računu (§4.2) |
