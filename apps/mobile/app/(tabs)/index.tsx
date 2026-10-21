@@ -5,7 +5,10 @@ import { AdvisorFab } from "../../src/AdvisorSection";
 import { useRouter, type Href } from "expo-router";
 import { Pressable, ScrollView, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { daysInMonth, formatEur, parseYearMonth, upcomingInMonth, yearMonthOf } from "@unitcent/core";
+import { STREAK_MILESTONES, daysInMonth, entryStreak, formatEur, milestoneMessage, parseYearMonth, upcomingInMonth, yearMonthOf } from "@unitcent/core";
+import { StreakPill } from "../../src/Streak";
+import { rescheduleReminders } from "../../src/notifications";
+import { maybeAskForReview } from "../../src/review";
 import { recurringIcon } from "../../src/BrandIcon";
 import { Avatar, Button, CatIcon } from "../../src/components";
 import { useDb } from "../../src/data";
@@ -18,8 +21,10 @@ import { TxRow } from "../../src/TxRow";
 import { T } from "../../src/ui";
 import {
   deleteTransaction,
+  entryStats,
   getMonthSummary,
   kvGet,
+  kvSet,
   listCategories,
   listRecentTransactions,
   listRecurring,
@@ -42,6 +47,10 @@ export default function Pocetna() {
   const recent = useDb(() => listRecentTransactions(6));
   const recurring = useDb(() => listRecurring());
   const name = useDb(() => kvGet("name"));
+  // Niz dana s unosom: tiho uz datum (od 3 dana), kratka poruka na 7, 14, 30… (nikad „izgubio si niz“).
+  const stats = useDb(() => entryStats(day), [day]);
+  const streak = entryStreak(stats.dates, day);
+  const enteredToday = stats.dates[0] === day;
 
   // Kraj jučerašnjeg dana / prošlog mjeseca: jedna tiha poruka pri prvom otvaranju dana.
   useEffect(() => {
@@ -51,10 +60,33 @@ export default function Pocetna() {
       if (r.good) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       toast.show(r.text);
       markRecapShown(day);
+      // Trenutak zadovoljstva: dan ili mjesec ispod plana. Ocjena se traži tek kad toast nestane.
+      if (r.good) setTimeout(() => void maybeAskForReview(day, "recap"), 3000);
     }, 900);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [day]);
+
+  // Novi cilj niza postignut današnjim unosom: jedna poruka (nakon poruke o jučer, ako je ima).
+  useEffect(() => {
+    if (!enteredToday || !(STREAK_MILESTONES as readonly number[]).includes(streak)) return;
+    const key = `${streak}@${day}`;
+    const text = milestoneMessage(streak);
+    if (!text || kvGet("streak.celebrated") === key) return;
+    // Mirno: blaga vibracija i jedna rečenica. Ocjena se ovdje ne traži (ne prekidamo trenutak napretka).
+    const t = setTimeout(() => {
+      kvSet("streak.celebrated", key);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      toast.show(text);
+    }, kvGet("recap.shown") === day ? 900 : 3500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [streak, enteredToday, day]);
+
+  // Večernji podsjetnik ovisi o tome je li danas upisano: nakon unosa se današnji miče.
+  useEffect(() => {
+    void rescheduleReminders();
+  }, [enteredToday]);
 
   const { limit } = summary;
   const catById = new Map(cats.map((c) => [c.id, c]));
@@ -137,8 +169,15 @@ export default function Pocetna() {
   return (
     <TabScreen floating={<AdvisorFab />}>
       <Animated.View entering={enter(0)}>
-        <PageHeader right={<Avatar quiet size={44} initial={name?.trim()[0] ?? "?"} onPress={() => router.navigate("/profil" as Href)} />}>
-          <T v="caption" muted>{longDate(day)}</T>
+        <PageHeader
+          right={
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <StreakPill streak={streak} enteredToday={enteredToday} dates={stats.dates} day={day} />
+              <Avatar quiet size={44} initial={name?.trim()[0] ?? "?"} onPress={() => router.navigate("/profil" as Href)} />
+            </View>
+          }
+        >
+          <T v="caption" muted numberOfLines={1}>{longDate(day)}</T>
           <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6 }}>
             <T v="title-1" style={{ fontSize: 24, lineHeight: 32 }}>Bok</T>
             {name ? <T v="serif-accent" color={colors.brand} style={{ fontSize: 32, lineHeight: 38 }}>{name}</T> : null}

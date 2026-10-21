@@ -9,3 +9,4 @@ export * from "./catalog";
 export * from "./plans";
 export * from "./sync";
 export * from "./syncEngine";
+export * from "./streak";

@@ -301,6 +301,44 @@ export function listTransactionsInMonth(month: YearMonth): Transaction[] {
 }
 
 /**
+ * Dani s barem jednim unosom (bez automatski knjiženih pretplata) u zadnjih ~400 dana, prvi takav dan i ukupan broj
+ * unosa: za niz („7 dana zaredom“) i za odluku smije li se tražiti ocjena.
+ */
+export function entryStats(todayDate: LocalDate = today()): { dates: LocalDate[]; firstEntry: LocalDate | null; totalEntries: number } {
+  const db = getDb();
+  const rows = db.getAllSync<{ d: string }>(
+    `select distinct local_date as d from transactions
+      where deleted_at is null and source != 'recurring' and local_date <= ? and local_date >= date(?, '-400 day')
+      order by local_date desc`,
+    [todayDate, todayDate],
+  );
+  const agg = db.getFirstSync<{ first: string | null; n: number }>(
+    "select min(local_date) as first, count(*) as n from transactions where deleted_at is null and source != 'recurring'",
+  );
+  // Dani označeni „Danas bez troška“ čuvaju niz (dan bez potrošnje nije propušten dan).
+  const merged = new Set(rows.map((r) => r.d));
+  for (const d of noSpendDays()) if (d <= todayDate) merged.add(d);
+  return { dates: [...merged].sort().reverse(), firstEntry: agg?.first ?? null, totalEntries: agg?.n ?? 0 };
+}
+
+const NO_SPEND = "nospend.days";
+
+/** Dani koje je korisnik označio kao „bez troška“ (lokalno, zadnjih ~400). */
+export function noSpendDays(): LocalDate[] {
+  try {
+    const v = JSON.parse(kvGet(NO_SPEND) ?? "[]");
+    return Array.isArray(v) ? v.filter((d): d is string => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function markNoSpendDay(d: LocalDate = today()): void {
+  const days = [...new Set([...noSpendDays(), d])].sort().slice(-400);
+  kvSet(NO_SPEND, JSON.stringify(days));
+}
+
+/**
  * „Zadnje“ na početnoj: zadnje UNESENO (ne zadnje po datumu), pa račun ili trošak unesen sad s datumom iz prošlosti
  * ostaje na vrhu. Automatska knjiženja pretplata ulaze samo ako su svježa (zadnja 3 dana), da ne preplave popis.
  */

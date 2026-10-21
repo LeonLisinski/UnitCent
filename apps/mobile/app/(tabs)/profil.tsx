@@ -156,8 +156,8 @@ export default function Profil() {
       <Group title="Aplikacija">
         <Row
           icon="bell"
-          title="Podsjetnici naplata"
-          subtitle="Dan prije naplate pretplate"
+          title="Podsjetnici"
+          subtitle="Naplate pretplata i večernji unos"
           right={<Switch value={reminders} onValueChange={(v) => void toggleReminders(v)} trackColor={{ false: colors["border-strong"], true: colors.brand }} thumbColor="#ffffff" ios_backgroundColor={colors["border-strong"]} />}
         />
         {LOCK_AVAILABLE ? (

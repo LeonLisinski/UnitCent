@@ -1,6 +1,6 @@
 import * as Notifications from "expo-notifications";
-import { occurrenceDate, yearMonthOf, formatEur } from "@unitcent/core";
-import { getLatestPlanBefore, getPlan, getSavings, kvGet, kvSet, listRecurring, today } from "./db/repo";
+import { entryStreak, eveningReminder, occurrenceDate, yearMonthOf, formatEur } from "@unitcent/core";
+import { entryStats, getLatestPlanBefore, getPlan, getSavings, kvGet, kvSet, listRecurring, today } from "./db/repo";
 
 const KEY = "reminders.enabled";
 
@@ -33,8 +33,9 @@ export async function disableReminders(): Promise<void> {
 }
 
 /**
- * Lokalni podsjetnici (rade bez interneta): dan prije svake naplate u 9:00,
- * za sljedećih ~35 dana. Poziva se pri pokretanju i nakon izmjene pretplata.
+ * Lokalni podsjetnici (rade bez interneta): dan prije svake naplate u 9:00 (sljedećih ~35 dana), kraj mjeseca
+ * za štednju i večernji podsjetnik za unos u 20:30 (danas samo ako još nema unosa, i sutra). Poziva se pri
+ * pokretanju, nakon izmjene pretplata i kad se na Početnoj promijeni „danas upisano“.
  */
 export async function rescheduleReminders(): Promise<void> {
   if (!remindersEnabled()) return;
@@ -58,6 +59,22 @@ export async function rescheduleReminders(): Promise<void> {
     await Notifications.scheduleNotificationAsync({
       content: { title: "Kraj mjeseca", body: `Prebaci ${formatEur(plan.savingsCents)} na štednju? Potvrdi u Profilu → Štednja.` },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: last },
+    });
+    scheduled += 1;
+  }
+  // Večernji unos: mirno, prema nizu (vidi eveningReminder u core). Ako se aplikacija ne otvara, podsjetnici prestaju.
+  const day = today();
+  const stats = entryStats(day);
+  const streak = entryStreak(stats.dates, day);
+  const enteredToday = stats.dates[0] === day;
+  for (const offset of [0, 1]) {
+    if (offset === 0 && enteredToday) continue;
+    const fire = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset, 20, 30, 0);
+    if (fire.getTime() <= now.getTime()) continue;
+    const n = offset === 0 || enteredToday ? streak : 0;
+    await Notifications.scheduleNotificationAsync({
+      content: eveningReminder(n),
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: fire },
     });
     scheduled += 1;
   }
