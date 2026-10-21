@@ -22,7 +22,7 @@ import { LockScreen } from "../src/LockScreen";
 import { getDb } from "../src/db/client";
 import { bookDueRecurring, ensureCategories } from "../src/db/repo";
 import { applyProfileName } from "../src/account";
-import { initAnalytics } from "../src/analytics";
+import { initAnalytics, track } from "../src/analytics";
 import { initMonitoring, wrapRoot } from "../src/monitoring";
 import { startSync } from "../src/sync";
 import { supabase } from "../src/supabase";
@@ -30,6 +30,11 @@ import { rescheduleReminders } from "../src/notifications";
 import { initCurrency, refreshRates } from "../src/currency";
 
 initMonitoring(); // greške se prate od prvog trenutka
+
+// Mjerenje pokretanja (faza H, cilj < 1,5 s): od učitavanja koda do prvog prikaza ekrana, jednom po pokretanju.
+// Ne uključuje nativno pokretanje prije JS-a; za usporedbu buildova i uređaja je dovoljno.
+const JS_START = Date.now();
+let startupReported = false;
 
 // Splash drži ekran dok se fontovi ne učitaju (nema skakanja teksta na prvom ekranu).
 void SplashScreen.preventAutoHideAsync();
@@ -46,6 +51,12 @@ function initLocalData(): true {
 
 function Shell() {
   const { scheme, colors } = useTheme();
+  useEffect(() => {
+    if (startupReported) return;
+    startupReported = true;
+    // Nakon prvog okvira: ono što korisnik stvarno vidi.
+    requestAnimationFrame(() => track("app_ready", { ms: Date.now() - JS_START, platform: Platform.OS }));
+  }, []);
   return (
     <>
       <StatusBar style={scheme === "dark" ? "light" : "dark"} />

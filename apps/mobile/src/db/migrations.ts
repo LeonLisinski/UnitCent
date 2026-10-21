@@ -155,4 +155,13 @@ alter table month_plans add column spent_before_cents integer not null default 0
 alter table savings_entries add column opening_cents integer;
 `,
   },
+  {
+    version: 7,
+    sql: `
+-- Brzina (faza H): knjiženje pretplata pri svakom pokretanju traži troškove po pretplati, a „Zadnje“ na Početnoj
+-- sortira po vremenu unosa. Bez ovih indeksa oba upita prolaze cijelu tablicu troškova.
+create index if not exists transactions_recurring_idx on transactions (recurring_id, local_date) where recurring_id is not null;
+create index if not exists transactions_created_idx on transactions (created_at desc, id desc) where deleted_at is null;
+`,
+  },
 ];
