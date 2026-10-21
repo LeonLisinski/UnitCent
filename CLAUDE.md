@@ -64,7 +64,7 @@ Nazivi (jednako u aplikaciji, webu i dokumentaciji): iznos za cijeli dan je „D
 - Nakon svake veće promjene: build mora proći, nema horizontalnog scrolla na 390 px, `prefers-reduced-motion` je poštovan.
 
 ## Stanje (ažurirati)
-- Web `unitcent.com`: objavljen (Next.js 15, Vercel). Waitlist piše u Supabase tablicu `waitlist`.
+- Web `unitcent.com`: objavljen (Next.js 16, Vercel). Waitlist piše u Supabase tablicu `waitlist`.
 - Supabase projekt: postoji (waitlist). Za aplikaciju treba zasebno okruženje (dev/staging/prod), vidi plan.
 - Aplikacija: Faza 0 gotova osim računa; Faza 1 (lokalni MVP) napisana, čeka prvo pokretanje na uređaju. (Faza 0 detalji:) Gotovo lokalno: workspace, `packages/core` (testovi), `packages/tokens` (testovi kontrasta), `apps/mobile` (Expo ljuska), migracija, CI. Čeka vlasnika: Supabase dev/staging, developer računi, Sentry/EAS. Odluke D-01…D-10: docs/APP-PLAN.md §11.
 - Faza 2: sinkronizacija (core pravila + `sync_push` na dev bazi + klijent `apps/mobile/src/sync.ts`) napisana i provjerena na dev bazi; čeka test na uređaju. Server koristi složene ključeve `(user_id, id)`.

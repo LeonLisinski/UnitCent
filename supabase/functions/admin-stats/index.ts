@@ -3,6 +3,7 @@
 // Dodatno (ako su postavljeni ključevi): RevenueCat (prihod, MRR, probna razdoblja) i Brevo (pretplatnici newslettera).
 // Trošak AI-ja je procjena: broj skeniranja × AI_COST_PER_SCAN_EUR + pitanja × AI_COST_PER_QUESTION_EUR.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { allow, tooMany } from "../_shared/rateLimit.ts";
 import { listStats } from "../_shared/brevo.ts";
 
 const cors = {
@@ -66,6 +67,7 @@ Deno.serve(async (req) => {
   if (u.user.is_anonymous || !email || !u.user.email_confirmed_at || !allowed.includes(email)) return json({ error: "forbidden" }, 403);
 
   const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  if (!(await allow(admin, "admin-stats", u.user.id))) return tooMany(cors);
   const [stats, rc, brevo] = await Promise.all([admin.rpc("admin_stats"), revenuecat(), listStats()]);
   if (stats.error) {
     console.error("admin_stats failed", stats.error.message);

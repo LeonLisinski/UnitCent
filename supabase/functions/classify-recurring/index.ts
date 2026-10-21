@@ -1,6 +1,7 @@
 // classify-recurring: AI prijedlog kategorije i ikone za naziv pretplate koji lokalni katalog ne prepoznaje (Premium).
 // Šalje se samo naziv (najviše 40 znakova) i nazivi korisnikovih kategorija; ništa se ne sprema.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { allow, tooMany } from "../_shared/rateLimit.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +26,7 @@ Deno.serve(async (req) => {
 
   // Premium provjerava poslužitelj (CLAUDE.md: ograničenja se ne provode samo u aplikaciji).
   const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  if (!(await allow(admin, "classify-recurring", u.user.id))) return tooMany(cors);
   const { data: ent } = await admin.from("entitlements").select("premium_until").eq("user_id", u.user.id).maybeSingle();
   if (!ent?.premium_until || Date.parse(ent.premium_until) <= Date.now()) return json({ error: "premium_required" }, 402);
 

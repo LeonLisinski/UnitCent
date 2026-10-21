@@ -25,7 +25,7 @@ export interface ScanResult {
   usage: { used: number; limit: number; premium: boolean };
 }
 
-export type ScanError = "quota" | "no-session" | "network" | "failed";
+export type ScanError = "quota" | "rate" | "no-session" | "network" | "failed";
 
 export class ScanFailure extends Error {
   constructor(public kind: ScanError, public limit?: number) {
@@ -97,6 +97,7 @@ export async function scanReceipt(images: string[], qrTotalCents?: Cents | null,
     if (res && typeof res.json === "function") {
       const body = (await res.json().catch(() => null)) as { error?: string; limit?: number } | null;
       if (body?.error === "quota_exceeded") throw new ScanFailure("quota", body.limit);
+      if (body?.error === "rate_limited") throw new ScanFailure("rate");
       throw new ScanFailure("failed");
     }
     throw new ScanFailure("network");

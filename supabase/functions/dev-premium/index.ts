@@ -3,6 +3,7 @@
 // na stagingu i produkciji vraća 403, čak i ako je funkcija slučajno objavljena.
 // Ne dira pravu kupnju: piše i briše samo redak sa source = 'dev'.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { allow, tooMany } from "../_shared/rateLimit.ts";
 
 const DEV_PROJECTS = ["ekdcfznglsioobnskqnu"];
 
@@ -35,6 +36,7 @@ Deno.serve(async (req) => {
   }
 
   const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  if (!(await allow(admin, "dev-premium", uid))) return tooMany(cors);
   const { data: ent } = await admin.from("entitlements").select("source, premium_until").eq("user_id", uid).maybeSingle();
   if (ent && ent.source !== "dev") return json({ ok: true, premium_until: ent.premium_until, note: "real_entitlement" });
 

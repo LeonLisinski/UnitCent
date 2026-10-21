@@ -7,5 +7,10 @@
     "typecheck": "pnpm -r --filter \"./packages/*\" typecheck",
     "prepare": "pnpm --filter @unitcent/tokens build",
     "mobile": "pnpm --filter @unitcent/mobile start"
+  },
+  "pnpm": {
+    "overrides": {
+      "xcode>uuid": "^11.1.1"
+    }
   }
 }

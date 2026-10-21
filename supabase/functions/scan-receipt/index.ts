@@ -2,6 +2,7 @@
 // Tok: sesija → kvota (3/mj besplatno, 100/mj Premium) → model → validacija zbroja → odgovor.
 // Slika se NE sprema nigdje: dolazi u zahtjevu, ide modelu i nestaje. Ključevi samo u Secrets.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { allow, tooMany } from "../_shared/rateLimit.ts";
 import { scanWithGemini } from "./gemini.ts";
 import { validate, type RawScan } from "./validate.ts";
 
@@ -55,6 +56,7 @@ Deno.serve(async (req) => {
   if (!okImages) return json({ error: "bad_image" }, 400);
 
   const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  if (!(await allow(admin, "scan-receipt", uid))) return tooMany(cors);
 
   // Kvota: Premium ako je entitlement aktivan.
   const { data: ent } = await admin.from("entitlements").select("premium_until").eq("user_id", uid).maybeSingle();

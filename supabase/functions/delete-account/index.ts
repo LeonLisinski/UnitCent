@@ -1,7 +1,8 @@
 // Brisanje računa i svih podataka korisnika (zahtjev Apple/Google storea i GDPR-a).
 // Poziva ga prijavljeni korisnik (i anonimni): briše slike računa iz Storagea i korisnika iz Authenticationa;
-// sve tablice se brišu kaskadno (on delete cascade na auth.users). Kontakt se briše i iz Brevoa (e-mailovi, newsletter).
+// sve tablice se brišu kaskadno (on delete cascade na auth.users). Kontakt se briše i iz Brevoa (e-mailovi, newsletter) i RevenueCata.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { allow, tooMany } from "../_shared/rateLimit.ts";
 import { brevoConfigured, deleteContact } from "../_shared/brevo.ts";
 
 const cors = {
@@ -25,6 +26,7 @@ Deno.serve(async (req) => {
   const uid = data.user.id;
 
   const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  if (!(await allow(admin, "delete-account", uid))) return tooMany(cors);
 
   // Slike računa: {uid}/... (do 1000 po krugu).
   for (;;) {
@@ -39,6 +41,22 @@ Deno.serve(async (req) => {
   if (data.user.email && !data.user.is_anonymous && brevoConfigured()) {
     const ok = await deleteContact(data.user.email);
     if (!ok) console.error("brevo contact delete failed", uid);
+  }
+
+  // RevenueCat: briše kupca (povijest kupnji ostaje u trgovini). Pretplatu otkazuje korisnik u trgovini; aplikacija to kaže prije brisanja.
+  const rcKey = Deno.env.get("REVENUECAT_SECRET_KEY");
+  const rcProject = Deno.env.get("REVENUECAT_PROJECT_ID");
+  if (rcKey && rcProject) {
+    try {
+      const res = await fetch(`https://api.revenuecat.com/v2/projects/${rcProject}/customers/${encodeURIComponent(uid)}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${rcKey}` },
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok && res.status !== 404) console.error("revenuecat delete failed", res.status, uid);
+    } catch (e) {
+      console.error("revenuecat delete failed", e instanceof Error ? e.message : String(e), uid);
+    }
   }
 
   const { error: delErr } = await admin.auth.admin.deleteUser(uid);

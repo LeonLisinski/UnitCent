@@ -5,6 +5,7 @@
 //  2) s web stranice za odjavu (unitcent.com/odjava): tijelo { token, product?, newsletter? }; token je iz maila.
 // Newsletter je zaseban izbor koji uključuje samo korisnik (GDPR); bilježi se vrijeme privole.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { allow, tooMany } from "../_shared/rateLimit.ts";
 import { setNewsletter } from "../_shared/brevo.ts";
 
 const cors = {
@@ -57,6 +58,7 @@ Deno.serve(async (req) => {
     email = u.user.email;
   }
 
+  if (!(await allow(admin, "email-prefs", uid))) return tooMany(cors);
   await admin.from("email_prefs").upsert({ user_id: uid }, { onConflict: "user_id", ignoreDuplicates: true });
   const { data: cur, error: readErr } = await admin.from("email_prefs").select("product, newsletter").eq("user_id", uid).single();
   if (readErr || !cur) return json({ error: "read_failed" }, 500);

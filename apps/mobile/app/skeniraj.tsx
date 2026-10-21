@@ -138,7 +138,8 @@ export default function Skeniraj() {
         // Besplatno: Premium s istaknutim skeniranjem. Premium: nema se što kupiti, samo poruka o mjesečnoj granici.
         if (quota.premium) toast.show(`Iskorišteno je svih ${quota.limit} skeniranja ovaj mjesec`);
         else goPremium();
-      } else if (kind === "no-session") toast.show("Skeniranje traži internetsku vezu");
+      } else if (kind === "rate") toast.show("Previše skeniranja zaredom. Probaj za nekoliko minuta.");
+      else if (kind === "no-session") toast.show("Skeniranje traži internetsku vezu");
       else if (kind === "network") toast.show("Nema veze. Probaj ponovno ili unesi ručno.");
       else toast.show("Čitanje nije uspjelo, probaj ponovno");
     } finally {

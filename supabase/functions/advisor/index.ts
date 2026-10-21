@@ -3,6 +3,7 @@
 // Ponovljeno isto pitanje s istim brojkama ne troši kvotu; ni odgovor bez podataka.
 // Modelu ne idu imena pretplata (zamijenjena oznakama), bilješke ni trgovine.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { allow, tooMany } from "../_shared/rateLimit.ts";
 import { numbersAreSubset } from "../insights/facts.ts";
 import { answer, fillPlaceholders, QUESTION_TEXT, QUESTIONS, type QuestionKey } from "./answers.ts";
 
@@ -80,6 +81,7 @@ Deno.serve(async (req) => {
   const today = zagrebToday();
   const month = today.slice(0, 7);
   const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  if (!(await allow(admin, "advisor", uid))) return tooMany(cors);
   const { data: ent } = await admin.from("entitlements").select("premium_until").eq("user_id", uid).maybeSingle();
   const premium = !!ent?.premium_until && Date.parse(ent.premium_until) > Date.now();
 

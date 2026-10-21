@@ -10,7 +10,8 @@ import { T } from "../src/ui";
 import { deleteAccountAndData, exportData } from "../src/dataTools";
 import { analyticsEnabled, setAnalyticsEnabled } from "../src/analytics";
 import { reportError } from "../src/monitoring";
-import { restorePurchases } from "../src/purchases";
+import { openManageSubscription, restorePurchases } from "../src/purchases";
+import { usePremium } from "../src/premium";
 import { signOutAndClear, useAccount } from "../src/account";
 
 const SITE = "https://unitcent.com";
@@ -22,6 +23,7 @@ export default function Podaci() {
   const toast = useToast();
   const account = useAccount();
   const [stats, setStats] = useState(analyticsEnabled());
+  const premium = usePremium();
 
   const doSignOut = async (force: boolean) => {
     const r = await signOutAndClear(force);
@@ -53,9 +55,12 @@ export default function Podaci() {
   const confirmDelete = () =>
     Alert.alert(
       "Obrisati račun i sve podatke?",
-      "Brišu se troškovi, pretplate, kategorije i plan, na mobitelu i u oblaku. Ovo se ne može poništiti.",
+      premium
+        ? "Brišu se troškovi, pretplate, kategorije i plan, na mobitelu i u oblaku. Ovo se ne može poništiti.\n\nPremium pretplata se ne otkazuje sama: otkaži je u trgovini (Upravljaj pretplatom)."
+        : "Brišu se troškovi, pretplate, kategorije i plan, na mobitelu i u oblaku. Ovo se ne može poništiti.",
       [
         { text: "Odustani", style: "cancel" },
+        ...(premium ? [{ text: "Upravljaj pretplatom", onPress: () => void openManageSubscription() }] : []),
         {
           text: "Obriši sve",
           style: "destructive",

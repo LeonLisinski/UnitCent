@@ -2,6 +2,7 @@
 // Šalju se samo zbrojevi (bez bilješki i trgovina). Rezultat se kešira po korisniku i mjesecu.
 // Free korisnik dobiva jedan uvid u cijelosti; ostali stižu bez teksta (zaključani), pa ograničenje drži poslužitelj.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { allow, tooMany } from "../_shared/rateLimit.ts";
 import { computeFacts, numbersAreSubset, type Fact } from "./facts.ts";
 
 const cors = {
@@ -76,6 +77,7 @@ Deno.serve(async (req) => {
   } catch { /* prazno tijelo = tekući mjesec */ }
 
   const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  if (!(await allow(admin, "insights", uid))) return tooMany(cors);
   const { data: ent } = await admin.from("entitlements").select("premium_until").eq("user_id", uid).maybeSingle();
   const premium = !!ent?.premium_until && Date.parse(ent.premium_until) > Date.now();
 

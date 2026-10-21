@@ -108,6 +108,9 @@ newsletter (pretplatnici, odjave), zakazani mailovi i zakazani članci, greške 
 ## H. Sigurnost, brzina, objava
 - **Sigurnosni prolaz prije bete:** RLS i savjeti Supabasea (advisors), ograničenje poziva na svim Edge Functionima, App Attest / Play Integrity za skeniranje,
   bez osobnih podataka u Sentryju, provjera ovisnosti, brisanje računa briše i na poslužitelju i u RevenueCatu.
+- **Napravljeno 21. 10.:** ograničenje poziva na svim Edge Functionima koje zove korisnik (`rate_limits` + `rate_hit`, `_shared/rateLimit.ts`; npr. skeniranje 20 / 10 min, AI kategorija 30 / h, brisanje računa 5 / h), poruka u aplikaciji kod skeniranja; Sentry bez iznosa, e-adresa, dugih brojeva, tragova dodira i parametara u adresama; brisanje računa briše kupca i u RevenueCatu (uz `REVENUECAT_SECRET_KEY` i `REVENUECAT_PROJECT_ID`) i Premium korisnika upozorava da pretplatu otkaže u trgovini; web: zakrpa za `sharp`.
+- **Ovisnosti (21. 10.):** web na Next 16.4.2 i React 19.2.9 (0 ranjivosti; `tsconfig` `jsx: react-jsx`); u workspaceu `pnpm.overrides` `xcode>uuid ^11.1.1`. Bez zakrpe ostaju `node-forge` i `braces` (Expo alati za build, ne ulaze u aplikaciju) i `decode-uri-component` u `expo-router` (0.5 je samo ESM i srušio bi navigaciju; rizik: sporo dekodiranje namjerno pokvarene poveznice u vlastitoj aplikaciji). Supabase Auth: zaštita od procurjelih lozinki uključena.
+- **Ostaje iz sigurnosti:** App Attest / Play Integrity (treba EAS build); po želji isključiti prijavu e-poštom u Supabase Auth (aplikacija je ne koristi).
 - **Brzina:** mjeriti hladno pokretanje (cilj < 1,5 s), virtualizirani popisi, bez mreže na putu unosa (već tako).
 - **Izdvajanje u trgovinama:** Apple ima obrazac za nominaciju u App Store Connectu, Google „Featuring“ u Play Consoleu. Što pomaže:
   izvorni osjećaj, pristupačnost (Dynamic Type, VoiceOver), widget, brze radnje / Prečaci, Prijava s Appleom, privatnost (bez praćenja), hrvatski jezik, dobre ocjene.
