@@ -8,9 +8,9 @@ export interface Scheduled {
   published: string;
 }
 
-export function blogSchedule(today: string): { next: Scheduled[]; scheduledCount: number; last: Scheduled | null } {
+export function blogSchedule(today: string, count = 5): { next: Scheduled[]; scheduledCount: number; last: Scheduled | null } {
   const pick = (p: { slug: string; title: string; published: string }): Scheduled => ({ slug: p.slug, title: p.title, published: p.published });
   const future = allPosts.filter((p) => p.published > today).sort((a, b) => a.published.localeCompare(b.published));
   const past = allPosts.filter((p) => p.published <= today); // allPosts je od najnovijeg
-  return { next: future.slice(0, 5).map(pick), scheduledCount: future.length, last: past[0] ? pick(past[0]) : null };
+  return { next: future.slice(0, count).map(pick), scheduledCount: future.length, last: past[0] ? pick(past[0]) : null };
 }

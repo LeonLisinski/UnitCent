@@ -3,7 +3,6 @@
   "build": {
     "admin": {
       "distribution": "internal",
-      "channel": "admin",
       "autoIncrement": true,
       "environment": "production",
       "ios": { "simulator": false }
