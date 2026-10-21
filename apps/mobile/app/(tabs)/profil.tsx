@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { Pressable, Switch, TextInput, View } from "react-native";
+import { Platform, Pressable, Switch, TextInput, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import Constants from "expo-constants";
 import * as Haptics from "expo-haptics";
 import { currencyInfo, formatEur, yearMonthOf } from "@unitcent/core";
 import { homeCurrency } from "../../src/currency";
 import { useAccount } from "../../src/account";
-import { DEV_TOOLS, isDevPremium, setDevPremium, usePremium } from "../../src/premium";
+import { FREE_HISTORY_MONTHS, FREE_SCANS, usePremium } from "../../src/premium";
 import { Avatar, GoldButton } from "../../src/components";
 import { AccountCta } from "../../src/AccountSection";
 import { useDb } from "../../src/data";
@@ -19,7 +19,7 @@ import { useToast } from "../../src/toast";
 import { T } from "../../src/ui";
 import { getLatestPlanBefore, getMonthSummary, getPlan, kvGet, kvSet, listCategories, savingsStats, today } from "../../src/db/repo";
 import { disableReminders, enableReminders, remindersEnabled } from "../../src/notifications";
-import { openManageSubscription } from "../../src/purchases";
+import { refreshPlanInfo, restorePurchases } from "../../src/purchases";
 import { LOCK_AVAILABLE, isLockEnabled, setLockEnabled, unlockMethodLabel } from "../../src/appLock";
 
 const THEMES: { key: ThemePreference; icon: string; label: string }[] = [
@@ -66,7 +66,11 @@ export default function Profil() {
   const router = useRouter();
   const account = useAccount();
   const premium = usePremium();
-  const devPremium = useDb(() => isDevPremium());
+  const planProduct = useDb(() => kvGet("premium.product") ?? "");
+  const onTrial = useDb(() => kvGet("premium.trial") === "1");
+  useEffect(() => {
+    if (premium) void refreshPlanInfo();
+  }, [premium]);
   const month = yearMonthOf(today());
   const plan = useDb(() => getPlan(month) ?? getLatestPlanBefore(month));
   const cats = useDb(() => listCategories());
@@ -121,20 +125,40 @@ export default function Profil() {
       </View>
 
       {/* Dvije istaknute radnje istog oblika: račun (gost) i Premium */}
-      {guest || !premium ? (
-        <View style={{ gap: 12, alignItems: "center" }}>
-          {guest ? <AccountCta /> : null}
-          {premium ? null : <GoldButton label="Nadogradi na Premium" onPress={() => router.push("/premium" as Href)} />}
+      {guest ? (
+        <View style={{ alignItems: "center" }}>
+          <AccountCta />
         </View>
       ) : null}
 
+      {/* Pretplata: koji plan imaš. Besplatno = poziv na Premium i vraćanje kupnje; Premium = gdje se otkazuje. */}
       {premium ? (
-        <Group>
-          <Row icon="star" gold title="Premium je aktivan" subtitle="Cijela povijest i neograničeno skeniranje" onPress={() => router.push("/premium" as Href)} />
-          {/* Promjena plana i otkazivanje idu preko trgovine; uvijek dostupno, ali tiho. */}
-          <Row icon="card" title="Upravljaj pretplatom" external onPress={() => void openManageSubscription()} />
+        <Group title="Pretplata">
+          <Row
+            icon="star"
+            gold
+            title={`Premium${planProduct.includes("yearly") ? " · godišnje" : planProduct.includes("monthly") ? " · mjesečno" : ""}${onTrial ? " · proba" : ""}`}
+            subtitle={Platform.OS === "ios" ? "Otkazuje se u Postavkama iPhonea: tvoje ime → Pretplate" : "Otkazuje se u Google Playu: Plaćanja i pretplate"}
+          />
         </Group>
-      ) : null}
+      ) : (
+        <View style={{ gap: 12 }}>
+          <Group title="Pretplata">
+            <Row icon="star" title="Besplatna verzija" subtitle={`${FREE_SCANS} skeniranja mjesečno · zadnjih ${FREE_HISTORY_MONTHS} mjeseci`} />
+            <Row
+              icon="repeat"
+              title="Vrati kupnju"
+              onPress={async () => {
+                const r = await restorePurchases();
+                toast.show(r === "ok" ? "Kupnja je vraćena" : r === "unavailable" ? "Prijavi se pa pokušaj ponovno" : "Nema kupnje za vratiti");
+              }}
+            />
+          </Group>
+          <View style={{ alignItems: "center" }}>
+            <GoldButton label="Nadogradi na Premium" onPress={() => router.push("/premium" as Href)} />
+          </View>
+        </View>
+      )}
 
       <Group title="Novac">
         <Row
@@ -175,17 +199,6 @@ export default function Profil() {
       <Group title="Račun">
         <Row icon="shield" title="Podaci i privatnost" subtitle="Izvoz, odjava, brisanje računa" onPress={() => router.push("/podaci" as Href)} />
       </Group>
-
-      {DEV_TOOLS ? (
-        <Group title="Testiranje" footer="Vidljivo samo u testnim buildovima. Na dev poslužitelju uključuje i Premium ograničenja (npr. 100 skeniranja).">
-          <Row
-            icon="star"
-            gold
-            title="Premium (test)"
-            right={<Switch value={devPremium} onValueChange={(v) => void setDevPremium(v).then((ok) => !ok && toast.show("Testni Premium vrijedi samo u aplikaciji (poslužitelj nije potvrdio)"))} trackColor={{ false: colors["border-strong"], true: colors.brand }} thumbColor="#ffffff" ios_backgroundColor={colors["border-strong"]} />}
-          />
-        </Group>
-      ) : null}
 
       <T v="caption" muted style={{ textAlign: "center" }}>UnitCent · verzija {Constants.expoConfig?.version ?? ""}</T>
     </TabScreen>

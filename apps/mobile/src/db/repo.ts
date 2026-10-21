@@ -6,6 +6,7 @@ import {
   occurrenceDate,
   parseAmount,
   summarizeMonth,
+  savingsForMonth,
   todayInZone,
   uuidV5,
   uuidV7,
@@ -704,7 +705,7 @@ export function getMonthSummary(todayDate: LocalDate = today()): { limit: LimitR
     // Potrošeno prije praćenja vrijedi samo za mjesec u kojem je upisano, ne za naslijeđeni plan.
     plan: {
       incomeCents: plan?.incomeCents ?? 0,
-      savingsCents: plan?.savingsCents ?? 0,
+      savingsCents: savingsForMonth(plan?.savingsCents ?? 0, getSavings(month)?.actualCents),
       spentBeforeCents: plan?.month === month ? plan.spentBeforeCents : 0,
     },
     recurring,
@@ -810,7 +811,7 @@ export function monthLeftover(month: YearMonth): Cents {
   const r = summarizeMonth({
     plan: {
       incomeCents: plan.incomeCents,
-      savingsCents: plan.savingsCents,
+      savingsCents: savingsForMonth(plan.savingsCents, getSavings(month)?.actualCents),
       spentBeforeCents: plan.month === month ? plan.spentBeforeCents : 0,
     },
     recurring: listRecurring(),

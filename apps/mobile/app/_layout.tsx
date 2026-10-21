@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import { openDatabaseAsync } from "expo-sqlite";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
@@ -28,6 +28,7 @@ import { startSync } from "../src/sync";
 import { supabase } from "../src/supabase";
 import { rescheduleReminders } from "../src/notifications";
 import { initCurrency, refreshRates } from "../src/currency";
+import { DEMO, demoScan, seedDemo } from "../src/demo";
 
 initMonitoring(); // greške se prate od prvog trenutka
 
@@ -46,11 +47,20 @@ function initLocalData(): true {
   ensureCategories();
   bookDueRecurring();
   initCurrency();
+  if (DEMO) {
+    seedDemo(); // samo razvoj na webu, ?demo=1 (snimke za trgovine)
+    demoScan();
+  }
   return true;
 }
 
 function Shell() {
   const { scheme, colors } = useTheme();
+  const router = useRouter();
+  // Demo (snimke za trgovine): skripta mijenja ekran bez ponovnog učitavanja (zadnje skeniranje je u memoriji).
+  useEffect(() => {
+    if (DEMO) (globalThis as { __go?: (href: string) => void }).__go = (href) => router.push(href as never);
+  }, [router]);
   useEffect(() => {
     if (startupReported) return;
     startupReported = true;

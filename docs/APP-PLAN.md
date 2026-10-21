@@ -106,7 +106,7 @@ docs/            plan, proizvod, odluke (ADR)
 
 **Formula dnevnog limita** (jedina definicija; implementacija samo u `packages/core`):
 
-1. **Raspoloživo za mjesec** = primanja − obavezno − štednja.
+1. **Raspoloživo za mjesec** = primanja − obavezno − štednja. Štednja je potvrđeni iznos za taj mjesec (ekran Štednja, „Prebačeno“) kad postoji, inače planirani (`savingsForMonth`); potvrda „Ništa“ vraća planirani iznos u trošenje.
 2. **Obavezno** = zbroj aktivnih `recurring_items` koji padaju u taj mjesec.
 3. **Potrošeno** = troškovi u mjesecu **bez** onih sa `source = recurring`. Ti su već oduzeti kroz „obavezno“; brojati ih i ovdje znači oduzeti istu pretplatu dvaput.
 4. **Dnevni budžet** = (raspoloživo − potrošeno *prije današnjeg dana*) ÷ preostali dani uključujući danas. Računa se jednom za taj dan.

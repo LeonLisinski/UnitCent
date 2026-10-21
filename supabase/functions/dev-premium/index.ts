@@ -1,6 +1,6 @@
 // dev-premium: testni prekidač Premiuma (Profil → Testiranje) i na poslužitelju, da se Premium ograničenja
-// (npr. 100 skeniranja) mogu isprobati prije nego je RevenueCat spojen. Radi SAMO na dev projektu (popis ispod):
-// na stagingu i produkciji vraća 403, čak i ako je funkcija slučajno objavljena.
+// (npr. 100 skeniranja) mogu isprobati bez kupnje. Projekt „UnitCent“ je i produkcija, pa prekidač smije samo
+// vlasnik: prijavljena, potvrđena e-adresa iz ADMIN_EMAILS (ista tajna kao za admin). Svi ostali dobivaju 403.
 // Ne dira pravu kupnju: piše i briše samo redak sa source = 'dev'.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { allow, tooMany } from "../_shared/rateLimit.ts";
@@ -27,6 +27,9 @@ Deno.serve(async (req) => {
   const { data: u, error: authErr } = await asUser.auth.getUser();
   if (authErr || !u.user) return json({ error: "unauthorized" }, 401);
   const uid = u.user.id;
+  const allowed = (Deno.env.get("ADMIN_EMAILS") ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+  const email = (u.user.email ?? "").toLowerCase();
+  if (u.user.is_anonymous || !email || !u.user.email_confirmed_at || !allowed.includes(email)) return json({ error: "forbidden" }, 403);
 
   let on = false;
   try {

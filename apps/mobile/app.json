@@ -3,7 +3,7 @@
     "name": "UnitCent",
     "slug": "unitcent",
     "scheme": "unitcent",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -11,6 +11,10 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.unitcent.app",
+      "usesAppleSignIn": true,
+      "entitlements": {
+        "com.apple.developer.applesignin": ["Default"]
+      },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }

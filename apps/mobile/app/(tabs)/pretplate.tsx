@@ -76,7 +76,7 @@ export default function Pretplate() {
   const nav = { month, onChange: setMonth, min: earliest, max: latest, lockedBefore: premium ? undefined : freeMinMonth(), onLocked: () => router.push(premiumHref("history")) };
 
   return (
-    <TabScreen onSwipe={(dir) => stepMonth(dir, nav)}>
+    <TabScreen onSwipe={(dir) => stepMonth(dir, nav)} sticky={<MonthSwitcher {...nav} />}>
       <Animated.View entering={enter(0)}>
         <PageHeader>
           <MonthSwitcher {...nav} />

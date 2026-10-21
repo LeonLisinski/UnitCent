@@ -5,7 +5,7 @@ import { obligatoryForMonth, occurrenceDate, type RecurringItem } from "./recurr
 /**
  * Preporučeni dnevni trošak. JEDINA definicija formule (docs/APP-PLAN.md §4.2).
  *
- *  raspoloživo   = primanja (+ neplanirani prihodi) − obavezno − štednja
+ *  raspoloživo   = primanja (+ neplanirani prihodi) − obavezno − štednja (potvrđena za mjesec, inače planirana: savingsForMonth)
  *  potrošeno     = troškovi u mjesecu BEZ source = "recurring" (pretplate su već u „obavezno”)
  *  dnevni iznos  = (raspoloživo − potrošeno prije današnjeg dana) ÷ preostali dani uključujući danas
  *  danas još     = dnevni iznos − potrošeno danas   (može biti negativno: „X € preko”)
@@ -168,4 +168,12 @@ export function checkAfford(limit: LimitResult, amountCents: Cents): AffordResul
     fitsToday: leftToday >= 0,
     fitsMonth: monthLeft >= 0,
   };
+}
+
+/**
+ * Štednja koja ulazi u formulu za mjesec: potvrđeni iznos („ovaj mjesec prebacio sam X €“) kad postoji,
+ * inače planirani. Tko potvrdi da ovaj mjesec ne štedi (0 €), dobiva taj iznos natrag za trošenje.
+ */
+export function savingsForMonth(plannedCents: Cents, confirmedCents: Cents | null | undefined): Cents {
+  return confirmedCents ?? plannedCents;
 }

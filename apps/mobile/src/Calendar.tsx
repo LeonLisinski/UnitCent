@@ -92,16 +92,23 @@ export function Calendar({
                     {c.label}
                   </T>
                 </View>
-                {subs.slice(0, subs.length > 2 ? 1 : 2).map((s) => {
-                  const cat = catById.get(s.categoryId ?? "");
-                  return (
-                    <View key={s.id} style={{ opacity: past ? 0.55 : 1 }}>
-                      <CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={recurringIcon(s, cat?.icon)} size={24} />
-                    </View>
-                  );
-                })}
-                {subs.length > 2 ? (
-                  <T v="caption" muted style={{ fontSize: 10, fontWeight: "800", opacity: past ? 0.55 : 1 }}>+{subs.length - 1}</T>
+                {subs.length > 0 ? (
+                  // Više naplata istog dana: ikone jedna pored druge, malo preklopljene (do 3; inače 2 i „+n“).
+                  <View style={{ flexDirection: "row", alignItems: "center", opacity: past ? 0.55 : 1 }}>
+                    {subs.slice(0, subs.length > 3 ? 2 : 3).map((s, si) => {
+                      const cat = catById.get(s.categoryId ?? "");
+                      return (
+                        <View key={s.id} style={{ marginLeft: si === 0 ? 0 : -7, borderRadius: 12, borderWidth: 1.5, borderColor: colors.bg, backgroundColor: colors.bg }}>
+                          <CatIcon colorToken={cat?.colorToken ?? "cat-pretplate"} icon={recurringIcon(s, cat?.icon)} size={19} />
+                        </View>
+                      );
+                    })}
+                    {subs.length > 3 ? (
+                      <View style={{ marginLeft: -7, width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: colors.bg, backgroundColor: colors["surface-2"], alignItems: "center", justifyContent: "center" }}>
+                        <T v="caption" style={{ fontSize: 9, fontWeight: "800" }}>+{subs.length - 2}</T>
+                      </View>
+                    ) : null}
+                  </View>
                 ) : null}
               </Pressable>
             );

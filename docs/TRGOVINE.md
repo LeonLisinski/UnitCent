@@ -24,8 +24,8 @@ primjer iz CLAUDE.md (ne mijenjati bez razloga). Duljine su provjerene.
 - **Podnaslov (29/30):** Koliko danas smijem potrošiti
 - **Ključne riječi (89/100, bez razmaka, bez riječi iz naziva):**
   `troškovi,budžet,štednja,financije,novac,računi,pretplate,skeniranje,plaća,potrošnja,kućni`
-- **Promotivni tekst (159/170, mijenja se bez nove verzije):**
-  Novo: AI skeniranje računa razvrsta stavke po kategorijama, a tjedni sažetak stiže ponedjeljkom. Besplatno: unos, pretplate, dnevni budžet i rad bez interneta.
+- **Promotivni tekst (≤170, mijenja se bez nove verzije):**
+  Slikaj račun i stavke se same razvrstaju po kategorijama. Premium isprobaj 7 dana besplatno. Unos, pretplate i dnevni budžet uvijek su besplatni.
 
 **Google Play**
 - **Naslov (23/30):** UnitCent: Dnevni budžet
@@ -38,7 +38,7 @@ primjer iz CLAUDE.md (ne mijenjati bez razloga). Duljine su provjerene.
 > Upišeš primanja, obavezne troškove i koliko želiš uštedjeti. UnitCent iz toga svaki dan izračuna tvoj dnevni budžet. Potrošiš li danas manje, sutra imaš više. Potrošiš li više, ostatak mjeseca se sam preračuna.
 >
 > BRZO
-> • Trošak upišeš za 3 sekunde, i bez interneta.
+> • Trošak upišeš u par dodira, i bez interneta.
 > • Pretplate i fiksni troškovi knjiže se sami na svoj dan.
 > • Prsten na Početnoj pokazuje koliko ti je ostalo za danas.
 >
@@ -97,7 +97,7 @@ Kratki video (do 30 s, po želji): otvaranje → prsten → unos → prsten se p
 ## 5. Bilješke za pregled (App Review / Play)
 
 > UnitCent radi bez prijave: na prvom ekranu odaberite „Nastavi kao gost“. Prijava (Apple/Google) samo sprema podatke na više uređaja.
-> Premium se kupuje u aplikaciji (Profil → Nadogradi na Premium); obnova kupnje: Profil → Podaci i privatnost → Vrati kupnju.
+> Premium se kupuje u aplikaciji (Profil → Nadogradi na Premium); obnova kupnje: Profil → Pretplata → Vrati kupnju.
 > Brisanje računa: Profil → Podaci i privatnost → Obriši račun i sve podatke.
 > AI skeniranje: kamera → slikati bilo koji račun; prva 3 skeniranja mjesečno su besplatna.
 
@@ -116,8 +116,14 @@ Kratki video (do 30 s, po želji): otvaranje → prsten → unos → prsten se p
 **App Store:** App Store Connect → aplikacija → **Featuring Nominations** → nova nominacija (vrsta „New App“), najmanje 2 do 3 tjedna prije objave.
 **Google Play:** Play Console → **Grow → Store presence → Featuring** (obrazac „Tell us about your app“), isto unaprijed.
 
-Tekst nominacije (prilagoditi):
+Tekst nominacije (engleski, čitaju ga Appleovi urednici; App Launch, Hrvatska):
 
-> UnitCent je hrvatska aplikacija za osobne financije koja odgovara na jedno pitanje: koliko danas smijem potrošiti. Umjesto tablica i grafova, korisnik vidi jedan broj u prstenu koji se mijenja sa svakim unosom. Unos traje 3 sekunde i radi bez interneta, pretplate se knjiže same, a AI čita fiskalne račune i razvrstava stavke po kategorijama (podaci se ne čuvaju, slike se brišu odmah). Napravljena je za hrvatsko tržište: jezik, euro, fiskalni QR kod. Bez reklama i bez praćenja; podaci se mogu izvesti i obrisati u aplikaciji. Pristupačnost: Dynamic Type, VoiceOver oznake, kontrast ≥ 4,5 : 1, poštuje „smanji pokret“. Tamna i svijetla tema, prijava Appleom, Face ID zaključavanje.
+> UnitCent is a Croatian personal finance app built around one question: how much can I spend today? Instead of tables and charts, the home screen shows a single number in a ring that updates with every expense.
+>
+> Users enter their income, fixed costs and savings goal once; UnitCent turns that into a daily budget and recalculates the rest of the month automatically. Logging an expense takes a few taps and works fully offline. Subscriptions and fixed bills are posted on their due date by themselves.
+>
+> Premium adds AI receipt scanning: the user photographs a Croatian fiscal receipt, the app reads its fiscal QR code and the line items, and sorts each item into a category. Receipt images are processed and not stored.
+>
+> Built for the Croatian market: Croatian language, euro, local stores and fiscal receipts. No ads, no tracking; data export and account deletion are in the app. Sign in with Apple, Face ID lock, light and dark themes, Dynamic Type, VoiceOver labels, 4.5:1 contrast and Reduce Motion support.
 
 Što povećava šanse (već imamo / treba): izvorni osjećaj ✔, prijava Appleom ✔, privatnost ✔, hrvatski ✔, pristupačnost ✔, brze radnje na ikoni ✔ (novi build), widget (nema), dobre ocjene (traženje ocjene u trenutku zadovoljstva, nije još napravljeno).

@@ -9,8 +9,7 @@ import { useToast } from "../src/toast";
 import { T } from "../src/ui";
 import { deleteAccountAndData, exportData } from "../src/dataTools";
 import { analyticsEnabled, setAnalyticsEnabled } from "../src/analytics";
-import { reportError } from "../src/monitoring";
-import { openManageSubscription, restorePurchases } from "../src/purchases";
+import { openManageSubscription } from "../src/purchases";
 import { usePremium } from "../src/premium";
 import { signOutAndClear, useAccount } from "../src/account";
 
@@ -88,25 +87,14 @@ export default function Podaci() {
           <Group title="Moji podaci">
             <Row
               icon="download"
-              title="Izvezi podatke"
+              title="Izvezi troškove"
+              subtitle="Tablica za Excel ili Numbers"
               onPress={async () => {
                 try {
                   if (!(await exportData())) toast.show("Dijeljenje nije dostupno na ovom uređaju");
                 } catch {
                   toast.show("Izvoz nije uspio");
                 }
-              }}
-            />
-          </Group>
-
-          <Group title="Premium">
-            <Row
-              icon="repeat"
-              gold
-              title="Vrati kupnju"
-              onPress={async () => {
-                const r = await restorePurchases();
-                toast.show(r === "ok" ? "Kupnja je vraćena" : r === "unavailable" ? "Dostupno u službenoj verziji aplikacije" : "Nema kupnje za vratiti");
               }}
             />
           </Group>
@@ -136,19 +124,6 @@ export default function Podaci() {
             <Row icon="file" title="Uvjeti korištenja" external onPress={() => void Linking.openURL(`${SITE}/uvjeti`)} />
           </Group>
 
-          {__DEV__ ? (
-            <Group title="Razvoj">
-              <Row
-                icon="info"
-                title="Pošalji testnu grešku u Sentry"
-                subtitle="Vidi se u Issues nakon nekoliko sekundi"
-                onPress={() => {
-                  reportError(new Error("Testna greška iz razvoja (UnitCent)"), "dev-test");
-                  toast.show("Testna greška poslana");
-                }}
-              />
-            </Group>
-          ) : null}
 
           {account.hasSession && !account.anonymous ? (
             <Group title="Račun">

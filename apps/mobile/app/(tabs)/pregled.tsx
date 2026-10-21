@@ -79,7 +79,7 @@ export default function Pregled() {
   const nav = { month, onChange: setMonth, min: earliest, max: thisMonth, lockedBefore: premium ? undefined : freeMinMonth(), onLocked: () => router.push(premiumHref("history")) };
 
   return (
-    <TabScreen onSwipe={(dir) => stepMonth(dir, nav)} floating={<AdvisorFab />}>
+    <TabScreen onSwipe={(dir) => stepMonth(dir, nav)} sticky={<MonthSwitcher {...nav} />} floating={<AdvisorFab />}>
       <Animated.View entering={enter(0)}>
         <PageHeader>
           <MonthSwitcher {...nav} />

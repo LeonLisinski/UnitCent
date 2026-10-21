@@ -6,30 +6,44 @@ import { notifyDbChanged } from "./db/events";
 import { ensureCategories, today } from "./db/repo";
 import { ensureAnonymousSession, supabase } from "./supabase";
 
-/** Izvoz svih korisnikovih podataka u JSON (pravo na prenosivost; besplatno za sve). */
+/** Polje za CSV: navodnici samo kad treba (razdjelnik, navodnik, novi red). */
+const cell = (v: string) => (/[;"\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+/** Iznos u centima kao „12,34“ (decimalni zarez, bez tisućica: Excel ga čita kao broj). */
+const amount = (cents: number) => `${Math.trunc(cents / 100)},${String(Math.abs(cents) % 100).padStart(2, "0")}`;
+
+/**
+ * Izvoz troškova i prihoda u CSV za Excel/Numbers (pravo na prenosivost; besplatno za sve).
+ * Samo ono što korisnik vidi: datum, vrsta, iznos, kategorija, trgovac, bilješka, porijeklo. Bez ID-jeva i
+ * tehničkih polja: podaci su korisnikovi, a struktura aplikacije nije dio izvoza.
+ */
 export async function exportData(): Promise<boolean> {
-  const db = getDb();
-  const all = (t: string) => db.getAllSync(`select * from ${t} where deleted_at is null order by created_at`);
-  const payload = {
-    app: "UnitCent",
-    exportedAt: new Date().toISOString(),
-    currency: homeCurrency(),
-    note: "Iznosi (amount_cents, *_cents) su u stotinkama navedene valute.",
-    categories: all("categories"),
-    transactions: all("transactions"),
-    recurring_items: all("recurring_items"),
-    month_plans: all("month_plans"),
-    savings_entries: all("savings_entries"),
-    receipts: all("receipts"),
-    receipt_items: all("receipt_items"),
-    budgets: all("budgets"),
-  };
-  const file = new File(Paths.cache, `unitcent-podaci-${today()}.json`);
+  const rows = getDb().getAllSync<{ local_date: string; type: string; amount_cents: number; category: string | null; merchant: string | null; note: string | null; source: string }>(
+    `select t.local_date, t.type, t.amount_cents, c.name as category, t.merchant, t.note, t.source
+       from transactions t left join categories c on c.id = t.category_id
+      where t.deleted_at is null
+      order by t.local_date, t.occurred_at`,
+  );
+  const SOURCE: Record<string, string> = { manual: "Ručni unos", scan: "Skeniran račun", recurring: "Pretplata" };
+  const lines = [
+    ["Datum", "Vrsta", `Iznos (${homeCurrency()})`, "Kategorija", "Trgovac", "Bilješka", "Unos"].join(";"),
+    ...rows.map((r) =>
+      [
+        r.local_date.split("-").reverse().join("."), // 21.10.2026
+        r.type === "income" ? "Prihod" : "Trošak",
+        amount(r.amount_cents),
+        cell(r.category ?? ""),
+        cell(r.merchant ?? ""),
+        cell(r.note ?? ""),
+        SOURCE[r.source] ?? "",
+      ].join(";"),
+    ),
+  ];
+  const file = new File(Paths.cache, `unitcent-troskovi-${today()}.csv`);
   if (file.exists) file.delete();
   file.create();
-  file.write(JSON.stringify(payload, null, 2));
+  file.write("﻿" + lines.join("\r\n")); // BOM: Excel prepozna UTF-8 (č, ć, š, ž, đ)
   if (!(await Sharing.isAvailableAsync())) return false;
-  await Sharing.shareAsync(file.uri, { mimeType: "application/json", dialogTitle: "Izvezi podatke" });
+  await Sharing.shareAsync(file.uri, { mimeType: "text/csv", UTI: "public.comma-separated-values-text", dialogTitle: "Izvezi troškove" });
   return true;
 }
 

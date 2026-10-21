@@ -1,4 +1,5 @@
 import { Linking, Platform } from "react-native";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import { getDb } from "./db/client";
 import { notifyDbChanged } from "./db/events";
 import { refreshEntitlement, type PlanKey } from "./premium";
@@ -37,8 +38,11 @@ function loadSdk(): PurchasesModule | null {
   }
 }
 
+/** Expo Go nema App Store / Google Play modul: kupnja tamo ne radi, pa se RevenueCat uopće ne pokreće. */
+const IN_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
 async function ensureConfigured(): Promise<boolean> {
-  if (!KEY || !supabase) return false;
+  if (!KEY || !supabase || IN_EXPO_GO) return false;
   const { data } = await supabase.auth.getSession();
   const uid = data.session?.user.id;
   if (!uid) return false;
@@ -53,11 +57,34 @@ async function ensureConfigured(): Promise<boolean> {
 
 export const purchasesConfigured = (): boolean => !!KEY;
 
+type EntitlementInfo = { expirationDate: string | null; productIdentifier?: string; periodType?: string };
+type CustomerInfoLike = { entitlements: { active: Record<string, EntitlementInfo> } };
+const setKv = (key: string, value: string) =>
+  getDb().runSync("insert into kv (key, value) values (?, ?) on conflict(key) do update set value = excluded.value", [key, value]);
+
+/** Koji plan je aktivan i je li probno razdoblje (za redak „Pretplata“ u Profilu). */
+function applyPlanInfo(info: CustomerInfoLike): void {
+  const e = activePremium(info.entitlements.active);
+  setKv("premium.product", e?.productIdentifier ?? "");
+  setKv("premium.trial", e?.periodType === "TRIAL" ? "1" : "");
+}
+
 /** Zapisuje status pretplate lokalno odmah nakon kupnje (poslužiteljski redak stiže webhookom nekoliko sekundi kasnije). */
-function applyLocal(info: { entitlements: { active: Record<string, { expirationDate: string | null }> } }): void {
-  const until = activePremium(info.entitlements.active)?.expirationDate ?? "";
-  getDb().runSync("insert into kv (key, value) values ('premium.until', ?) on conflict(key) do update set value = excluded.value", [until]);
+function applyLocal(info: CustomerInfoLike): void {
+  setKv("premium.until", activePremium(info.entitlements.active)?.expirationDate ?? "");
+  applyPlanInfo(info);
   notifyDbChanged();
+}
+
+/** Osvježava podatke o planu (godišnje/mjesečno, proba) iz trgovine; pristup i dalje određuje poslužitelj. */
+export async function refreshPlanInfo(): Promise<void> {
+  try {
+    if (!(await ensureConfigured())) return;
+    applyPlanInfo((await loadSdk()!.getCustomerInfo()) as never);
+    notifyDbChanged();
+  } catch {
+    // ostaje zadnja poznata vrijednost
+  }
 }
 
 export async function purchasePlan(plan: PlanKey): Promise<PurchaseResult> {

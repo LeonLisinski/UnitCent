@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Modal, Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from "react-native-reanimated";
 import { Safe, useInsets, useKeyboardHeight } from "./safe";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Glass, Glow, RoundButton, recentlySwiped } from "./fx";
 import { Icon } from "./icons";
 import { PremiumMark } from "./components";
@@ -34,15 +35,27 @@ export function TabScreen({
   children,
   onSwipe,
   floating,
+  sticky,
 }: {
   children: ReactNode;
   /** Vodoravni swipe po ekranu: −1 = prethodno (prst udesno), 1 = sljedeće (prst ulijevo). Npr. promjena mjeseca. */
   onSwipe?: (dir: -1 | 1) => void;
   /** Lebdeći element iznad sadržaja (npr. gumb savjetnika), izvan skrolanja. */
   floating?: ReactNode;
+  /** Traka pri vrhu koja se pojavi tek kad zaglavlje odskrola (npr. izbor mjeseca na Pregledu i Pretplatama). */
+  sticky?: ReactNode;
 }) {
   const { colors } = useTheme();
   const scroll = useRef<ScrollView>(null);
+  const reduce = useReducedMotion();
+  const safeTop = useSafeAreaInsets().top; // isti izvor kao SafeAreaView ispod
+  const { width: winW, height: winH } = useWindowDimensions();
+  const [stuck, setStuck] = useState(false);
+  const stickyOpacity = useSharedValue(0);
+  useEffect(() => {
+    stickyOpacity.value = reduce ? (stuck ? 1 : 0) : withTiming(stuck ? 1 : 0, { duration: 160 });
+  }, [stuck, reduce]);
+  const stickyStyle = useAnimatedStyle(() => ({ opacity: stickyOpacity.value }));
   // Samo ekran koji je trenutno otvoren reagira na ponovni dodir svog taba.
   const focused = useRef(false);
   useFocusEffect(
@@ -69,16 +82,42 @@ export function TabScreen({
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Glow />
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
+        {/* Omotač: apsolutna traka se mjeri od njega, tj. ispod sigurne zone (status traka, Dynamic Island). */}
+        <View style={{ flex: 1 }}>
         <GestureDetector gesture={pan}>
           <ScrollView
             ref={scroll}
             contentContainerStyle={{ paddingHorizontal: PAD, paddingTop: 12, paddingBottom: 140, gap: SECTION_GAP }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            scrollEventThrottle={32}
+            onScroll={
+              sticky
+                ? (e) => {
+                    // Zaglavlje (12 + HEADER_H) je odskrolalo: traka preuzima njegovu ulogu.
+                    const past = e.nativeEvent.contentOffset.y > 12 + HEADER_H;
+                    if (past !== stuck) setStuck(past);
+                  }
+                : undefined
+            }
           >
             {children}
           </ScrollView>
         </GestureDetector>
+        {sticky ? (
+          <Animated.View
+            pointerEvents={stuck ? "auto" : "none"}
+            aria-hidden={!stuck}
+            style={[{ position: "absolute", top: 0, left: 0, right: 0, paddingHorizontal: PAD, paddingVertical: 6, overflow: "hidden" }, stickyStyle]}
+          >
+            {/* Ista pozadina kao ekran (prijelaz + sjaj), poravnata s njom: traka je dio stranice, ne tamna ploča. */}
+            <View pointerEvents="none" style={{ position: "absolute", top: -safeTop, left: 0, width: winW, height: winH }}>
+              <Glow />
+            </View>
+            {sticky}
+          </Animated.View>
+        ) : null}
+        </View>
       </SafeAreaView>
       {floating}
     </View>
@@ -138,7 +177,14 @@ export function ModalScreen({
               {children}
             </ScrollView>
           ) : (
-            <View style={{ flex: 1, paddingHorizontal: PAD, paddingTop: floatingClose ? 14 : 4, paddingBottom: 12, justifyContent: "space-evenly" }}>{children}</View>
+            // Raspoređuje po visini kad stane, a skrola kad ne stane (veći tekst, mali ekran): nikad preklapanje.
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{ flexGrow: 1, paddingHorizontal: PAD, paddingTop: floatingClose ? 14 : 4, paddingBottom: 12, justifyContent: "space-evenly", gap: 16 }}
+              showsVerticalScrollIndicator={false}
+            >
+              {children}
+            </ScrollView>
           )}
           {footer ? <View style={{ paddingHorizontal: PAD, paddingTop: 8, paddingBottom: 12, alignItems: "center", gap: 2 }}>{footer}</View> : null}
         </View>
