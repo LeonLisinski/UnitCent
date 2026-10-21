@@ -13,7 +13,7 @@ export default function Privatnost() {
     <main className="wrap legal prose">
       <p><Link href="/" className="muted">← UnitCent</Link></p>
       <h1>Privatnost</h1>
-      <p className="muted">Nacrt, prije lansiranja potrebna je pravna provjera.</p>
+      <p className="muted">Zadnja izmjena 21. 10. 2026.</p>
 
       <h2>Ukratko</h2>
       <ul>
@@ -29,7 +29,7 @@ export default function Privatnost() {
       <p>Podatke koje sam upišeš: iznose, kategorije, pretplate, primanja i plan. Slike računa koje skeniraš. Podatke za prijavu (e-adresa ili Apple/Google račun). Osnovne tehničke podatke potrebne za rad i ispravljanje grešaka.</p>
 
       <h2>Kako se koriste slike računa</h2>
-      <p>Slika računa šalje se na našu uslugu radi čitanja stavki i razvrstavanja po kategorijama. Obradu radi AI model putem našeg poslužitelja. Sliku brišemo nakon obrade, osim ako sam odabereš da je želiš čuvati uz trošak.</p>
+      <p>Slika računa šalje se na našu uslugu radi čitanja stavki i razvrstavanja po kategorijama. Obradu radi AI model putem našeg poslužitelja. Sliku ne spremamo: nakon obrade se briše, a uz trošak ostaju samo trgovac, iznos i stavke.</p>
 
       <h2>E-mailovi</h2>
       <p>Ako se prijaviš e-adresom (Apple ili Google), šaljemo ti dobrodošlicu, savjet za prvi tjedan, tjedni sažetak i mjesečni pregled. Svaki mail ima odjavu jednim klikom, a izbor mijenjaš i u aplikaciji (Profil, E-mailovi). Newsletter je zaseban izbor: dobivaš ga samo ako ga sam uključiš. Podsjetnici za unos su obavijesti na mobitelu, ne mailovi. Gosti (bez prijave) ne primaju mailove.</p>

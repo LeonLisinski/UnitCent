@@ -87,7 +87,8 @@ Kratki video (do 30 s, po želji): otvaranje → prsten → unos → prsten se p
 | Kupnje → Povijest kupnji (RevenueCat) | Da | Da | Funkcionalnost |
 | Korištenje → Interakcija s proizvodom (PostHog, isključivo) | Da | **Ne** | Analitika |
 | Dijagnostika → Rušenja, performanse (Sentry) | Da | **Ne** | Funkcionalnost aplikacije |
-| Fotografije (slike računa) | **Ne** (obrađuju se u stvarnom vremenu i ne čuvaju) | | |
+| Kontakt → Ime (iz Apple/Google prijave, za mailove) | Da | Da | Funkcionalnost; marketing razvojnog tima |
+| Korisnički sadržaj → Fotografije (slike računa; Gemini ih kratko čuva radi zloupotrebe) | Da | **Ne** | Funkcionalnost aplikacije |
 
 **Google Play „Data safety“**
 - Podaci se šifriraju u prijenosu: **Da**. Korisnik može zatražiti brisanje: **Da** (u aplikaciji + https://unitcent.com/privatnost).

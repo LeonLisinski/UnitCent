@@ -26,11 +26,13 @@ export function Stores({ className = "" }: { className?: string }) {
     <div className={`stores ${className}`.trim()}>
       <button type="button" className="store" aria-disabled="true" aria-label="App Store, uskoro">
         <AppleMark />
-        <span><small>Uskoro na</small><strong>App Store</strong></span>
+        <strong>App Store</strong>
+        <span className="store-soon">Uskoro</span>
       </button>
       <button type="button" className="store" aria-disabled="true" aria-label="Google Play, uskoro">
         <PlayMark />
-        <span><small>Uskoro na</small><strong>Google Play</strong></span>
+        <strong>Google Play</strong>
+        <span className="store-soon">Uskoro</span>
       </button>
     </div>
   );

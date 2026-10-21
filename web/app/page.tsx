@@ -115,8 +115,11 @@ export default function Home() {
               <div className="label">Dnevni budžet</div>
               <div className="hero-number num"><CountUp to={DAILY} /></div>
               <h1 id="h-hero">Znaj koliko smiješ potrošiti. <em className="serif">Svaki dan.</em></h1>
-              <div id="prijava" className="hero-form"><Waitlist id="wl-hero" where="hero" /></div>
               <Stores className="hero-stores" />
+              <div id="prijava" className="hero-form secondary">
+                <p className="wl-lead">Javimo ti čim izađe:</p>
+                <Waitlist id="wl-hero" where="hero" secondary />
+              </div>
               <div className="meta-row"><span>iPhone + Android</span><span>Fiskalni QR</span><span>Bez reklama</span></div>
             </div>
             <PhoneTilt><PhoneMock /></PhoneTilt>
@@ -263,8 +266,11 @@ export default function Home() {
         <section id="prijava-dno" className="cta" aria-labelledby="h-cta">
           <div className="wrap-full">
             <h2 id="h-cta" data-reveal>Prestani pogađati.<br /><em className="serif">Počni znati.</em></h2>
-            <div className="hero-form center"><Waitlist id="wl-foot" where="footer" /></div>
             <Stores className="cta-stores" />
+            <div className="hero-form center secondary">
+              <p className="wl-lead">Javimo ti čim izađe:</p>
+              <Waitlist id="wl-foot" where="footer" secondary />
+            </div>
           </div>
         </section>
       </main>

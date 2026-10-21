@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { track } from "@vercel/analytics";
 
-export function Waitlist({ id, where }: { id: string; where: "hero" | "footer" }) {
+/** `secondary`: lista čekanja ispod gumba trgovina (rubni gumb, jer je glavna radnja aplikacija). */
+export function Waitlist({ id, where, secondary = false }: { id: string; where: "hero" | "footer"; secondary?: boolean }) {
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
   const [website, setWebsite] = useState("");
@@ -57,7 +58,7 @@ export function Waitlist({ id, where }: { id: string; where: "hero" | "footer" }
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <button className="btn primary" type="submit" disabled={state === "sending"}>
+        <button className={`btn ${secondary ? "ghost" : "primary"}`} type="submit" disabled={state === "sending"}>
           {state === "sending" ? "Šaljem" : "Javi mi kad izađe"}
         </button>
       </div>

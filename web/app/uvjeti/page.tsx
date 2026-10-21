@@ -13,7 +13,7 @@ export default function Uvjeti() {
     <main className="wrap legal prose">
       <p><Link href="/" className="muted">← UnitCent</Link></p>
       <h1>Uvjeti korištenja</h1>
-      <p className="muted">Nacrt, zadnja izmjena 16. 10. 2026. Prije lansiranja potrebna je pravna provjera i upisivanje podataka o pružatelju usluge.</p>
+      <p className="muted">Zadnja izmjena 21. 10. 2026.</p>
 
       <h2>Ukratko</h2>
       <ul>
@@ -52,7 +52,7 @@ export default function Uvjeti() {
       <p>Trudimo se da aplikacija radi bez prekida, ali ne jamčimo stalnu dostupnost. Osnovne funkcije rade i bez interneta. Aplikaciju, ove uvjete i opseg usluge možemo mijenjati; o bitnim promjenama obavijestit ćemo te u aplikaciji ili e-poštom, a daljnje korištenje znači prihvaćanje izmjena.</p>
 
       <h2>10. Ograničenje odgovornosti</h2>
-      <p>U granicama dopuštenim zakonom aplikaciju pružamo „kakva jest“ i ne odgovaramo za neizravnu štetu, izgubljenu dobit ni za štetu nastalu neovlaštenim korištenjem tvog uređaja. Savjetujemo povremeni izvoz podataka (Profil → Izvezi podatke). Ništa u ovim uvjetima ne isključuje odgovornost koja se po zakonu ne može isključiti niti ograničava tvoja prava kao potrošača.</p>
+      <p>U granicama dopuštenim zakonom aplikaciju pružamo „kakva jest“ i ne odgovaramo za neizravnu štetu, izgubljenu dobit ni za štetu nastalu neovlaštenim korištenjem tvog uređaja. Savjetujemo povremeni izvoz podataka (Profil → Podaci i privatnost → Izvezi troškove). Ništa u ovim uvjetima ne isključuje odgovornost koja se po zakonu ne može isključiti niti ograničava tvoja prava kao potrošača.</p>
 
       <h2>11. Prestanak</h2>
       <p>Aplikaciju možeš prestati koristiti i izbrisati račun u svakom trenutku. Brisanje računa ne otkazuje pretplatu u storeu, to moraš napraviti sam u postavkama Apple ili Google računa.</p>
