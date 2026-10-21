@@ -8,10 +8,16 @@ import { supabase } from "./supabase";
  * Kupnja preko RevenueCata (Apple/Google). Radi kad su postavljeni ključevi (EXPO_PUBLIC_RC_IOS_KEY / _ANDROID_KEY) i
  * kad aplikacija radi kao pravi build; inače vraća "unavailable" i aplikacija ostaje na besplatnoj razini.
  * `app_user_id` je Supabase korisnik, pa webhook (supabase/functions/revenuecat-webhook) zna kome upisati pristup.
- * Entitlement u RevenueCatu zove se "premium", a paketi su standardni ($rc_monthly, $rc_annual).
+ * Entitlement u RevenueCatu je „Premium“ (uspoređuje se bez obzira na velika i mala slova), a paketi su standardni ($rc_monthly, $rc_annual).
  */
 const KEY = Platform.OS === "ios" ? process.env.EXPO_PUBLIC_RC_IOS_KEY : process.env.EXPO_PUBLIC_RC_ANDROID_KEY;
 const ENTITLEMENT = "premium";
+
+/** Aktivni Premium entitlement; identifier u RevenueCatu je „Premium“, pa usporedba ne ovisi o velikim slovima. */
+function activePremium<T>(active: Record<string, T>): T | undefined {
+  const key = Object.keys(active).find((k) => k.toLowerCase() === ENTITLEMENT);
+  return key ? active[key] : undefined;
+}
 
 export type PurchaseResult = "ok" | "cancelled" | "unavailable" | "error";
 
@@ -49,7 +55,7 @@ export const purchasesConfigured = (): boolean => !!KEY;
 
 /** Zapisuje status pretplate lokalno odmah nakon kupnje (poslužiteljski redak stiže webhookom nekoliko sekundi kasnije). */
 function applyLocal(info: { entitlements: { active: Record<string, { expirationDate: string | null }> } }): void {
-  const until = info.entitlements.active[ENTITLEMENT]?.expirationDate ?? "";
+  const until = activePremium(info.entitlements.active)?.expirationDate ?? "";
   getDb().runSync("insert into kv (key, value) values ('premium.until', ?) on conflict(key) do update set value = excluded.value", [until]);
   notifyDbChanged();
 }
@@ -78,7 +84,7 @@ export async function restorePurchases(): Promise<PurchaseResult> {
     const info = await loadSdk()!.restorePurchases();
     applyLocal(info as never);
     void refreshEntitlement();
-    return info.entitlements.active[ENTITLEMENT] ? "ok" : "error";
+    return activePremium(info.entitlements.active) ? "ok" : "error";
   } catch {
     return "error";
   }
