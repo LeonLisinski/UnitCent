@@ -165,7 +165,7 @@ function plain(b: Block, unsubscribeUrl: string, reason: string): string {
   if (b.hero) lines.push(b.hero + (b.heroSub ? ` ${b.heroSub}` : ""));
   for (const s of b.stats ?? []) lines.push(`${s.label}: ${s.value}`);
   if (lines.length) lines.push("");
-  for (const p of b.paragraphs) lines.push(p.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&"), "");
+  for (const p of b.paragraphs) lines.push(p.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&"), "");
   if (b.cta) lines.push(`${b.cta.label}: ${b.cta.url}`, "");
   lines.push("—", `${reason} Odjava: ${unsubscribeUrl}`);
   return lines.join("\n");
@@ -183,19 +183,19 @@ const utm = (path: string, campaign: string) => `${SITE}${path}${path.includes("
 
 /** Premium se spominje tek u svakom 3. do 4. mailu, jednom rečenicom, bez pritiska. */
 const premiumLine = (campaign: string) =>
-  `Ako želiš cijelu povijest i skeniranje bez brojanja, ${link(utm("/#besplatno-premium", campaign), "Premium")} je 7 dana besplatan.`;
+  `Ako ti treba cijela povijest ili više skeniranja računa (100 mjesečno), ${link(utm("/#besplatno-premium", campaign), "Premium")} možeš isprobati 7 dana besplatno.`;
 
 export function welcomeEmail(name: string | null, unsubscribeUrl: string): EmailParts {
   return build(
-    "Dobrodošlica u UnitCent",
-    "Jedno pitanje svaki dan: koliko danas smijem potrošiti?",
+    "Tvoj UnitCent je spreman",
+    "Odsad svaki dan znaš koliko smiješ potrošiti.",
     {
       paragraphs: [
         hi(name),
-        "drago nam je što si tu. UnitCent odgovara na jedno pitanje: <strong>koliko danas smijem potrošiti?</strong>",
-        "Tri stvari koje vrijede prvi dan:",
-        "1. Postavi plan: primanja, obavezne troškove i štednju. Prsten na Početnoj tada pokazuje tvoj dnevni budžet.<br>2. Upiši trošak čim se dogodi. Traje 3 sekunde.<br>3. Dodaj pretplate jednom. Knjiže se same.",
-        "Ponedjeljkom ti šaljemo kratak sažetak tjedna. Ništa više.",
+        "drago nam je što si s nama. UnitCent ti svaki dan odgovara na jedno pitanje: <strong>koliko danas smijem potrošiti?</strong>",
+        "Za dobar početak napravi ove tri stvari:",
+        "1. Postavi plan: upiši primanja, obavezne troškove i koliko želiš uštedjeti. Prsten na Početnoj tada pokazuje tvoj dnevni budžet.<br>2. Trošak upiši čim ga napraviš. Treba ti 3 sekunde.<br>3. Pretplate dodaj samo jednom, a dalje se knjiže same.",
+        "Svakog ponedjeljka poslat ćemo ti kratak pregled prošlog tjedna. Inače se javljamo rijetko.",
       ],
     },
     unsubscribeUrl,
@@ -205,16 +205,16 @@ export function welcomeEmail(name: string | null, unsubscribeUrl: string): Email
 export function tipsEmail(name: string | null, unsubscribeUrl: string): EmailParts {
   return build(
     "Tri savjeta za prvi tjedan",
-    "Kako da prsten ostane zelen do kraja mjeseca.",
+    "Kako da ti prsten ostane zelen do kraja mjeseca.",
     {
       label: "Prvi tjedan",
       paragraphs: [
         hi(name),
         "evo tri navike koje najviše pomažu u prvom tjednu:",
-        "<strong>Upiši odmah, ne navečer.</strong> Trošak upisan na blagajni je točan; navečer se pola zaboravi.",
-        "<strong>Skeniraj veće račune.</strong> Kamera razvrsta stavke po kategorijama, pa vidiš gdje stvarno ide novac.",
-        "<strong>Gledaj samo prsten.</strong> Ako je dnevni budžet danas potrošen, sutra je opet novi dan. Ne treba ti tablica.",
-        `Više o tome: ${link(utm("/blog/koliko-dnevno-smijem-potrositi", "tips"), "Koliko dnevno smijem potrošiti")}.`,
+        "<strong>Upiši odmah, a ne navečer.</strong> Kad trošak upišeš još na blagajni, iznos je točan. Do večeri se pola toga zaboravi.",
+        "<strong>Veće račune slikaj.</strong> Aplikacija sama razvrsta stavke po kategorijama, pa vidiš na što ti stvarno odlazi novac.",
+        "<strong>Gledaj samo prsten.</strong> Ako je današnji budžet potrošen, sutra kreće iznova. Tablice ti ne trebaju.",
+        `Ako te zanima više, pročitaj članak ${link(utm("/blog/koliko-dnevno-smijem-potrositi", "tips"), "Koliko dnevno smijem potrošiti")}.`,
       ],
     },
     unsubscribeUrl,
@@ -231,10 +231,10 @@ export function weeklyEmail(name: string | null, w: WeekSummary, opts: { premium
   stats.push({ label: "Dana s unosom", value: `${w.daysWithEntries} od 7` });
 
   const paragraphs = [hi(name)];
-  if (!hasTarget) paragraphs.push("postavi plan u aplikaciji pa ćeš uz ovaj broj vidjeti i plan za tjedan.");
-  else if (diff >= 0) paragraphs.push(`prošli tjedan završio je <strong>${esc(eur(diff))} ispod plana</strong>. Taj iznos ostaje u ovom mjesecu.`);
-  else paragraphs.push(`prošli tjedan bio je ${esc(eur(-diff))} preko plana. Dnevni budžet za ostatak mjeseca već je preračunat.`);
-  if (w.daysWithEntries >= 5) paragraphs.push(`${w.daysWithEntries} ${plural(w.daysWithEntries, "dan", "dana", "dana")} s unosom. Tako brojke ostaju točne.`);
+  if (!hasTarget) paragraphs.push("kad u aplikaciji postaviš plan, ovdje ćeš uz potrošnju vidjeti i koliko je bilo planirano za tjedan.");
+  else if (diff >= 0) paragraphs.push(`prošli tjedan završio je <strong>${esc(eur(diff))} ispod plana</strong>. Taj novac ti ostaje za ostatak mjeseca.`);
+  else paragraphs.push(`prošli tjedan završio je ${esc(eur(-diff))} preko plana. Dnevni budžet za ostatak mjeseca već je preračunat, pa odmah vidiš koliko smiješ dnevno.`);
+  if (w.daysWithEntries >= 5) paragraphs.push(`Troškove upisuješ redovito (${w.daysWithEntries} ${plural(w.daysWithEntries, "dan", "dana", "dana")} od 7), zato su ove brojke točne.`);
   if (opts.premiumCta) paragraphs.push(premiumLine("weekly"));
 
   const subject = hasTarget ? `Tvoj tjedan: ${eur(w.spentCents)} od ${eur(w.targetCents!)}` : `Tvoj tjedan: ${eur(w.spentCents)}`;
@@ -262,9 +262,9 @@ export function monthlyEmail(name: string | null, m: MonthSummary, opts: { premi
 
   const paragraphs = [hi(name)];
   if (hasPlan && diff >= 0) paragraphs.push(`${esc(Name)} je završio <strong>${esc(eur(diff))} ispod plana</strong>.`);
-  else if (hasPlan) paragraphs.push(`${esc(Name)} je završio ${esc(eur(-diff))} preko plana. Plan za novi mjesec možeš prilagoditi u aplikaciji.`);
-  else paragraphs.push(`ovo je tvoj ${esc(mName)}. Postavi plan pa ćeš idući mjesec vidjeti i koliko ti je ostalo.`);
-  paragraphs.push("Najveće kategorije su gore. Detalje po danima i usporedbu s prošlim mjesecima imaš na Pregledu.");
+  else if (hasPlan) paragraphs.push(`${esc(Name)} je završio ${esc(eur(-diff))} preko plana. Ako treba, plan za novi mjesec možeš promijeniti u aplikaciji.`);
+  else paragraphs.push(`ovo je tvoj ${esc(mName)} u brojkama. Ako postaviš plan, sljedeći put ćeš vidjeti i koliko ti je ostalo.`);
+  paragraphs.push("Gore su kategorije na koje je otišlo najviše. Potrošnju po danima i usporedbu s prošlim mjesecima naći ćeš na Pregledu u aplikaciji.");
   if (opts.premiumCta) paragraphs.push(premiumLine("monthly"));
 
   return build(
@@ -284,13 +284,13 @@ export function monthlyEmail(name: string | null, m: MonthSummary, opts: { premi
 
 export function winbackEmail(name: string | null, unsubscribeUrl: string): EmailParts {
   return build(
-    "Tvoj plan je još tu",
-    "Jedan unos i prsten je opet točan.",
+    "Tvoj plan te čeka",
+    "Dovoljan je jedan unos i prsten je opet točan.",
     {
       paragraphs: [
         hi(name),
-        "tvoj plan i svi troškovi su na mjestu. Ako je bilo par dana bez unosa, nije problem: upiši današnji trošak i dnevni budžet se sam preračuna za ostatak mjeseca.",
-        "Ne moraš nadoknađivati propuštene dane. Dovoljno je krenuti od danas.",
+        "već nekoliko dana nema novih unosa, i to je sasvim u redu. Tvoj plan i svi troškovi su sačuvani.",
+        "Kad upišeš današnji trošak, UnitCent će sam preračunati dnevni budžet do kraja mjeseca. Propuštene dane ne moraš nadoknađivati, samo nastavi od danas.",
       ],
       cta: { label: "Otvori UnitCent", url: utm("/", "winback") },
     },
